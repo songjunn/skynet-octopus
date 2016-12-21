@@ -1,0 +1,5 @@
+[2016:12:21 18:53:27] NOTICE [:0000] create service logger success handle:0 args:skynet.log,0
+[2016:12:21 18:53:27] NOTICE [:0001] [MongonDB] Connect 192.168.5.123:27017 Success
+[2016:12:21 18:53:27] NOTICE [:0000] create service mongodb success handle:1 args:192.168.5.123:27017
+[2016:12:21 18:53:27] NOTICE [:0000] create service gatec success handle:2 args:20000,100
+[2016:12:21 18:53:27] NOTICE [:0000] create service game success handle:3 args:

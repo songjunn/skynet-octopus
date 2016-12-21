@@ -1,0 +1,25 @@
+################################################
+# skynet config
+[skynet]
+thread = 8		# worker thread count
+logger_args = "skynet.log,0"
+service_path = "./lib"
+service_list = "mongodb, gatec, game"
+
+################################################
+# service config
+[mongodb]
+args = "192.168.5.123:27017"
+concurrent = 0
+
+[gatec]
+args = "20000,100"
+concurrent = 0
+
+[game]
+args = ""
+concurrent = 0
+
+[proxy]
+args = "30000"
+concurrent = 1
