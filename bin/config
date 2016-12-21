@@ -4,7 +4,8 @@
 thread = 8		# worker thread count
 logger_args = "skynet.log,0"
 service_path = "./lib"
-service_list = "mongodb, gatec, game"
+service_list = ""
+#service_list = "mongodb, gatec, game"
 
 ################################################
 # service config
