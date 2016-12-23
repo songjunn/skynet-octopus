@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define LOG_MESSAGE_SIZE 256
+#define LOG_MESSAGE_SIZE 10240
 
 struct skynet_logger {
 	FILE * handle;
