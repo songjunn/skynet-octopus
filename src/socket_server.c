@@ -1158,7 +1158,7 @@ report_accept(struct socket_server *ss, struct socket *s, struct socket_message 
 	}
 	socket_keepalive(client_fd);
 	sp_nonblocking(client_fd);
-	struct socket *ns = new_fd(ss, id, client_fd, PROTOCOL_TCP, s->opaque, false);
+	struct socket *ns = new_fd(ss, id, client_fd, PROTOCOL_TCP, s->opaque, true);
 	if (ns == NULL) {
 		close(client_fd);
 		return 0;

@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT(keystone, 0.1, [])
-AM_INIT_AUTOMAKE(keystone,0.1)
+AC_INIT(skynet, 0.1, [])
+AM_INIT_AUTOMAKE(skynet,0.1)
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.

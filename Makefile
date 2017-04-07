@@ -1,6 +1,6 @@
 BUILD_PATH ?= .
 
-CFLAGS := -g -ggdb -O2 -Wall -m64
+CFLAGS := -g -ggdb -O0 -Wall -m64 -DDEBUG
 LDFLAGS := -Wl,-E
 LIBS := -lrt -ldl -lm -lpthread
 
