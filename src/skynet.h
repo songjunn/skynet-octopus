@@ -7,14 +7,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define PTYPE_TEXT 0
-#define PTYPE_RESPONSE 1
-#define PTYPE_MULTICAST 2
-#define PTYPE_CLIENT 3
-#define PTYPE_SYSTEM 4
-#define PTYPE_HARBOR 5
-#define PTYPE_SOCKET 6
-#define PTYPE_TIMER 7
+#define PTYPE_SOCKET 1
+#define PTYPE_TIMER 2
+#define PTYPE_SERVICE 3
+#define PTYPE_CUSTOM 100
 
 #define LOGGER_DEBUG 0
 #define LOGGER_WARN 1
