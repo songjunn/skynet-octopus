@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define LOG_MESSAGE_SIZE 10240
+#define LOG_MESSAGE_SIZE 204800
 
 struct skynet_logger {
     FILE * handle;
@@ -110,10 +110,10 @@ void skynet_logger_init(int harbor, const char * filename) {
 }
 
 void skynet_print(struct skynet_service * context, int level, const char * msg, ...) {
-    char tmp[LOG_MESSAGE_SIZE];
     va_list ap;
     va_start(ap, msg);
-    int len = vsnprintf(tmp, LOG_MESSAGE_SIZE, msg, ap);
+    char tmp[LOG_MESSAGE_SIZE] = {0};
+    int len = vsnprintf(tmp, LOG_MESSAGE_SIZE-1, msg, ap);
     va_end(ap);
 
     uint32_t source = 0;

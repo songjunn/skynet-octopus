@@ -57,7 +57,7 @@ forward_message(int type, bool padding, struct socket_message * result) {
 	struct skynet_message message;
 	message.source = 0;
 	message.data = sm;
-	message.type = PTYPE_SOCKET;
+	message.type = SERVICE_SOCKET;
 	message.size = sz;
 	
 	if (skynet_service_pushmsg((uint32_t)result->opaque, &message)) {
@@ -116,7 +116,7 @@ check_wsz(struct skynet_service *ctx, int id, void *buffer, int64_t wsz) {
 		tmp.id = id;
 		tmp.ud = (int)(wsz / 1024);
 		tmp.buffer = NULL;
-		skynet_send(ctx, 0, PTYPE_SOCKET, &tmp, sizeof(tmp));
+		skynet_send(ctx, 0, SERVICE_SOCKET, &tmp, sizeof(tmp));
 //		skynet_logger_debug(ctx, "%d Mb bytes on socket %d need to send out", (int)(wsz / (1024 * 1024)), id);
 	}
 	return 0;

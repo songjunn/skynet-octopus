@@ -8,6 +8,4 @@ struct skynet_message;
 
 int skynet_service_message_dispatch();
 
-char * skynet_strdup(const char * str);
-
 #endif

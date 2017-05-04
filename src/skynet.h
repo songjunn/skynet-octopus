@@ -7,10 +7,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define PTYPE_SOCKET 1
-#define PTYPE_TIMER 2
-#define PTYPE_SERVICE 3
-#define PTYPE_CUSTOM 100
+#define SERVICE_SOCKET 1
+#define SERVICE_TIMER 2
 
 #define LOGGER_DEBUG 0
 #define LOGGER_WARN 1
@@ -65,6 +63,7 @@ void skynet_print(struct skynet_service * context, int level, const char * msg, 
 
 // service
 void skynet_push(uint32_t target, uint32_t source, int type, void * msg, size_t sz);
+void skynet_push_ex(uint32_t target, uint32_t source, int type, void * msg, size_t sz);
 void skynet_send(struct skynet_service * context, uint32_t source, int type, void * msg, size_t sz);
 void skynet_trans(const char * name, uint32_t source, int type, void * msg, size_t sz);
 
@@ -78,5 +77,8 @@ int skynet_socket_send(struct skynet_service *ctx, int id, void *buffer, int sz)
 // timer
 uint64_t skynet_now(void);
 void skynet_register_timer(uint32_t handle, const void * args, size_t size, int time);
+
+// utils
+char * skynet_strdup(const char * str);
 
 #endif

@@ -140,7 +140,7 @@ dispatch_list(struct timer_node *current) {
 		struct timer_event * event = (struct timer_event *)(current+1);
 		struct skynet_message message;
 		message.source = 0;
-		message.type = PTYPE_TIMER;
+		message.type = SERVICE_TIMER;
 		message.data = event->data;
 		message.size = event->size;
 
@@ -209,7 +209,7 @@ skynet_register_timer(uint32_t handle, const void * args, size_t size, int time)
 	if (time <= 0) {
 		struct skynet_message message;
 		message.source = 0;
-		message.type = PTYPE_TIMER;
+		message.type = SERVICE_TIMER;
 		message.size = size;
 		if (args != NULL) {
 			message.data = skynet_malloc(size);

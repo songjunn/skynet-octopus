@@ -60,6 +60,20 @@ void skynet_push(uint32_t target, uint32_t source, int type, void * data, size_t
 	skynet_service_pushmsg(target, &smsg);
 }
 
+void skynet_push_ex(uint32_t target, uint32_t source, int type, void * data, size_t size) {
+	if (target == 0) {
+		return;
+	}
+
+	struct skynet_message smsg;
+	smsg.source = source;
+	smsg.type = type;
+	smsg.size = size;
+	smsg.data = data;
+
+	skynet_service_pushmsg(target, &smsg);
+}
+
 void skynet_send(struct skynet_service * context, uint32_t source, int type, void * data, size_t size) {
 	struct skynet_message smsg;
 	smsg.source = source;
