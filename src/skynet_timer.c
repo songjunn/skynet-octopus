@@ -211,7 +211,7 @@ skynet_register_timer(uint32_t handle, const void * args, size_t size, int time)
 		message.source = 0;
 		message.type = SERVICE_TIMER;
 		message.size = size;
-		if (args != NULL) {
+		if (args != NULL && size > 0) {
 			message.data = skynet_malloc(size);
 			memcpy(message.data, args, size);
 		}
@@ -221,7 +221,7 @@ skynet_register_timer(uint32_t handle, const void * args, size_t size, int time)
 		struct timer_event event;
 		event.handle = handle;
 		event.size = size;
-		if (args != NULL) {
+		if (args != NULL && size > 0) {
 			event.data = skynet_malloc(size);
 			memcpy(event.data, args, size);
 		}

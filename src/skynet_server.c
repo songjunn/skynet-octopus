@@ -31,7 +31,7 @@ int skynet_service_message_dispatch() {
 			ctx->cb(msg.type, msg.source, msg.data, msg.size);
 		}
 
-		if (msg.data != NULL) {
+		if (msg.size > 0 && msg.data != NULL) {
 			skynet_free(msg.data);
 		}
 	} while (0);
