@@ -237,8 +237,14 @@ write_buffer_free(struct socket_server *ss, struct write_buffer *wb) {
 
 static void
 socket_keepalive(int fd) {
-	int keepalive = 1;
-	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive));  
+	int keepalive = 1; //非0值，开启keepalive属性
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive));
+	int keepidle = 30; //如该连接在idle秒内没有任何数据往来,则进行此TCP层的探测
+	setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&keepidle, sizeof(keepidle));
+	int keepinterval = 10; //探测发包间隔为intv秒
+	setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL,(void*)&keepinterval, sizeof(keepinterval));
+	int keepcount = 3; //尝试探测的次数.如果第1次探测包就收到响应了,则后2次的不再发
+	setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, (void *)&keepcount, sizeof(keepcount));
 }
 
 static int
