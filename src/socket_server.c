@@ -293,6 +293,8 @@ socket_server_create() {
 	if (sp_setSignal() < 0) {
 		skynet_logger_error(NULL, "socket-server: can't set setSignal.");
 		return NULL;
+	} else {
+		skynet_logger_debug(NULL, "socket-server: set setSignal.");
 	}
 
 	struct socket_server *ss = MALLOC(sizeof(*ss));
