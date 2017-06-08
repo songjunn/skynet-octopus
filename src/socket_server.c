@@ -235,18 +235,6 @@ write_buffer_free(struct socket_server *ss, struct write_buffer *wb) {
 	FREE(wb);
 }
 
-static void
-socket_keepalive(int fd) {
-	int keepalive = 1; //非0值，开启keepalive属性
-	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive));
-	int keepidle = 30; //如该连接在idle秒内没有任何数据往来,则进行此TCP层的探测
-	setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&keepidle, sizeof(keepidle));
-	int keepinterval = 10; //探测发包间隔为intv秒
-	setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL,(void*)&keepinterval, sizeof(keepinterval));
-	int keepcount = 3; //尝试探测的次数.如果第1次探测包就收到响应了,则后2次的不再发
-	setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, (void *)&keepcount, sizeof(keepcount));
-}
-
 static int
 reserve_id(struct socket_server *ss) {
 	int i;
@@ -440,7 +428,6 @@ open_socket(struct socket_server *ss, struct request_open * request, struct sock
 		if ( sock < 0 ) {
 			continue;
 		}
-		//socket_keepalive(sock);
 		sp_nonblocking(sock);
 		status = connect( sock, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
 		if ( status != 0 && errno != EINPROGRESS) {
@@ -1170,7 +1157,6 @@ report_accept(struct socket_server *ss, struct socket *s, struct socket_message 
 		close(client_fd);
 		return 0;
 	}
-	//socket_keepalive(client_fd);
 	sp_nonblocking(client_fd);
 	struct socket *ns = new_fd(ss, id, client_fd, PROTOCOL_TCP, s->opaque, false);
 	if (ns == NULL) {
