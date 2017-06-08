@@ -872,7 +872,7 @@ setopt_socket(struct socket_server *ss, struct request_setopt *request) {
 static void
 block_readpipe(int pipefd, void *buffer, int sz) {
 	for (;;) {
-		int n = recv(pipefd, buffer, sz, 0);
+		int n = read(pipefd, buffer, sz);
 		if (n<0) {
 			if (errno == EINTR)
 				continue;
@@ -1286,7 +1286,7 @@ send_request(struct socket_server *ss, struct request_package *request, char typ
 	request->header[6] = (uint8_t)type;
 	request->header[7] = (uint8_t)len;
 	for (;;) {
-		int n = send(ss->sendctrl_fd, &request->header[6], len+2, 0);
+		int n = write(ss->sendctrl_fd, &request->header[6], len+2);
 		if (n<0) {
 			if (errno != EINTR) {
 				skynet_logger_error(NULL, "socket-server : send ctrl command error %s.", strerror(errno));
