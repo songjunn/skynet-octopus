@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <string.h>
 
 static bool 
 sp_invalid(int efd) {
