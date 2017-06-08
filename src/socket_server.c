@@ -709,7 +709,7 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 	}
 	if (send_buffer_empty(s) && s->type == SOCKET_TYPE_CONNECTED) {
 		if (s->protocol == PROTOCOL_TCP) {
-			int n = write(s->fd, so.buffer, so.sz);
+			int n = send(s->fd, so.buffer, so.sz, MSG_NOSIGNAL);
 			if (n<0) {
 				switch(errno) {
 				case EINTR:
@@ -872,7 +872,7 @@ setopt_socket(struct socket_server *ss, struct request_setopt *request) {
 static void
 block_readpipe(int pipefd, void *buffer, int sz) {
 	for (;;) {
-		int n = read(pipefd, buffer, sz);
+		int n = recv(pipefd, buffer, sz, 0);
 		if (n<0) {
 			if (errno == EINTR)
 				continue;
@@ -1001,7 +1001,7 @@ static int
 forward_message_tcp(struct socket_server *ss, struct socket *s, struct socket_message * result) {
 	int sz = s->p.size;
 	char * buffer = MALLOC(sz);
-	int n = (int)read(s->fd, buffer, sz);
+	int n = (int)recv(s->fd, buffer, sz, 0);
 	if (n<0) {
 		FREE(buffer);
 		switch(errno) {
@@ -1286,7 +1286,7 @@ send_request(struct socket_server *ss, struct request_package *request, char typ
 	request->header[6] = (uint8_t)type;
 	request->header[7] = (uint8_t)len;
 	for (;;) {
-		int n = write(ss->sendctrl_fd, &request->header[6], len+2);
+		int n = send(ss->sendctrl_fd, &request->header[6], len+2, MSG_NOSIGNAL);
 		if (n<0) {
 			if (errno != EINTR) {
 				skynet_logger_error(NULL, "socket-server : send ctrl command error %s.", strerror(errno));
