@@ -137,10 +137,10 @@ int main(int argc, char *argv[]) {
     skynet_config_string("skynet", "service_list", service_list, 1024);
 
     skynet_mq_init();
-    skynet_timer_init();
-    skynet_socket_init();
     skynet_service_init(service_path);
     skynet_logger_init(harbor, logger_args);
+    skynet_timer_init();
+    skynet_socket_init();
 
     service_name = strtok(service_list, ",");
     while (service_name != NULL) {
