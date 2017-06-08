@@ -298,6 +298,14 @@ socket_server_create() {
 		sp_release(efd);
 		return NULL;
 	}
+	if (sp_setlimits() < 0) {
+		skynet_logger_error(NULL, "socket-server: can't set limits.");
+		return NULL;
+	}
+	if (sp_setSignal() < 0) {
+		skynet_logger_error(NULL, "socket-server: can't set setSignal.");
+		return NULL;
+	}
 
 	struct socket_server *ss = MALLOC(sizeof(*ss));
 	ss->event_fd = efd;

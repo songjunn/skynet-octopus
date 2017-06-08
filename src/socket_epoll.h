@@ -74,4 +74,21 @@ sp_nonblocking(int fd) {
 	fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 }
 
+static int
+sp_setlimits() {
+	int maxconn = 100000;
+	struct rlimit srl;
+	srl.rlim_cur = maxconn + 10;
+	srl.rlim_max = maxconn + 10;
+	return setrlimit(RLIMIT_NOFILE, &srl);
+}
+
+static int
+sp_setSignal() {
+	struct sigaction sa;
+	memset(&sa, 0, sizeof (sa));
+	sa.sa_handler = SIG_IGN;
+	return sigaction(SIGPIPE, &sa, NULL);
+}
+
 #endif
