@@ -88,7 +88,7 @@ void * thread_worker(void *p) {
     return NULL;
 }
 
-void skynet_start(unsigned thread) {
+void skynet_start(unsigned harbor, unsigned thread) {
     unsigned i;
     pthread_t pid[thread+2];
 
@@ -112,9 +112,13 @@ void skynet_start(unsigned thread) {
     create_thread(&pid[i++], thread_timer, m);
     create_thread(&pid[i], thread_socket, m);
 
+    skynet_logger_notice(NULL, "skynet start, harbor:%u workers:%u", harbor, thread);
+
     for (i=0;i<sizeof(pid)/sizeof(pthread_t);i++) {
         pthread_join(pid[i], NULL); 
     }
+
+    skynet_logger_notice(NULL, "skynet shutdown, harbor:%u", harbor);
 
     pthread_mutex_destroy(&m->mutex);
     pthread_cond_destroy(&m->cond);
@@ -151,7 +155,7 @@ int main(int argc, char *argv[]) {
         service_name = strtok(NULL, ",");
     }
 
-    skynet_start(thread);
+    skynet_start(harbor, thread);
     skynet_socket_free();
     skynet_config_free();
     skynet_free(logger_args);
