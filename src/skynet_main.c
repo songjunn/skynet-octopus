@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 struct monitor {
     int count;
@@ -128,7 +129,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
 }
 
 void skynet_shutdown() {
-    skynet_service_release();
+    skynet_service_releaseall();
 }
 
 int main(int argc, char *argv[]) {
