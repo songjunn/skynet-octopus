@@ -139,29 +139,23 @@ void skynet_signal_init() {
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
 
-    sigaction(SIGINT, &act, NULL);
-}
-
-int main(int argc, char *argv[]) {
-    /*signal(SIGSEGV, skynet_shutdown);
-    signal(SIGILL, skynet_shutdown);
-    signal(SIGFPE, skynet_shutdown);
-    signal(SIGABRT, skynet_shutdown);
-    signal(SIGTERM, skynet_shutdown);
-    signal(SIGKILL, skynet_shutdown);
-    signal(SIGXFSZ, skynet_shutdown);
+    sigaction(SIGSEGV, &act, NULL);
+    sigaction(SIGILL, &act, NULL);
+    sigaction(SIGFPE, &act, NULL);
+    sigaction(SIGABRT, &act, NULL);
+    sigaction(SIGTERM, &act, NULL);
+    sigaction(SIGKILL, &act, NULL);
+    sigaction(SIGXFSZ, &act, NULL);
 
     // block SIGINT to all child process:
     sigset_t bset, oset;
     sigemptyset(&bset);
     sigaddset(&bset, SIGINT);
     // equivalent to sigprocmask
-    if (pthread_sigmask(SIG_BLOCK, &bset, &oset) != 0)
-    {
-        printf("set thread signal mask error!");
-        return 1;
-    }*/
+    pthread_sigmask(SIG_BLOCK, &bset, &oset);
+}
 
+int main(int argc, char *argv[]) {
     int harbor, thread, concurrent;
     char * service_name = NULL;
     char * service_args = skynet_malloc(1024);
