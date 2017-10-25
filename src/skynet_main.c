@@ -128,7 +128,8 @@ void skynet_start(unsigned harbor, unsigned thread) {
     skynet_free(m);
 }
 
-void skynet_shutdown() {
+void skynet_shutdown(int signal) {
+    skynet_logger_notice(NULL, "recv signal:%d", signal);
     skynet_service_releaseall();
 }
 
