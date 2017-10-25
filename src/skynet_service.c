@@ -161,6 +161,13 @@ void skynet_service_release(struct skynet_service * ctx) {
 	}
 }
 
+void skynet_service_release() {
+	int i;
+	for (i=M->count-1;i>=0;i--) { // release by desc
+		skynet_service_release(&M->m[i]);
+	}
+}
+
 struct skynet_service * skynet_service_grab(uint32_t handle) {
 	struct skynet_service * result = NULL;
 
