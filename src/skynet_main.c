@@ -133,8 +133,17 @@ void skynet_shutdown(int signal) {
     skynet_service_releaseall();
 }
 
+void skynet_signal_init() {
+    struct sigaction act;
+    act.sa_handler = skynet_shutdown;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+
+    sigaction(SIGINT, &act, NULL);
+}
+
 int main(int argc, char *argv[]) {
-    signal(SIGSEGV, skynet_shutdown);
+    /*signal(SIGSEGV, skynet_shutdown);
     signal(SIGILL, skynet_shutdown);
     signal(SIGFPE, skynet_shutdown);
     signal(SIGABRT, skynet_shutdown);
@@ -151,7 +160,7 @@ int main(int argc, char *argv[]) {
     {
         printf("set thread signal mask error!");
         return 1;
-    }
+    }*/
 
     int harbor, thread, concurrent;
     char * service_name = NULL;
@@ -168,6 +177,7 @@ int main(int argc, char *argv[]) {
     skynet_config_string("skynet", "service_list", service_list, 1024);
 
     skynet_mq_init();
+    skynet_signal_init();
     skynet_service_init(service_path);
     skynet_logger_init(harbor, logger_args);
     skynet_timer_init();
