@@ -12,6 +12,7 @@
 #include <time.h>
 
 #define LOG_MESSAGE_SIZE 204800
+#define LOG_FILE_SIZE 10240000
 
 struct skynet_logger {
     FILE * handle;
@@ -35,6 +36,7 @@ bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance->handle = NULL;
 
     if (strlen(filename) > 0) {
+        _formatFileName(filename, 256);
         instance->handle = fopen(filename, "wb");
         if (instance->handle == NULL) {
             return false;
@@ -51,6 +53,16 @@ void logger_release() {
     }
     skynet_free(instance->filename);
     skynet_free(instance);
+}
+
+void _formatFileName(char * filename, size_t size) {
+    struct tm * newtime;
+    time_t aclock;
+    time(&aclock);
+    newtime = localtime(&aclock);
+    snprintf(filename, size, "-%02d%02d%02d-%02d%02d%02d", newtime->tm_year+1900, 
+            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
+            newtime->tm_min, newtime->tm_sec);
 }
 
 void _formatTime(char * buffer, size_t size) {
