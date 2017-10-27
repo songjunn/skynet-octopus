@@ -66,7 +66,7 @@ bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance->handle = NULL;
 
     if (strlen(filename) > 0) {
-        _formatFileName(filename, sizeof(filename));
+        //_formatFileName(filename, sizeof(filename));
         instance->handle = fopen(filename, "wb");
         if (instance->handle == NULL) {
             return false;
