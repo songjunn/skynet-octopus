@@ -24,6 +24,36 @@ struct skynet_logger {
 
 static struct skynet_logger * instance = NULL;
 
+void _formatFileName(char * filename, size_t size) {
+    struct tm * newtime;
+    time_t aclock;
+    time(&aclock);
+    newtime = localtime(&aclock);
+    snprintf(filename, size, "-%02d%02d%02d-%02d%02d%02d", newtime->tm_year+1900, 
+            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
+            newtime->tm_min, newtime->tm_sec);
+}
+
+void _formatTime(char * buffer, size_t size) {
+    struct tm * newtime;
+    time_t aclock;
+    time(&aclock);
+    newtime = localtime(&aclock);
+    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime->tm_year+1900, 
+            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
+            newtime->tm_min, newtime->tm_sec);
+}
+
+void _formatHead(char * buffer, size_t size, int level, uint32_t source) {
+    switch (level) {
+    case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x] ", source); break;
+    case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x] ", source); break;
+    case LOGGER_NOTICE: snprintf(buffer, size, "NOTICE [:%04x] ", source); break;
+    case LOGGER_ERROR: snprintf(buffer, size, "ERROR [:%04x] ", source); break;
+    default: break;
+    }
+}
+
 bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     int level = 0;
     char filename[128] = {0};
@@ -53,36 +83,6 @@ void logger_release() {
     }
     skynet_free(instance->filename);
     skynet_free(instance);
-}
-
-void _formatFileName(char * filename, size_t size) {
-    struct tm * newtime;
-    time_t aclock;
-    time(&aclock);
-    newtime = localtime(&aclock);
-    snprintf(filename, size, "-%02d%02d%02d-%02d%02d%02d", newtime->tm_year+1900, 
-            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
-            newtime->tm_min, newtime->tm_sec);
-}
-
-void _formatTime(char * buffer, size_t size) {
-    struct tm * newtime;
-    time_t aclock;
-    time(&aclock);
-    newtime = localtime(&aclock);
-    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime->tm_year+1900, 
-            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
-            newtime->tm_min, newtime->tm_sec);
-}
-
-void _formatHead(char * buffer, size_t size, int level, uint32_t source) {
-    switch (level) {
-    case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x] ", source); break;
-    case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x] ", source); break;
-    case LOGGER_NOTICE: snprintf(buffer, size, "NOTICE [:%04x] ", source); break;
-    case LOGGER_ERROR: snprintf(buffer, size, "ERROR [:%04x] ", source); break;
-    default: break;
-    }
 }
 
 bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
