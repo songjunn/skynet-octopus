@@ -56,7 +56,7 @@ void _format_head(char * buffer, size_t size, int level, uint32_t source) {
     }
 }
 
-FILE * _open_file(char * filname, size_t size, const char * basename) {
+FILE * _open_file(char * filename, size_t size, const char * basename) {
     _format_name(filename, size, basename);
     FILE * handle = fopen(filename, "wb");
     return handle;
