@@ -11,11 +11,11 @@
 #include <stdarg.h>
 #include <time.h>
 
+#define LOG_FILE_SIZE 20480000
 #define LOG_MESSAGE_SIZE 204800
-#define LOG_MESSAGE_LINE 10000
 
 struct skynet_logger {
-    int line;
+    int size;
     int level;
     int close;
     FILE * handle;
@@ -65,7 +65,7 @@ FILE * _open_file(char * filename, size_t size, const char * basename) {
 bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance = skynet_malloc(sizeof(*instance));
     instance->ctx = ctx;
-    instance->line = 0;
+    instance->size = 0;
     instance->close = 0;
     instance->level = 0;
     instance->handle = NULL;
@@ -99,13 +99,13 @@ bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
     _format_head(head, sizeof(head), level, source);
     snprintf(content, sz+1, "%s", (const char*)msg);
 
-    if (instance->line >= LOG_MESSAGE_LINE) {
+    if (instance->size >= LOG_FILE_SIZE) {
         instance->close = 0;
         fclose(instance->handle);
 
         instance->handle = _open_file(instance->filename, sizeof(instance->filename), instance->basename);
         if (instance->handle) {
-            instance->line = 0;
+            instance->size = 0;
             instance->close = 1;
         }
     }
@@ -116,7 +116,7 @@ bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
         fprintf(instance->handle, content);
         fprintf(instance->handle, "\n");
         fflush(instance->handle);
-        instance->line++;
+        instance->size += strlen(content);
     }
 
     fprintf(stdout, time);
