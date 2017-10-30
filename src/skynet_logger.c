@@ -12,29 +12,31 @@
 #include <time.h>
 
 #define LOG_MESSAGE_SIZE 204800
-#define LOG_FILE_SIZE 10240000
+#define LOG_MESSAGE_LINE 10000
 
 struct skynet_logger {
-    FILE * handle;
-    char * filename;
-    int close;
+    int line;
     int level;
+    int close;
+    FILE * handle;
+    char basename[64];
+    char filename[128];
     struct skynet_service * ctx;
 };
 
 static struct skynet_logger * instance = NULL;
 
-void _formatFileName(char * name, size_t size, const char * filename) {
+void _format_name(char * filename, size_t size, const char * basename) {
     struct tm * newtime;
     time_t aclock;
     time(&aclock);
     newtime = localtime(&aclock);
-    snprintf(name, size, "%s-%02d%02d%02d-%02d%02d%02d", filename, newtime->tm_year+1900, 
+    snprintf(filename, size, "%s-%02d%02d%02d-%02d%02d%02d.log", basename, newtime->tm_year+1900, 
             newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
             newtime->tm_min, newtime->tm_sec);
 }
 
-void _formatTime(char * buffer, size_t size) {
+void _format_time(char * buffer, size_t size) {
     struct tm * newtime;
     time_t aclock;
     time(&aclock);
@@ -44,7 +46,7 @@ void _formatTime(char * buffer, size_t size) {
             newtime->tm_min, newtime->tm_sec);
 }
 
-void _formatHead(char * buffer, size_t size, int level, uint32_t source) {
+void _format_head(char * buffer, size_t size, int level, uint32_t source) {
     switch (level) {
     case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x] ", source); break;
     case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x] ", source); break;
@@ -54,25 +56,28 @@ void _formatHead(char * buffer, size_t size, int level, uint32_t source) {
     }
 }
 
-bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
-    int level = 0;
-    char filename[64] = {0}, name[128] = {0};
-    sscanf(args, "%[^','],%d", filename, &level);
+FILE * _open_file(char * filname, size_t size, const char * basename) {
+    _format_name(filename, size, basename);
+    FILE * handle = fopen(filename, "wb");
+    return handle;
+}
 
+bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance = skynet_malloc(sizeof(*instance));
     instance->ctx = ctx;
+    instance->line = 0;
     instance->close = 0;
-    instance->level = level;
+    instance->level = 0;
     instance->handle = NULL;
 
-    if (strlen(filename) > 0) {
-        _formatFileName(name, sizeof(name), filename);
-        instance->handle = fopen(name, "wb");
+    sscanf(args, "%[^','],%d", instance->basename, &instance->level);
+
+    if (strlen(instance->basename) > 0) {
+        instance->handle = _open_file(instance->filename, sizeof(instance->filename), instance->basename);
         if (instance->handle == NULL) {
             return false;
         }
         instance->close = 1;
-        instance->filename = skynet_strdup(name);
     }
     return true;
 }
@@ -81,7 +86,6 @@ void logger_release() {
     if (instance->close) {
         fclose(instance->handle);
     }
-    skynet_free(instance->filename);
     skynet_free(instance);
 }
 
@@ -91,9 +95,20 @@ bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
     }
 
     char head[64] = {0}, time[64] = {0}, content[LOG_MESSAGE_SIZE] = {0};
-    _formatTime(time, sizeof(time));
-    _formatHead(head, sizeof(head), level, source);
+    _format_time(time, sizeof(time));
+    _format_head(head, sizeof(head), level, source);
     snprintf(content, sz+1, "%s", (const char*)msg);
+
+    if (instance->line >= LOG_MESSAGE_LINE) {
+        instance->close = 0;
+        fclose(instance->handle);
+
+        instance->handle = _open_file(instance->filename, sizeof(instance->filename), instance->basename);
+        if (instance->handle) {
+            instance->line = 0;
+            instance->close = 1;
+        }
+    }
 
     if (instance->handle) {
         fprintf(instance->handle, time);
@@ -101,6 +116,7 @@ bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
         fprintf(instance->handle, content);
         fprintf(instance->handle, "\n");
         fflush(instance->handle);
+        instance->line++;
     }
 
     fprintf(stdout, time);
