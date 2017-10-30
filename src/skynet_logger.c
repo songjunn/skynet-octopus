@@ -24,12 +24,12 @@ struct skynet_logger {
 
 static struct skynet_logger * instance = NULL;
 
-void _formatFileName(char * filename, size_t size) {
+void _formatFileName(char * name, size_t size, const char * filename) {
     struct tm * newtime;
     time_t aclock;
     time(&aclock);
     newtime = localtime(&aclock);
-    snprintf(filename, size, "-%02d%02d%02d-%02d%02d%02d", newtime->tm_year+1900, 
+    snprintf(name, size, "%s-%02d%02d%02d-%02d%02d%02d", filename, newtime->tm_year+1900, 
             newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
             newtime->tm_min, newtime->tm_sec);
 }
@@ -56,7 +56,7 @@ void _formatHead(char * buffer, size_t size, int level, uint32_t source) {
 
 bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     int level = 0;
-    char filename[128] = {0};
+    char filename[64] = {0}, name[128] = {0};
     sscanf(args, "%[^','],%d", filename, &level);
 
     instance = skynet_malloc(sizeof(*instance));
@@ -66,13 +66,13 @@ bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance->handle = NULL;
 
     if (strlen(filename) > 0) {
-        //_formatFileName(filename, sizeof(filename));
-        instance->handle = fopen(filename, "wb");
+        _formatFileName(name, sizeof(name), filename);
+        instance->handle = fopen(name, "wb");
         if (instance->handle == NULL) {
             return false;
         }
         instance->close = 1;
-        instance->filename = skynet_strdup(filename);
+        instance->filename = skynet_strdup(name);
     }
     return true;
 }
