@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+struct skynet_service;
 struct skynet_message;
 
-int skynet_service_message_dispatch();
+int skynet_message_dispatch();
+int skynet_service_message_dispatch(struct skynet_service * ctx);
 
 #endif

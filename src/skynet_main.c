@@ -41,7 +41,7 @@ void wakeup(struct monitor *m, int busy) {
 
 void * thread_socket(void *p) {
     struct monitor * m = p;
-    for (;;) {
+    while (!m->quit) {
         int r = skynet_socket_poll();
         if (r==0)
             break;
@@ -55,29 +55,22 @@ void * thread_socket(void *p) {
 
 void * thread_timer(void *p) {
     struct monitor * m = p;
-    for (;;) {
+    while (!m->quit) {
         skynet_updatetime();
         wakeup(m,m->count-1);
         usleep(1000);
     }
-    // wakeup socket thread
-    skynet_socket_exit();
-    // wakeup all worker thread
-    pthread_mutex_lock(&m->mutex);
-    m->quit = 1;
-    pthread_cond_broadcast(&m->cond);
-    pthread_mutex_unlock(&m->mutex);
     return NULL;
 }
 
 void * thread_worker(void *p) {
     struct monitor *m = p;
     while (!m->quit) {
-        if (skynet_service_message_dispatch()) {
+        if (skynet_message_dispatch()) {
             if (pthread_mutex_lock(&m->mutex) == 0) {
                 ++ m->sleep;
                 // "spurious wakeup" is harmless,
-                // because skynet_service_message_dispatch() can be call at any time.
+                // because skynet_message_dispatch() can be call at any time.
                 if (!m->quit)
                     pthread_cond_wait(&m->cond, &m->mutex);
                 -- m->sleep;
@@ -99,6 +92,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
     memset(m, 0, sizeof(*m));
     m->count = thread;
     m->sleep = 0;
+    m->quit = 0;
 
     if (pthread_mutex_init(&m->mutex, NULL)) {
         skynet_logger_error(NULL, "Init mutex error");
@@ -130,6 +124,17 @@ void skynet_start(unsigned harbor, unsigned thread) {
 
 void skynet_shutdown(int signal) {
     skynet_logger_notice(NULL, "recv signal:%d", signal);
+
+    m->quit = 1;
+
+    // wakeup socket thread
+    skynet_socket_exit();
+    
+    // wakeup all worker thread
+    pthread_mutex_lock(&m->mutex);
+    pthread_cond_broadcast(&m->cond);
+    pthread_mutex_unlock(&m->mutex);
+
     skynet_service_releaseall();
 }
 
