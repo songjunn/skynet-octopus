@@ -142,13 +142,14 @@ void skynet_signal_init() {
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
 
-    sigaction(SIGSEGV, &act, NULL);
+    /*sigaction(SIGSEGV, &act, NULL);
     sigaction(SIGILL, &act, NULL);
     sigaction(SIGFPE, &act, NULL);
     sigaction(SIGABRT, &act, NULL);
     sigaction(SIGTERM, &act, NULL);
     sigaction(SIGKILL, &act, NULL);
-    sigaction(SIGXFSZ, &act, NULL);
+    sigaction(SIGXFSZ, &act, NULL);*/
+    sigaction(SIGUSR1, &act, NULL);
 
     // block SIGINT to all child process:
     sigset_t bset, oset;
