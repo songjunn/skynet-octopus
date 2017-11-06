@@ -134,8 +134,6 @@ void skynet_shutdown(int signal) {
     pthread_mutex_lock(&m->mutex);
     pthread_cond_broadcast(&m->cond);
     pthread_mutex_unlock(&m->mutex);
-
-    skynet_service_releaseall();
 }
 
 void skynet_signal_init() {
@@ -178,7 +176,7 @@ int main(int argc, char *argv[]) {
     skynet_mq_init();
     skynet_signal_init();
     skynet_service_init(service_path);
-    skynet_logger_init(harbor, logger_args);
+    skynet_logger_init(harbor, logger_args); // logger must be the first service
     skynet_timer_init();
     skynet_socket_init();
 
@@ -192,6 +190,7 @@ int main(int argc, char *argv[]) {
     }
 
     skynet_start(harbor, thread);
+    skynet_service_releaseall();
     skynet_socket_free();
     skynet_config_free();
     skynet_free(logger_args);
