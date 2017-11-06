@@ -199,5 +199,7 @@ int main(int argc, char *argv[]) {
     skynet_free(service_args);
     skynet_free(service_path);
 
+    printf("skynet exit.");
+
     return 0;
 }
