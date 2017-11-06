@@ -107,7 +107,6 @@ _release(struct message_queue *q) {
 		skynet_free(msg.data);
 	}
 
-	assert(q->next == NULL);
 	SPIN_DESTROY(q)
 	skynet_free(q->queue);
 	skynet_free(q);
