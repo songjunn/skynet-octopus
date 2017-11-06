@@ -39,7 +39,6 @@ skynet_globalmq_push(struct message_queue * queue) {
 	struct global_queue *q= Q;
 
 	SPIN_LOCK(q)
-	assert(queue->next == NULL);
 	if(q->tail) {
 		q->tail->next = queue;
 		q->tail = queue;
