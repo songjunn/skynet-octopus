@@ -19,6 +19,7 @@ struct monitor {
     int count;
     int sleep;
     int quit;
+    int sig;
     pthread_cond_t cond;
     pthread_mutex_t mutex;
 };
@@ -93,6 +94,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
     m->count = thread;
     m->sleep = 0;
     m->quit = 0;
+    m->sig = 0;
 
     if (pthread_mutex_init(&m->mutex, NULL)) {
         skynet_logger_error(NULL, "Init mutex error");
@@ -125,7 +127,11 @@ void skynet_start(unsigned harbor, unsigned thread) {
 void skynet_shutdown(int sig) {
     skynet_logger_notice(NULL, "recv signal:%d", sig);
 
+    if (m->quit)
+        return;
+
     m->quit = 1;
+    m->sig = sig;
 
     // wakeup socket thread
     skynet_socket_exit();
@@ -134,19 +140,13 @@ void skynet_shutdown(int sig) {
     pthread_mutex_lock(&m->mutex);
     pthread_cond_broadcast(&m->cond);
     pthread_mutex_unlock(&m->mutex);
-
-    // SIGTERM for normal exit, otherwise make coredump 
-    if (sig != SIGTERM) {
-        //signal(sig, SIG_DFL);
-        raise(sig);
-    }
 }
 
 void skynet_signal_init() {
     struct sigaction act;
     act.sa_handler = skynet_shutdown;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_RESETHAND;
+    act.sa_flags = 0;
     sigaction(SIGTERM, &act, NULL);
     sigaction(SIGSEGV, &act, NULL);
     sigaction(SIGILL, &act, NULL);
@@ -202,6 +202,12 @@ int main(int argc, char *argv[]) {
     skynet_free(service_list);
     skynet_free(service_args);
     skynet_free(service_path);
+
+    // SIGTERM for normal exit, otherwise make coredump 
+    if (m->sig != SIGTERM) {
+        signal(m->sig, SIG_DFL);
+        raise(m->sig);
+    }
 
     printf("skynet exit.");
 
