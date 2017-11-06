@@ -122,8 +122,8 @@ void skynet_start(unsigned harbor, unsigned thread) {
     skynet_free(m);
 }
 
-void skynet_shutdown(int signal) {
-    skynet_logger_notice(NULL, "recv signal:%d", signal);
+void skynet_shutdown(int sig) {
+    skynet_logger_notice(NULL, "recv signal:%d", sig);
 
     m->quit = 1;
 
@@ -136,8 +136,9 @@ void skynet_shutdown(int signal) {
     pthread_mutex_unlock(&m->mutex);
 
     // SIGTERM for normal exit, otherwise make coredump 
-    if (signal != SIGTERM) {
-        abort();
+    if (sig != SIGTERM) {
+        //signal(sig, SIG_DFL);
+        raise(sig);
     }
 }
 
@@ -145,7 +146,7 @@ void skynet_signal_init() {
     struct sigaction act;
     act.sa_handler = skynet_shutdown;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
+    act.sa_flags = SA_RESETHAND;
     sigaction(SIGTERM, &act, NULL);
     sigaction(SIGSEGV, &act, NULL);
     sigaction(SIGILL, &act, NULL);
