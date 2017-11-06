@@ -6,6 +6,7 @@
 #include "skynet_timer.h"
 #include "skynet_socket.h"
 #include "skynet_logger.h"
+#include "skynet_coredump.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -122,8 +123,14 @@ void skynet_start(unsigned harbor, unsigned thread) {
     skynet_free(m);
 }
 
+void skynet_coredump(int signal) {
+    skynet_logger_notice(NULL, "recv coredump signal:%d", signal);
+
+    saveBackTrace(signal);
+}
+
 void skynet_shutdown(int signal) {
-    skynet_logger_notice(NULL, "recv signal:%d", signal);
+    skynet_logger_notice(NULL, "recv shutdown signal:%d", signal);
 
     m->quit = 1;
 
@@ -137,19 +144,23 @@ void skynet_shutdown(int signal) {
 }
 
 void skynet_signal_init() {
-    struct sigaction act;
-    act.sa_handler = skynet_shutdown;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
+    struct sigaction shutdown;
+    shutdown.sa_handler = skynet_shutdown;
+    sigemptyset(&shutdown.sa_mask);
+    shutdown.sa_flags = 0;
+    sigaction(SIGUSR1, &shutdown, NULL);
 
-    /*sigaction(SIGSEGV, &act, NULL);
-    sigaction(SIGILL, &act, NULL);
-    sigaction(SIGFPE, &act, NULL);
-    sigaction(SIGABRT, &act, NULL);
-    sigaction(SIGTERM, &act, NULL);
-    sigaction(SIGKILL, &act, NULL);
-    sigaction(SIGXFSZ, &act, NULL);*/
-    sigaction(SIGUSR1, &act, NULL);
+    struct sigaction coredump;
+    coredump.sa_handler = skynet_coredump;
+    sigemptyset(&coredump.sa_mask);
+    coredump.sa_flags = 0;
+    sigaction(SIGSEGV, &coredump, NULL);
+    sigaction(SIGILL, &coredump, NULL);
+    sigaction(SIGFPE, &coredump, NULL);
+    sigaction(SIGABRT, &coredump, NULL);
+    sigaction(SIGTERM, &coredump, NULL);
+    sigaction(SIGKILL, &coredump, NULL);
+    sigaction(SIGXFSZ, &coredump, NULL);
 
     // block SIGINT to all child process:
     sigset_t bset, oset;
