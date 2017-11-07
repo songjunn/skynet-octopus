@@ -87,7 +87,6 @@ void * thread_worker(void *p) {
 
 void skynet_start(unsigned harbor, unsigned thread) {
     unsigned i;
-    pthread_t pid[thread+2];
 
     m = skynet_malloc(sizeof(*m));
     memset(m, 0, sizeof(*m));
@@ -139,7 +138,7 @@ void skynet_shutdown(int sig) {
 }
 
 void skynet_coredump(int sig) {
-    int i;
+    unsigned i;
 
     skynet_shutdown(sig);
 
