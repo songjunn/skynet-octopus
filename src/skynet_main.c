@@ -19,7 +19,7 @@ struct monitor {
     int count;
     int sleep;
     int quit;
-    int sig;
+    pthread_t * pids;
     pthread_cond_t cond;
     pthread_mutex_t mutex;
 };
@@ -94,7 +94,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
     m->count = thread;
     m->sleep = 0;
     m->quit = 0;
-    m->sig = 0;
+    m->pids = skynet_malloc(sizeof(*m->pids) * (thread+2));
 
     if (pthread_mutex_init(&m->mutex, NULL)) {
         skynet_logger_error(NULL, "Init mutex error");
@@ -106,15 +106,15 @@ void skynet_start(unsigned harbor, unsigned thread) {
     }
 
     for (i=0;i<thread;i++) {
-        create_thread(&pid[i], thread_worker, m);
+        create_thread(m->pids+i, thread_worker, m);
     }
-    create_thread(&pid[i++], thread_timer, m);
-    create_thread(&pid[i], thread_socket, m);
+    create_thread(m->pids+i, thread_timer, m);
+    create_thread(m->pids+i+1, thread_socket, m);
 
     skynet_logger_notice(NULL, "skynet start, harbor:%u workers:%u", harbor, thread);
 
     for (i=0;i<thread;i++) {
-        pthread_join(pid[i], NULL); 
+        pthread_join(m->pids+i, NULL); 
     }
 
     skynet_logger_notice(NULL, "skynet shutdown, harbor:%u", harbor);
@@ -127,11 +127,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
 void skynet_shutdown(int sig) {
     skynet_logger_notice(NULL, "recv signal:%d", sig);
 
-    if (m->quit)
-        return;
-
     m->quit = 1;
-    m->sig = sig;
 
     // wakeup socket thread
     skynet_socket_exit();
@@ -140,6 +136,18 @@ void skynet_shutdown(int sig) {
     pthread_mutex_lock(&m->mutex);
     pthread_cond_broadcast(&m->cond);
     pthread_mutex_unlock(&m->mutex);
+
+    // SIGTERM for normal exit, otherwise make coredump 
+    if (sig != SIGTERM) {
+        for (i=0;i<thread;i++) {
+            pthread_join(m->pids+i, NULL); 
+        }
+
+        skynet_service_releaseall();
+    
+        signal(sig, SIG_DFL);
+        raise(sig);
+    }
 }
 
 void skynet_signal_init() {
@@ -202,12 +210,6 @@ int main(int argc, char *argv[]) {
     skynet_free(service_list);
     skynet_free(service_args);
     skynet_free(service_path);
-
-    // SIGTERM for normal exit, otherwise make coredump 
-    if (m->sig != SIGTERM) {
-        signal(m->sig, SIG_DFL);
-        raise(m->sig);
-    }
 
     printf("skynet exit.");
 
