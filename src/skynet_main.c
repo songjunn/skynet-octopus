@@ -120,6 +120,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
 
     pthread_mutex_destroy(&m->mutex);
     pthread_cond_destroy(&m->cond);
+    skynet_free(m->pids);
     skynet_free(m);
 }
 
