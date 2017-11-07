@@ -139,12 +139,13 @@ void skynet_shutdown(int sig) {
 
     // SIGTERM for normal exit, otherwise make coredump 
     if (sig != SIGTERM) {
-        for (i=0;i<thread;i++) {
+        int i;
+        for (i=0;i<m->count;i++) {
             pthread_join(m->pids+i, NULL); 
         }
 
         skynet_service_releaseall();
-    
+
         signal(sig, SIG_DFL);
         raise(sig);
     }
