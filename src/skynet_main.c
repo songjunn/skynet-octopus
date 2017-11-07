@@ -114,7 +114,7 @@ void skynet_start(unsigned harbor, unsigned thread) {
     skynet_logger_notice(NULL, "skynet start, harbor:%u workers:%u", harbor, thread);
 
     for (i=0;i<thread;i++) {
-        pthread_join(m->pids+i, NULL); 
+        pthread_join(*(m->pids+i), NULL); 
     }
 
     skynet_logger_notice(NULL, "skynet shutdown, harbor:%u", harbor);
@@ -141,7 +141,7 @@ void skynet_shutdown(int sig) {
     if (sig != SIGTERM) {
         int i;
         for (i=0;i<m->count;i++) {
-            pthread_join(m->pids+i, NULL); 
+            pthread_join(*(m->pids+i), NULL); 
         }
 
         skynet_service_releaseall();
