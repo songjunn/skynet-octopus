@@ -136,33 +136,40 @@ void skynet_shutdown(int sig) {
     pthread_mutex_lock(&m->mutex);
     pthread_cond_broadcast(&m->cond);
     pthread_mutex_unlock(&m->mutex);
+}
 
-    // SIGTERM for normal exit, otherwise make coredump 
-    if (sig != SIGTERM) {
-        int i;
-        for (i=0;i<m->count;i++) {
-            pthread_join(*(m->pids+i), NULL); 
-        }
+void skynet_coredump(int sig) {
+    int i;
 
-        skynet_service_releaseall();
+    skynet_shutdown(sig);
 
-        signal(sig, SIG_DFL);
-        raise(sig);
+    for (i=0;i<m->count;i++) {
+        pthread_join(*(m->pids+i), NULL); 
     }
+
+    skynet_service_releaseall();
+
+    signal(sig, SIG_DFL);
+    raise(sig);
 }
 
 void skynet_signal_init() {
-    struct sigaction act;
-    act.sa_handler = skynet_shutdown;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    sigaction(SIGTERM, &act, NULL);
-    sigaction(SIGSEGV, &act, NULL);
-    sigaction(SIGILL, &act, NULL);
-    sigaction(SIGFPE, &act, NULL);
-    sigaction(SIGABRT, &act, NULL);
-    sigaction(SIGKILL, &act, NULL);
-    sigaction(SIGXFSZ, &act, NULL);
+    struct sigaction actTerminate;
+    actTerminate.sa_handler = skynet_shutdown;
+    sigemptyset(&actTerminate.sa_mask);
+    actTerminate.sa_flags = 0;
+    sigaction(SIGTERM, &actTerminate, NULL);
+
+    struct sigaction actCoredump;
+    actCoredump.sa_handler = skynet_coredump;
+    sigemptyset(&actCoredump.sa_mask);
+    actCoredump.sa_flags = 0;
+    sigaction(SIGSEGV, &actCoredump, NULL);
+    sigaction(SIGILL, &actCoredump, NULL);
+    sigaction(SIGFPE, &actCoredump, NULL);
+    sigaction(SIGABRT, &actCoredump, NULL);
+    sigaction(SIGKILL, &actCoredump, NULL);
+    sigaction(SIGXFSZ, &actCoredump, NULL);
 
     // block SIGINT to all child process:
     sigset_t bset, oset;
