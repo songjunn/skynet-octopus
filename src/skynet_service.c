@@ -113,8 +113,8 @@ struct skynet_service * skynet_service_create(const char * name, int harbor, con
 		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", name, ctx->handle, param);
 		return ctx;
 	} else {
-		skynet_service_release(ctx);
 		skynet_logger_error(NULL, "create service %s failed args:%s", name, param);
+		skynet_service_release(ctx);
 		return NULL;
 	}
 }
