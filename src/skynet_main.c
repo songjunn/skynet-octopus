@@ -171,12 +171,12 @@ void skynet_signal_init() {
     sigaction(SIGKILL, &actCoredump, NULL);
     sigaction(SIGXFSZ, &actCoredump, NULL);
 
-    // block SIGINT to all child process:
+    /*// block SIGINT to all child process:
     sigset_t bset, oset;
     sigemptyset(&bset);
     sigaddset(&bset, SIGINT);
     // equivalent to sigprocmask
-    pthread_sigmask(SIG_BLOCK, &bset, &oset);
+    pthread_sigmask(SIG_BLOCK, &bset, &oset);*/
 }
 
 int main(int argc, char *argv[]) {
