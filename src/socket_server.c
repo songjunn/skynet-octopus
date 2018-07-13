@@ -269,14 +269,14 @@ socket_server_create() {
 	int i;
 	int fd[2];
 	poll_fd efd = sp_create();
-	if (sp_setlimits() < 0) {
+	/*if (sp_setlimits() < 0) {
 		skynet_logger_error(NULL, "socket-server: can't set limits.");
 		return NULL;
 	}
 	if (sp_setSignal() < 0) {
 		skynet_logger_error(NULL, "socket-server: can't set setSignal.");
 		return NULL;
-	}
+	}*/
 	if (sp_invalid(efd)) {
 		skynet_logger_error(NULL, "socket-server: create event pool failed.");
 		return NULL;
