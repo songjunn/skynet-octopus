@@ -63,7 +63,6 @@ void skynet_print(struct skynet_service * context, int level, const char * msg, 
 
 // service
 void skynet_push(uint32_t target, uint32_t source, int type, void * msg, size_t sz);
-void skynet_push_ex(uint32_t target, uint32_t source, int type, void * msg, size_t sz);
 void skynet_send(struct skynet_service * context, uint32_t source, int type, void * msg, size_t sz);
 void skynet_trans(const char * name, uint32_t source, int type, void * msg, size_t sz);
 

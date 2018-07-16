@@ -97,7 +97,7 @@ bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
     char head[64] = {0}, time[64] = {0}, content[LOG_MESSAGE_SIZE] = {0};
     _format_time(time, sizeof(time));
     _format_head(head, sizeof(head), level, source);
-    snprintf(content, sz+1, "%s", (const char*)msg);
+    snprintf(content, sz, "%s", (const char*)msg);
 
     if (instance->size >= LOG_FILE_SIZE) {
         instance->close = 0;
@@ -148,5 +148,5 @@ void skynet_print(struct skynet_service * context, int level, const char * msg, 
     if (context != NULL) {
         source = skynet_service_handle(context);
     }
-    skynet_send(instance->ctx, source, level, (void *)tmp, len);
+    skynet_send(instance->ctx, source, level, (void *)tmp, len+1);
 }

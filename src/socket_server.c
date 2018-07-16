@@ -1320,6 +1320,7 @@ open_request(struct socket_server *ss, struct request_package *req, uintptr_t op
 int 
 socket_server_connect(struct socket_server *ss, uintptr_t opaque, const char * addr, int port) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	int len = open_request(ss, &request, opaque, addr, port);
 	if (len < 0)
 		return -1;
@@ -1344,6 +1345,7 @@ socket_server_send(struct socket_server *ss, int id, const void * buffer, int sz
 	}
 
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.send.id = id;
 	request.u.send.sz = sz;
 	request.u.send.buffer = (char *)buffer;
@@ -1361,6 +1363,7 @@ socket_server_send_lowpriority(struct socket_server *ss, int id, const void * bu
 	}
 
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.send.id = id;
 	request.u.send.sz = sz;
 	request.u.send.buffer = (char *)buffer;
@@ -1371,12 +1374,14 @@ socket_server_send_lowpriority(struct socket_server *ss, int id, const void * bu
 void
 socket_server_exit(struct socket_server *ss) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	send_request(ss, &request, 'X', 0);
 }
 
 void
 socket_server_close(struct socket_server *ss, uintptr_t opaque, int id) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.close.id = id;
 	request.u.close.shutdown = 0;
 	request.u.close.opaque = opaque;
@@ -1387,6 +1392,7 @@ socket_server_close(struct socket_server *ss, uintptr_t opaque, int id) {
 void
 socket_server_shutdown(struct socket_server *ss, uintptr_t opaque, int id) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.close.id = id;
 	request.u.close.shutdown = 1;
 	request.u.close.opaque = opaque;
@@ -1468,6 +1474,7 @@ socket_server_listen(struct socket_server *ss, uintptr_t opaque, const char * ad
 		close(fd);
 		return id;
 	}
+	memset(&request, 0, sizeof(request));
 	request.u.listen.opaque = opaque;
 	request.u.listen.id = id;
 	request.u.listen.fd = fd;
@@ -1481,6 +1488,7 @@ socket_server_bind(struct socket_server *ss, uintptr_t opaque, int fd) {
 	int id = reserve_id(ss);
 	if (id < 0)
 		return -1;
+	memset(&request, 0, sizeof(request));
 	request.u.bind.opaque = opaque;
 	request.u.bind.id = id;
 	request.u.bind.fd = fd;
@@ -1491,6 +1499,7 @@ socket_server_bind(struct socket_server *ss, uintptr_t opaque, int fd) {
 void 
 socket_server_start(struct socket_server *ss, uintptr_t opaque, int id) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.start.id = id;
 	request.u.start.opaque = opaque;
 	send_request(ss, &request, 'S', sizeof(request.u.start));
@@ -1499,6 +1508,7 @@ socket_server_start(struct socket_server *ss, uintptr_t opaque, int id) {
 void
 socket_server_nodelay(struct socket_server *ss, int id) {
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.setopt.id = id;
 	request.u.setopt.what = TCP_NODELAY;
 	request.u.setopt.value = 1;
@@ -1538,6 +1548,7 @@ socket_server_udp(struct socket_server *ss, uintptr_t opaque, const char * addr,
 		return -1;
 	}
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.udp.id = id;
 	request.u.udp.fd = fd;
 	request.u.udp.opaque = opaque;
@@ -1556,6 +1567,7 @@ socket_server_udp_send(struct socket_server *ss, int id, const struct socket_udp
 	}
 
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.send_udp.send.id = id;
 	request.u.send_udp.send.sz = sz;
 	request.u.send_udp.send.buffer = (char *)buffer;
@@ -1597,6 +1609,7 @@ socket_server_udp_connect(struct socket_server *ss, int id, const char * addr, i
 		return -1;
 	}
 	struct request_package request;
+	memset(&request, 0, sizeof(request));
 	request.u.set_udp.id = id;
 	int protocol;
 
