@@ -77,7 +77,7 @@ sp_nonblocking(int fd) {
 	fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 }
 
-static int
+/*static int
 sp_setlimits() {
 	int maxconn = 100000;
 	struct rlimit srl;
@@ -92,6 +92,6 @@ sp_setSignal() {
 	memset(&sa, 0, sizeof (sa));
 	sa.sa_handler = SIG_IGN;
 	return sigaction(SIGPIPE, &sa, NULL);
-}
+}*/
 
 #endif
