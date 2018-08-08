@@ -36,13 +36,14 @@
 struct skynet_service;
 
 typedef bool (*service_dl_create)(struct skynet_service * ctx, int harbor, const char * parm);
-typedef void (*service_dl_release)(void);
-typedef bool (*service_dl_callback)(int type, uint32_t source , void * msg, size_t sz);
+typedef void (*service_dl_release)(struct skynet_service * ctx);
+typedef bool (*service_dl_callback)(struct skynet_service * ctx, int type, uint32_t source, void * msg, size_t sz);
 
 struct skynet_service {
 	int ref;
 	char * name;
 	void * module;
+	void * hook;
 	uint32_t handle;
 	struct message_queue * queue;
 

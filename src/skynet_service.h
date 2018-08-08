@@ -8,8 +8,8 @@ struct skynet_message;
 struct skynet_service;
 
 void skynet_service_init(const char * path);
-struct skynet_service * skynet_service_create(const char * name, int harbor, const char *param, int concurrent);
-struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * param, int concurrent);
+struct skynet_service * skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent);
+struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * args, int concurrent);
 struct skynet_service * skynet_service_query(const char * name);
 struct skynet_service * skynet_service_grab(uint32_t handle);
 void skynet_service_releaseall();

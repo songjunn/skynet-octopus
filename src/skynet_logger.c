@@ -82,14 +82,14 @@ bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     return true;
 }
 
-void logger_release() {
+void logger_release(struct skynet_service * ctx) {
     if (instance->close) {
         fclose(instance->handle);
     }
     skynet_free(instance);
 }
 
-bool logger_callback(int level, uint32_t source, void * msg, size_t sz) {
+bool logger_callback(struct skynet_service * ctx, int level, uint32_t source, void * msg, size_t sz) {
     if (level < instance->level) {
         return false;
     }

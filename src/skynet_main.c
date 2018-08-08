@@ -182,17 +182,18 @@ void skynet_signal_init() {
 int main(int argc, char *argv[]) {
     int harbor, thread, concurrent;
     char * service_name = NULL;
-    char * service_args = skynet_malloc(1024);
-    char * service_list = skynet_malloc(1024);
-    char * service_path = skynet_malloc(1024);
-    char * logger_args = skynet_malloc(1024);
+    char * service_lib = skynet_malloc(128);
+    char * service_args = skynet_malloc(128);
+    char * service_list = skynet_malloc(128);
+    char * service_path = skynet_malloc(128);
+    char * logger_args = skynet_malloc(128);
 
     skynet_config_init(argv[1]);
     skynet_config_int("skynet", "harbor", &harbor);
     skynet_config_int("skynet", "thread", &thread);
-    skynet_config_string("skynet", "logger_args", logger_args, 1024);
-    skynet_config_string("skynet", "service_path", service_path, 1024);
-    skynet_config_string("skynet", "service_list", service_list, 1024);
+    skynet_config_string("skynet", "logger_args", logger_args, 128);
+    skynet_config_string("skynet", "service_path", service_path, 128);
+    skynet_config_string("skynet", "service_list", service_list, 128);
 
     skynet_mq_init();
     skynet_signal_init();
@@ -204,8 +205,9 @@ int main(int argc, char *argv[]) {
     service_name = strtok(service_list, ",");
     while (service_name != NULL) {
         skynet_config_int(service_name, "concurrent", &concurrent);
-        skynet_config_string(service_name, "args", service_args, 1024);
-        skynet_service_create(service_name, harbor, service_args, concurrent);
+        skynet_config_string(service_name, "lib", service_lib, 128);
+        skynet_config_string(service_name, "args", service_args, 128);
+        skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
 
         service_name = strtok(NULL, ",");
     }
@@ -215,6 +217,7 @@ int main(int argc, char *argv[]) {
     skynet_socket_free();
     skynet_config_free();
     skynet_free(logger_args);
+    skynet_free(service_lib);
     skynet_free(service_list);
     skynet_free(service_args);
     skynet_free(service_path);

@@ -76,7 +76,7 @@ uint32_t _handle(int index) {
 	return index & 0xffff;
 }
 
-struct skynet_service * _load(const char * name) {
+struct skynet_service * _load(const char * name, const char * module) {
 	struct skynet_service * result = _query(name);
 	if (result)
 		return result;
@@ -87,7 +87,7 @@ struct skynet_service * _load(const char * name) {
 
 	if (result == NULL && M->count < MAX_MODULE_TYPE) {
 		int index = M->count;
-		if (_open(&M->m[index], M->path, name)) {
+		if (_open(&M->m[index], M->path, module)) {
 			M->m[index].name = skynet_strdup(name);
 			M->m[index].handle = _handle(index);
 			M->count ++;
@@ -100,26 +100,26 @@ struct skynet_service * _load(const char * name) {
 	return result;
 }
 
-struct skynet_service * skynet_service_create(const char * name, int harbor, const char * param, int concurrent) {
-	struct skynet_service * ctx = _load(name);
+struct skynet_service * skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent) {
+	struct skynet_service * ctx = _load(name, module);
 	if (ctx == NULL)
 		return NULL;
 
 	ctx->ref = 1;
 	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
 
-	if (ctx->create(ctx, harbor, param)) {
+	if (ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
-		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", name, ctx->handle, param);
+		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", name, ctx->handle, args);
 		return ctx;
 	} else {
-		skynet_logger_error(NULL, "create service %s failed args:%s", name, param);
+		skynet_logger_error(NULL, "create service %s failed args:%s", name, args);
 		skynet_service_release(ctx);
 		return NULL;
 	}
 }
 
-struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * param, int concurrent) {
+struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * args, int concurrent) {
 	SPIN_LOCK(M)
 	int index = M->count;
 	if (index >= MAX_MODULE_TYPE) {
@@ -140,13 +140,13 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 	ctx->ref = 1;
 	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
 
-	if (ctx->create(ctx, harbor, param)) {
+	if (ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
-		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", ctx->name, ctx->handle, param);
+		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", ctx->name, ctx->handle, args);
 		return ctx;
 	} else {
 		skynet_service_release(ctx);
-		skynet_logger_error(NULL, "create service %s failed args:%s", ctx->name, param);
+		skynet_logger_error(NULL, "create service %s failed args:%s", ctx->name, args);
 		return NULL;
 	}
 }
@@ -154,7 +154,7 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 void skynet_service_release(struct skynet_service * ctx) {
 	if (ATOM_DEC(&ctx->ref) == 0) {
 		skynet_logger_notice(NULL, "release service %s success handle:%d", ctx->name, ctx->handle);
-		ctx->release();
+		ctx->release(ctx);
 		if (ctx->module) dlclose(ctx->module);
 		if (ctx->name) skynet_free(ctx->name);
 		if (ctx->queue) skynet_mq_release(ctx->queue);

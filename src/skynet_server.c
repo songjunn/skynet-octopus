@@ -36,7 +36,7 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
     }
 
     if (ctx->cb != NULL) {
-        ctx->cb(msg.type, msg.source, msg.data, msg.size);
+        ctx->cb(ctx, msg.type, msg.source, msg.data, msg.size);
     }
 
     if (msg.size > 0 && msg.data != NULL) {
