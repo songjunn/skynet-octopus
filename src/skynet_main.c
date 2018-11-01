@@ -207,7 +207,12 @@ int main(int argc, char *argv[]) {
         skynet_config_int(service_name, "concurrent", &concurrent);
         skynet_config_string(service_name, "lib", service_lib, 128);
         skynet_config_string(service_name, "args", service_args, 128);
-        skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
+        
+        struct skynet_service * service = skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
+        if (service == NULL) {
+            printf("skynet start failed.");
+            return 1;
+        }
 
         service_name = strtok(NULL, ",");
     }
