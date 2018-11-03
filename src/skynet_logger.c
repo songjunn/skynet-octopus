@@ -119,10 +119,10 @@ bool logger_callback(struct skynet_service * ctx, int level, uint32_t source, vo
         instance->size += strlen(content);
     }
 
-    fprintf(stdout, time);
+    /*fprintf(stdout, time);
     fprintf(stdout, head);
     fprintf(stdout, content);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "\n");*/
 
     return true;
 }
@@ -148,5 +148,8 @@ void skynet_print(struct skynet_service * context, int level, const char * msg, 
     if (context != NULL) {
         source = skynet_service_handle(context);
     }
+
+    fprintf(stdout, tmp);
+    fprintf(stdout, "\n");
     skynet_send(instance->ctx, source, level, (void *)tmp, len+1);
 }

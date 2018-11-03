@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
         
         struct skynet_service * service = skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
         if (service == NULL) {
-            printf("skynet start failed.");
+            printf("skynet start failed.\n");
             return 1;
         }
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     skynet_free(service_args);
     skynet_free(service_path);
 
-    printf("skynet exit.");
+    printf("skynet exit.\n");
 
     return 0;
 }
