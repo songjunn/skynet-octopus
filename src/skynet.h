@@ -28,16 +28,16 @@
 #define skynet_realloc realloc
 #define skynet_free free
 
-#define skynet_logger_debug(ctx, msg, ...) skynet_print(ctx, LOGGER_DEBUG, msg, ##__VA_ARGS__)
-#define skynet_logger_warn(ctx, msg, ...) skynet_print(ctx, LOGGER_WARN, msg, ##__VA_ARGS__)
-#define skynet_logger_notice(ctx, msg, ...) skynet_print(ctx, LOGGER_NOTICE, msg, ##__VA_ARGS__)
-#define skynet_logger_error(ctx, msg, ...) skynet_print(ctx, LOGGER_ERROR, msg, ##__VA_ARGS__)
+#define skynet_logger_debug(ctx, msg, ...) skynet_logger_print(ctx, LOGGER_DEBUG, msg, ##__VA_ARGS__)
+#define skynet_logger_warn(ctx, msg, ...) skynet_logger_print(ctx, LOGGER_WARN, msg, ##__VA_ARGS__)
+#define skynet_logger_notice(ctx, msg, ...) skynet_logger_print(ctx, LOGGER_NOTICE, msg, ##__VA_ARGS__)
+#define skynet_logger_error(ctx, msg, ...) skynet_logger_print(ctx, LOGGER_ERROR, msg, ##__VA_ARGS__)
 
 struct skynet_service;
 
 typedef bool (*service_dl_create)(struct skynet_service * ctx, int harbor, const char * parm);
 typedef void (*service_dl_release)(struct skynet_service * ctx);
-typedef bool (*service_dl_callback)(struct skynet_service * ctx, int type, uint32_t source, void * msg, size_t sz);
+typedef bool (*service_dl_callback)(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 struct skynet_service {
 	int ref;
@@ -60,25 +60,25 @@ struct skynet_socket_message {
 };
 
 // logger
-void skynet_print(struct skynet_service * context, int level, const char * msg, ...);
+extern void skynet_logger_print(struct skynet_service * ctx, int level, const char * msg, ...);
 
 // service
-void skynet_push(uint32_t target, uint32_t source, int type, void * msg, size_t sz);
-void skynet_send(struct skynet_service * context, uint32_t source, int type, void * msg, size_t sz);
-void skynet_trans(const char * name, uint32_t source, int type, void * msg, size_t sz);
+extern void skynet_send(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
+extern void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
+extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 // tcp socket
-void skynet_socket_start(struct skynet_service *ctx, int id);
-void skynet_socket_close(struct skynet_service *ctx, int id);
-int skynet_socket_connect(struct skynet_service *ctx, const char *host, int port);
-int skynet_socket_listen(struct skynet_service *ctx, const char *host, int port, int backlog);
-int skynet_socket_send(struct skynet_service *ctx, int id, void *buffer, int sz);
+extern void skynet_socket_start(struct skynet_service * ctx, int id);
+extern void skynet_socket_close(struct skynet_service * ctx, int id);
+extern int skynet_socket_connect(struct skynet_service * ctx, const char * host, int port);
+extern int skynet_socket_listen(struct skynet_service * ctx, const char * host, int port, int backlog);
+extern int skynet_socket_send(struct skynet_service * ctx, int id, void * buffer, int sz);
 
 // timer
-uint64_t skynet_now(void);
-void skynet_register_timer(uint32_t handle, const void * args, size_t size, int time);
+extern uint64_t skynet_timer_now(void);
+extern void skynet_timer_register(uint32_t handle, const void * args, size_t size, int time);
 
 // utils
-char * skynet_strdup(const char * str);
+extern char * skynet_strdup(const char * str);
 
 #endif

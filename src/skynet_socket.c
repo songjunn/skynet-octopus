@@ -116,7 +116,7 @@ check_wsz(struct skynet_service *ctx, int id, void *buffer, int64_t wsz) {
 		tmp.id = id;
 		tmp.ud = (int)(wsz / 1024);
 		tmp.buffer = NULL;
-		skynet_send(ctx, 0, SERVICE_SOCKET, &tmp, sizeof(tmp));
+		skynet_send(ctx, 0, 0, SERVICE_SOCKET, &tmp, sizeof(tmp));
 //		skynet_logger_debug(ctx, "%d Mb bytes on socket %d need to send out", (int)(wsz / (1024 * 1024)), id);
 	}
 	return 0;

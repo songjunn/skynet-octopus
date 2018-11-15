@@ -205,7 +205,7 @@ timer_create_timer() {
 }
 
 void
-skynet_register_timer(uint32_t handle, const void * args, size_t size, int time) {
+skynet_timer_register(uint32_t handle, const void * args, size_t size, int time) {
 	if (time <= 0) {
 		struct skynet_message message;
 		message.source = 0;
@@ -285,7 +285,7 @@ skynet_starttime(void) {
 }
 
 uint64_t 
-skynet_now(void) {
+skynet_timer_now(void) {
 	return TI->current;
 }
 

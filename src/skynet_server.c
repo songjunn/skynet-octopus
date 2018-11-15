@@ -36,7 +36,7 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
     }
 
     if (ctx->cb != NULL) {
-        ctx->cb(ctx, msg.type, msg.source, msg.data, msg.size);
+        ctx->cb(ctx, msg.source, msg.session, msg.type, msg.data, msg.size);
     }
 
     if (msg.size > 0 && msg.data != NULL) {
@@ -45,52 +45,33 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
     return 0;
 }
 
-void skynet_push(uint32_t target, uint32_t source, int type, void * data, size_t size) {
-    if (target == 0) {
-        return;
-    }
-
+void skynet_send(struct skynet_service * context, uint32_t source, uint32_t session, int type, void * data, size_t size) {
     struct skynet_message smsg;
     smsg.source = source;
     smsg.type = type;
     smsg.size = size;
+    smsg.session = session;
     if (data != NULL) {
         smsg.data = skynet_malloc(size);
         memcpy(smsg.data, data, size);
     }
-
-    skynet_service_pushmsg(target, &smsg);
-}
-
-void skynet_send(struct skynet_service * context, uint32_t source, int type, void * data, size_t size) {
-    struct skynet_message smsg;
-    smsg.source = source;
-    smsg.type = type;
-    smsg.size = size;
-    if (data != NULL) {
-        smsg.data = skynet_malloc(size);
-        memcpy(smsg.data, data, size);
-    }
-
     skynet_service_sendmsg(context, &smsg);
 }
 
-void skynet_trans(const char * name, uint32_t source, int type, void * data, size_t size) {
+void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
     struct skynet_service * context = skynet_service_query(name);
     if (context == NULL) {
         return;
     }
+    skynet_send(context, source, session, type, data, size);
+}
 
-    struct skynet_message smsg;
-    smsg.source = source;
-    smsg.type = type;
-    smsg.size = size;
-    if (data != NULL) {
-        smsg.data = skynet_malloc(size);
-        memcpy(smsg.data, data, size);
+void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
+    struct skynet_service * context = skynet_service_grab(target);
+    if (context == NULL) {
+        return;
     }
-
-    skynet_service_sendmsg(context, &smsg);
+    skynet_send(context, source, session, type, data, size);
 }
 
 char * skynet_strdup(const char *str) {

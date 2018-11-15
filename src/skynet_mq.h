@@ -9,6 +9,7 @@ struct skynet_message {
 	void * data;
 	size_t size;
 	uint32_t source;
+	uint32_t session;
 };
 
 struct message_queue;

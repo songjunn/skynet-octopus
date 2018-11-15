@@ -9,6 +9,12 @@ void skynet_socket_exit();
 void skynet_socket_free();
 int skynet_socket_poll();
 
+void skynet_socket_start(struct skynet_service *ctx, int id);
+void skynet_socket_close(struct skynet_service *ctx, int id);
+int skynet_socket_connect(struct skynet_service *ctx, const char *host, int port);
+int skynet_socket_listen(struct skynet_service *ctx, const char *host, int port, int backlog);
+int skynet_socket_send(struct skynet_service *ctx, int id, void *buffer, int sz);
+
 void skynet_socket_send_lowpriority(struct skynet_service *ctx, int id, void *buffer, int sz);
 int skynet_socket_bind(struct skynet_service *ctx, int fd);
 void skynet_socket_shutdown(struct skynet_service *ctx, int id);

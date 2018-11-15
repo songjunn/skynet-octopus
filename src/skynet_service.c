@@ -202,16 +202,6 @@ void skynet_service_init(const char *path) {
 	M = m;
 }
 
-void skynet_service_send(struct skynet_service * context, void * msg, size_t sz, uint32_t source, int type) {
-	struct skynet_message smsg;
-	smsg.source = source;
-	smsg.data = msg;
-	smsg.type = type;
-	smsg.size = sz;
-
-	skynet_mq_push(context->queue, &smsg);
-}
-
 void skynet_service_sendmsg(struct skynet_service * context, struct skynet_message * message) {
 	skynet_mq_push(context->queue, message);
 }

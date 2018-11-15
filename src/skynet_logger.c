@@ -89,7 +89,7 @@ void logger_release(struct skynet_service * ctx) {
     skynet_free(instance);
 }
 
-bool logger_callback(struct skynet_service * ctx, int level, uint32_t source, void * msg, size_t sz) {
+bool logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int level, void * msg, size_t sz) {
     if (level < instance->level) {
         return false;
     }
@@ -137,7 +137,7 @@ void skynet_logger_init(int harbor, const char * filename) {
     skynet_service_insert(ctx, harbor, filename, 0);
 }
 
-void skynet_print(struct skynet_service * context, int level, const char * msg, ...) {
+void skynet_logger_print(struct skynet_service * context, int level, const char * msg, ...) {
     va_list ap;
     va_start(ap, msg);
     char tmp[LOG_MESSAGE_SIZE] = {0};
@@ -151,5 +151,5 @@ void skynet_print(struct skynet_service * context, int level, const char * msg, 
 
     fprintf(stdout, tmp);
     fprintf(stdout, "\n");
-    skynet_send(instance->ctx, source, level, (void *)tmp, len+1);
+    skynet_send(instance->ctx, source, 0, level, (void *)tmp, len+1);
 }
