@@ -81,7 +81,7 @@ int skynet_config_string(const char * section, const char * option, char * value
 
 int skynet_config_int(const char * section, const char * option, int * value) {
 	int ret;
-	char s[32];
+	char s[1024];
 	ret = skynet_config_string(section, option, s, sizeof(s));
 	if (ret == 0) 
 		*value = atoi(s);
