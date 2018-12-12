@@ -51,6 +51,7 @@ void skynet_send(struct skynet_service * context, uint32_t source, uint32_t sess
     smsg.type = type;
     smsg.size = size;
     smsg.session = session;
+    smsg.data = NULL;
     if (data != NULL) {
         smsg.data = skynet_malloc(size);
         memcpy(smsg.data, data, size);

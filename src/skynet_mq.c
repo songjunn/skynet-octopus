@@ -103,7 +103,9 @@ static void
 _release(struct message_queue *q) {
 	struct skynet_message msg;
 	while(!skynet_mq_pop(q, &msg)) {
-		skynet_free(msg.data);
+		if (msg.data != NULL) {
+			skynet_free(msg.data);
+		}
 	}
 
 	SPIN_DESTROY(q)
