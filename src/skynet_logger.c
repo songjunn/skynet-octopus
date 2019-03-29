@@ -135,13 +135,15 @@ void skynet_logger_init(int harbor, const char * filename) {
     ctx->cb = logger_callback;
 
     skynet_service_insert(ctx, harbor, filename, 0);
+    skynet_free(ctx->name);
+    skynet_free(ctx);
 }
 
 void skynet_logger_print(struct skynet_service * context, int level, const char * msg, ...) {
     va_list ap;
     va_start(ap, msg);
     char tmp[LOG_MESSAGE_SIZE] = {0};
-    int len = vsnprintf(tmp, LOG_MESSAGE_SIZE-1, msg, ap);
+    int len = vsnprintf(tmp, LOG_MESSAGE_SIZE, msg, ap);
     va_end(ap);
 
     uint32_t source = 0;
@@ -149,7 +151,19 @@ void skynet_logger_print(struct skynet_service * context, int level, const char 
         source = skynet_service_handle(context);
     }
 
+    if (len < 0) {
+        char err[32] = {};
+        sprintf(err, "vsnprintf error len=%d", len);
+        skynet_send(instance->ctx, source, 0, LOGGER_ERROR, (void *)err, strlen(err));
+        return;
+    } else if (len > LOG_MESSAGE_SIZE) {
+        char err[32] = {};
+        sprintf(err, "vsnprintf error len=%d", len);
+        skynet_send(instance->ctx, source, 0, LOGGER_ERROR, (void *)err, strlen(err));
+        len = LOG_MESSAGE_SIZE;
+    }
+
     fprintf(stdout, tmp);
     fprintf(stdout, "\n");
-    skynet_send(instance->ctx, source, 0, level, (void *)tmp, len+1);
+    skynet_send(instance->ctx, source, 0, level, (void *)tmp, len);
 }

@@ -7,6 +7,8 @@ skynet_SOURCES = \
   src/skynet_atomic.h \
   src/skynet_config.c \
   src/skynet_config.h \
+  src/skynet_harbor.c \
+  src/skynet_harbor.h \
   src/skynet_logger.c \
   src/skynet_logger.h \
   src/skynet_main.c \

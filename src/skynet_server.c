@@ -2,6 +2,7 @@
 #include "skynet_server.h"
 #include "skynet_service.h"
 #include "skynet_mq.h"
+#include "skynet_harbor.h"
 
 int skynet_message_dispatch() {
     struct message_queue * q = skynet_globalmq_pop();
@@ -10,7 +11,7 @@ int skynet_message_dispatch() {
     }
 
     uint32_t handle = skynet_mq_handle(q);
-    struct skynet_service * ctx = skynet_service_grab(handle);
+    struct skynet_service * ctx = skynet_service_find(handle);
     if (ctx == NULL) {
         skynet_mq_release(q);
         return 0;
@@ -61,21 +62,23 @@ void skynet_send(struct skynet_service * context, uint32_t source, uint32_t sess
 
 void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
     struct skynet_service * context = skynet_service_query(name);
-    if (context == NULL) {
-        return;
+    if (context != NULL) {
+        skynet_send(context, source, session, type, data, size);
+    } else {
+        skynet_harbor_sendname(name, source, session, type, data, size);
     }
-    skynet_send(context, source, session, type, data, size);
 }
 
 void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-    struct skynet_service * context = skynet_service_grab(target);
-    if (context == NULL) {
-        return;
+    struct skynet_service * context = skynet_service_find(target);
+    if (context != NULL) {
+        skynet_send(context, source, session, type, data, size);
+    } else {
+        skynet_harbor_sendhandle(target, source, session, type, data, size);
     }
-    skynet_send(context, source, session, type, data, size);
 }
 
-char * skynet_strdup(const char *str) {
+char * skynet_strdup(const char * str) {
     size_t sz = strlen(str);
     char * ret = skynet_malloc(sz+1);
     memcpy(ret, str, sz+1);

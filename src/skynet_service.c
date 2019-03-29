@@ -2,6 +2,7 @@
 #include "skynet_service.h"
 #include "skynet_server.h"
 #include "skynet_mq.h"
+#include "skynet_harbor.h"
 #include "skynet_atomic.h"
 #include "skynet_spinlock.h"
 
@@ -72,14 +73,11 @@ struct skynet_service * _query(const char * name) {
 	return NULL;
 }
 
-uint32_t _handle(int index) {
-	return index & 0xffff;
-}
-
-struct skynet_service * _load(const char * name, const char * module) {
+struct skynet_service * _load(int harbor, const char * name, const char * module) {
 	struct skynet_service * result = _query(name);
-	if (result)
+	if (result) {
 		return result;
+	}
 
 	SPIN_LOCK(M)
 
@@ -89,7 +87,7 @@ struct skynet_service * _load(const char * name, const char * module) {
 		int index = M->count;
 		if (_open(&M->m[index], M->path, module)) {
 			M->m[index].name = skynet_strdup(name);
-			M->m[index].handle = _handle(index);
+			M->m[index].handle = skynet_harbor_handle(harbor, index);
 			M->count ++;
 			result = &M->m[index];
 		}
@@ -101,11 +99,11 @@ struct skynet_service * _load(const char * name, const char * module) {
 }
 
 struct skynet_service * skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent) {
-	struct skynet_service * ctx = _load(name, module);
-	if (ctx == NULL)
+	struct skynet_service * ctx = _load(harbor, name, module);
+	if (ctx == NULL) {
 		return NULL;
+	}
 
-	ctx->ref = 1;
 	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
 
 	if (ctx->create(ctx, harbor, args)) {
@@ -129,36 +127,33 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 	}
 
 	M->m[index].name = skynet_strdup(ctx->name);
-	M->m[index].handle = _handle(index);
+	M->m[index].handle = skynet_harbor_handle(harbor, index);
 	M->m[index].create = ctx->create;
 	M->m[index].release = ctx->release;
 	M->m[index].cb = ctx->cb;
 	M->count ++;
 	SPIN_UNLOCK(M)
 
-	ctx = &M->m[index];
-	ctx->ref = 1;
-	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
+	struct skynet_service * service = &M->m[index];
+	service->queue = skynet_mq_create(service->handle, concurrent);
 
-	if (ctx->create(ctx, harbor, args)) {
-		skynet_globalmq_push(ctx->queue);
-		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", ctx->name, ctx->handle, args);
-		return ctx;
+	if (service->create(service, harbor, args)) {
+		skynet_globalmq_push(service->queue);
+		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", service->name, service->handle, args);
+		return service;
 	} else {
-		skynet_service_release(ctx);
-		skynet_logger_error(NULL, "create service %s failed args:%s", ctx->name, args);
+		skynet_service_release(service);
+		skynet_logger_error(NULL, "create service %s failed args:%s", service->name, args);
 		return NULL;
 	}
 }
 
 void skynet_service_release(struct skynet_service * ctx) {
-	if (ATOM_DEC(&ctx->ref) == 0) {
-		skynet_logger_notice(NULL, "release service %s success handle:%d", ctx->name, ctx->handle);
-		ctx->release(ctx);
-		if (ctx->module) dlclose(ctx->module);
-		if (ctx->name) skynet_free(ctx->name);
-		if (ctx->queue) skynet_mq_release(ctx->queue);
-	}
+	skynet_logger_notice(NULL, "release service %s success handle:%d", ctx->name, ctx->handle);
+	ctx->release(ctx);
+	if (ctx->module) dlclose(ctx->module);
+	if (ctx->name) skynet_free(ctx->name);
+	if (ctx->queue) skynet_mq_release(ctx->queue);
 }
 
 void skynet_service_releaseall() {
@@ -170,13 +165,14 @@ void skynet_service_releaseall() {
 	}
 }
 
-struct skynet_service * skynet_service_grab(uint32_t handle) {
+struct skynet_service * skynet_service_find(uint32_t handle) {
 	struct skynet_service * result = NULL;
+	int index = skynet_harbor_index(handle);
 
 	SPIN_LOCK(M)
 
-	if (handle >= 0 && handle < (uint32_t)M->count) {
-		result = &M->m[handle];
+	if (index >= 0 && index < (uint32_t)M->count) {
+		result = &M->m[index];
 	}
 
 	SPIN_UNLOCK(M)
@@ -207,7 +203,7 @@ void skynet_service_sendmsg(struct skynet_service * context, struct skynet_messa
 }
 
 int skynet_service_pushmsg(uint32_t handle, struct skynet_message * message) {
-	struct skynet_service * ctx = skynet_service_grab(handle);
+	struct skynet_service * ctx = skynet_service_find(handle);
 	if (ctx == NULL) {
 		return -1;
 	}

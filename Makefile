@@ -5,7 +5,7 @@ LDFLAGS := -Wl,-E
 LIBS := -lrt -ldl -lm -lpthread
 
 SKYNET_SRC = skynet_main.c skynet_service.c skynet_mq.c \
-  skynet_server.c skynet_timer.c skynet_config.c \
+  skynet_server.c skynet_timer.c skynet_config.c skynet_harbor.c \
   skynet_logger.c skynet_socket.c socket_server.c
 
 all : \
