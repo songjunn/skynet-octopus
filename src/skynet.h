@@ -51,6 +51,13 @@ struct skynet_service {
 	service_dl_callback cb;
 };
 
+struct skynet_remote_message {
+	char name[32];
+	uint32_t handle;
+	void * data;
+	size_t size;
+};
+
 struct skynet_socket_message {
 	int type;
 	int id;
@@ -66,9 +73,9 @@ extern void skynet_send(struct skynet_service * ctx, uint32_t source, uint32_t s
 extern void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
-// cluster
-extern struct skynet_cluster * skynet_cluster_create(int fd, int harbor, const char * host, int port);
-extern struct skynet_cluster_service * skynet_cluster_service_create(int harbor, uint32_t handle, const char * service_name);
+// harbor
+extern void skynet_harbor_start(struct skynet_service * ctx);
+extern void skynet_harbor_exit();
 
 // tcp socket
 extern void skynet_socket_start(struct skynet_service * ctx, int id);

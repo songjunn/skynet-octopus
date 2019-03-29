@@ -5,14 +5,6 @@
 #include <stdlib.h>
 
 struct skynet_service;
-struct skynet_message;
-
-struct remote_message {
-	char name[32];
-	uint32_t handle;
-	void * data;
-	size_t size;
-};
 
 void skynet_harbor_init(int harbor);
 void skynet_harbor_start(struct skynet_service * ctx);

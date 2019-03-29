@@ -15,7 +15,6 @@ void skynet_harbor_init(int harbor) {
 
 void skynet_harbor_start(struct skynet_service * ctx) {
 	REMOTE = ctx;
-	skynet_service_insert(ctx, HARBOR, NULL, 0);
 }
 
 void skynet_harbor_exit() {
@@ -27,7 +26,7 @@ void skynet_harbor_exit() {
 }
 
 void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-	struct remote_message rmsg;
+	struct skynet_remote_message rmsg;
 	rmsg.data = data;
 	rmsg.size = size;
 	sprintf(rmsg.name, "%s", name);
@@ -36,7 +35,7 @@ void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session
 
 void skynet_harbor_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
 	if (skynet_harbor_isremote(target)) {
-		struct remote_message rmsg;
+		struct skynet_remote_message rmsg;
 		rmsg.handle = target;
 		rmsg.data = data;
 		rmsg.size = size;
