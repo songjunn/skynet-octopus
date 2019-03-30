@@ -18,28 +18,30 @@ void skynet_harbor_start(struct skynet_service * ctx) {
 }
 
 void skynet_harbor_exit() {
-	struct skynet_service * ctx = REMOTE;
 	REMOTE = NULL;
-	if (ctx) {
-		skynet_service_release(ctx);
-	}
 }
 
 void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-	struct skynet_remote_message rmsg;
-	rmsg.data = data;
-	rmsg.size = size;
-	sprintf(rmsg.name, "%s", name);
-	skynet_send(REMOTE, source, session, type, &rmsg, sizeof(rmsg));
+	if (REMOTE != NULL) {
+		struct skynet_remote_message rmsg;
+		rmsg.type = type;
+		rmsg.data = data;
+		rmsg.size = size;
+		rmsg.handle = 0;
+		sprintf(rmsg.name, "%s", name);
+		skynet_send(REMOTE, source, session, SERVICE_REMOTE, &rmsg, sizeof(rmsg));
+	}
 }
 
 void skynet_harbor_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-	if (skynet_harbor_isremote(target)) {
+	if (REMOTE != NULL && skynet_harbor_isremote(target)) {
 		struct skynet_remote_message rmsg;
-		rmsg.handle = target;
+		rmsg.type = type;
 		rmsg.data = data;
 		rmsg.size = size;
-		skynet_send(REMOTE, source, session, type, &rmsg, sizeof(rmsg));
+		rmsg.name = NULL;
+		rmsg.handle = target;
+		skynet_send(REMOTE, source, session, SERVICE_REMOTE, &rmsg, sizeof(rmsg));
 	}
 }
 

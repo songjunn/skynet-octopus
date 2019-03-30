@@ -9,6 +9,7 @@
 
 #define SERVICE_SOCKET 1
 #define SERVICE_TIMER 2
+#define SERVICE_REMOTE 3
 
 #define LOGGER_DEBUG 0
 #define LOGGER_WARN 1
@@ -54,6 +55,7 @@ struct skynet_service {
 struct skynet_remote_message {
 	char name[32];
 	uint32_t handle;
+	int type;
 	void * data;
 	size_t size;
 };
@@ -76,6 +78,7 @@ extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session
 // harbor
 extern void skynet_harbor_start(struct skynet_service * ctx);
 extern void skynet_harbor_exit();
+extern int skynet_harbor_id(uint32_t handle);
 
 // tcp socket
 extern void skynet_socket_start(struct skynet_service * ctx, int id);
