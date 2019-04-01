@@ -25,10 +25,14 @@ void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session
 	if (REMOTE != NULL) {
 		struct skynet_remote_message rmsg;
 		rmsg.type = type;
-		rmsg.data = data;
 		rmsg.size = size;
 		rmsg.handle = 0;
 		sprintf(rmsg.name, "%s", name);
+		if (data != NULL) {
+	        rmsg.data = skynet_malloc(size);
+	        memcpy(rmsg.data, data, size);
+	    }
+
 		skynet_send(REMOTE, source, session, SERVICE_REMOTE, &rmsg, sizeof(rmsg));
 	}
 }
@@ -37,10 +41,13 @@ void skynet_harbor_sendhandle(uint32_t target, uint32_t source, uint32_t session
 	if (REMOTE != NULL && skynet_harbor_isremote(target)) {
 		struct skynet_remote_message rmsg;
 		rmsg.type = type;
-		rmsg.data = data;
 		rmsg.size = size;
-		rmsg.name = NULL;
 		rmsg.handle = target;
+		if (data != NULL) {
+	        rmsg.data = skynet_malloc(size);
+	        memcpy(rmsg.data, data, size);
+	    }
+
 		skynet_send(REMOTE, source, session, SERVICE_REMOTE, &rmsg, sizeof(rmsg));
 	}
 }
