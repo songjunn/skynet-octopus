@@ -24,10 +24,12 @@ void skynet_harbor_exit() {
 void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
 	if (REMOTE != NULL) {
 		struct skynet_remote_message rmsg;
+		rmsg.source = source;
+		rmsg.session = session;
 		rmsg.type = type;
 		rmsg.size = size;
 		rmsg.handle = 0;
-		sprintf(rmsg.name, "%s", name);
+		strncpy(rmsg.name, name, 32);
 		if (data != NULL) {
 	        rmsg.data = skynet_malloc(size);
 	        memcpy(rmsg.data, data, size);
@@ -40,6 +42,8 @@ void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session
 void skynet_harbor_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
 	if (REMOTE != NULL && skynet_harbor_isremote(target)) {
 		struct skynet_remote_message rmsg;
+		rmsg.source = source;
+		rmsg.session = session;
 		rmsg.type = type;
 		rmsg.size = size;
 		rmsg.handle = target;

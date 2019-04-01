@@ -2,7 +2,6 @@
 
 #define CLUSTER_ADDR_MAX 32
 #define SERVICE_NAME_MAX 64
-#define SERVICE_LIST_MAX 128
 #define HARBOR_CLUSTER_MAX 32
 #define REMOTE_SERVICE_MAX 256
 
@@ -19,10 +18,7 @@ struct remote_service {
 };
 
 struct harbor {
-	//int port;
 	int remote_service_count;
-	//char addr[CLUSTER_ADDR_MAX];
-	//char service_list[SERVICE_LIST_MAX];
 	struct harbor_cluster hcs[HARBOR_CLUSTER_MAX];
 	struct remote_service rss[REMOTE_SERVICE_MAX];
 };
@@ -103,9 +99,26 @@ int load_clusters(struct skynet_service * ctx, struct harbor * h) {
     return 0;
 }
 
-void send_remote_message(struct skynet_service * ctx, uint32_t source, uint32_t session, const void * msg, size_t sz) {
-	struct skynet_remote_message rmsg;
-	memcpy(&rmsg, msg, sz);
+void send_remote_message(struct skynet_service * ctx, const void * msg, size_t sz) {
+	struct skynet_remote_message * rmsg = skynet_malloc(sizeof(struct skynet_remote_message));
+	memcpy(rmsg, msg, sz);
+
+	struct harbor_cluster * cluster = NULL;
+	if (rmsg->handle != 0) {
+		cluster = get_cluster_handle(ctx->hook, rmsg->handle);
+	} else {
+		cluster = get_cluster_name(ctx->hook, rmsg->name);
+	}
+	if (cluster == NULL) {
+		skynet_logger_error(ctx, "[harbor]find cluster failed");
+		return;
+	}
+
+	skynet_socket_send(ctx, cluster->fd, rmsg.data, rmsg.size);
+}
+
+void recv_remote_message(const char * message, size_t sz) {
+
 }
 
 bool harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
@@ -122,14 +135,15 @@ bool harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
 }
 
 void harbor_release(struct skynet_service * ctx) {
-
+	skynet_harbor_exit();
+	skynet_free(ctx->hook);
 }
 
 bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
 	struct harbor * h = ctx->hook;
 	switch (type) {
 		case SERVICE_REMOTE: {
-			send_remote_message(ctx, source, session, msg, sz);
+			send_remote_message(ctx, msg, sz);
 			break;
 		}
 		case SERVICE_SOCKET: {

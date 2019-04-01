@@ -55,6 +55,8 @@ struct skynet_service {
 struct skynet_remote_message {
 	char name[32];
 	uint32_t handle;
+	uint32_t source;
+	uint32_t session;
 	int type;
 	size_t size;
 	void * data;
@@ -91,6 +93,7 @@ extern int skynet_socket_send(struct skynet_service * ctx, int id, void * buffer
 extern uint64_t skynet_timer_now(void);
 extern void skynet_timer_register(uint32_t handle, const void * args, size_t size, int time);
 
+// config
 extern int skynet_config_int(const char * section, const char * option, int * value);
 extern int skynet_config_string(const char * section, const char * option, char *value, int size);
 
