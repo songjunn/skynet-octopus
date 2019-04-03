@@ -33,7 +33,7 @@ int config_parse(FILE * fp, const char * section, const char * option, char * va
 
 		if (!flag) {
 			sprintf(title, "[%s]", section);
-			if (!strncmp(buff, title, strlen(section))) {
+			if (!strncmp(buff, title, strlen(title))) {
 				flag = 1;
 			}
 			continue;
