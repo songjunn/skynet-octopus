@@ -26,8 +26,7 @@ void _format_name(char * filename, size_t size, const char * basename) {
     time(&aclock);
     newtime = localtime(&aclock);
     snprintf(filename, size, "%s-%02d%02d%02d-%02d%02d%02d.log", basename, newtime->tm_year+1900, 
-            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
-            newtime->tm_min, newtime->tm_sec);
+        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 }
 
 void _format_time(char * buffer, size_t size) {
@@ -36,8 +35,7 @@ void _format_time(char * buffer, size_t size) {
     time(&aclock);
     newtime = localtime(&aclock);
     snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime->tm_year+1900, 
-            newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour,
-            newtime->tm_min, newtime->tm_sec);
+        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 }
 
 void _format_head(char * buffer, size_t size, int level, uint32_t source) {
