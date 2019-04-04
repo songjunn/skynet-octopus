@@ -6,7 +6,6 @@
 #include "skynet_timer.h"
 #include "skynet_socket.h"
 #include "skynet_harbor.h"
-#include "skynet_logger.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -187,12 +186,10 @@ int main(int argc, char *argv[]) {
     char * service_args = skynet_malloc(1024);
     char * service_list = skynet_malloc(1024);
     char * service_path = skynet_malloc(1024);
-    char * logger_args = skynet_malloc(1024);
 
     skynet_config_init(argv[1]);
     skynet_config_int("skynet", "harbor", &harbor);
     skynet_config_int("skynet", "thread", &thread);
-    skynet_config_string("skynet", "logger_args", logger_args, 1024);
     skynet_config_string("skynet", "service_path", service_path, 1024);
     skynet_config_string("skynet", "service_list", service_list, 1024);
 
@@ -200,7 +197,6 @@ int main(int argc, char *argv[]) {
     skynet_signal_init();
     skynet_harbor_init(harbor);
     skynet_service_init(service_path);
-    skynet_logger_init(harbor, logger_args); // logger must be the first service
     skynet_timer_init();
     skynet_socket_init();
 
@@ -224,7 +220,6 @@ int main(int argc, char *argv[]) {
     skynet_harbor_exit();
     skynet_socket_free();
     skynet_config_free();
-    skynet_free(logger_args);
     skynet_free(service_lib);
     skynet_free(service_list);
     skynet_free(service_args);

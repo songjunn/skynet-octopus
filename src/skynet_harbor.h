@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 struct skynet_service;
+struct skynet_remote_message;
 
 void skynet_harbor_init(int harbor);
 void skynet_harbor_start(struct skynet_service * ctx);
@@ -17,5 +18,9 @@ int skynet_harbor_id(uint32_t handle);
 int skynet_harbor_index(uint32_t handle);
 int skynet_harbor_isremote(uint32_t handle);
 uint32_t skynet_harbor_handle(int harbor, int index);
+
+size_t skynet_remote_message_header();
+size_t skynet_remote_message_push(struct skynet_remote_message * rmsg, void * data, size_t size);
+void skynet_local_message_forward(void * data, size_t size);
 
 #endif

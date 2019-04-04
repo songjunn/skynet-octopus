@@ -35,6 +35,7 @@
 #define skynet_logger_error(ctx, msg, ...) skynet_logger_print(ctx, LOGGER_ERROR, msg, ##__VA_ARGS__)
 
 struct skynet_service;
+struct skynet_remote_message;
 
 typedef bool (*service_dl_create)(struct skynet_service * ctx, int harbor, const char * parm);
 typedef void (*service_dl_release)(struct skynet_service * ctx);
@@ -70,6 +71,8 @@ struct skynet_socket_message {
 };
 
 // logger
+extern void skynet_logger_start(struct skynet_service * ctx);
+extern void skynet_logger_exit();
 extern void skynet_logger_print(struct skynet_service * ctx, int level, const char * msg, ...);
 
 // service
@@ -78,9 +81,12 @@ extern void skynet_sendname(const char * name, uint32_t source, uint32_t session
 extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 // harbor
+extern int skynet_harbor_id(uint32_t handle);
 extern void skynet_harbor_start(struct skynet_service * ctx);
 extern void skynet_harbor_exit();
-extern int skynet_harbor_id(uint32_t handle);
+extern size_t skynet_remote_message_header();
+extern size_t skynet_remote_message_push(struct skynet_remote_message * rmsg, void * data, size_t size);
+extern void skynet_local_message_forward(void * data, size_t size);
 
 // tcp socket
 extern void skynet_socket_start(struct skynet_service * ctx, int id);

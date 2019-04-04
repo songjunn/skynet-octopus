@@ -1,7 +1,7 @@
 BUILD_PATH ?= .
 SERVICE_PATH ?= service-libs
 
-CFLAGS := -g -ggdb -O0 -Wall -m64 -DDEBUG
+CFLAGS := -g -ggdb -O0 -w -m64 -DDEBUG
 LDFLAGS := -Wl,-E
 LIBS := -lrt -ldl -lm -lpthread
 SHARED := -shared -fPIC
@@ -13,13 +13,17 @@ SKYNET_SRC = skynet_main.c skynet_service.c skynet_mq.c \
 all : \
   $(SERVICE_PATH) \
   $(BUILD_PATH)/skynet \
-  $(SERVICE_PATH)/libharbor.so 
+  $(SERVICE_PATH)/liblogger.so \
+  $(SERVICE_PATH)/libharbor.so \
 
 $(SERVICE_PATH) :
 	mkdir $(SERVICE_PATH)
 
 $(BUILD_PATH)/skynet : $(foreach v, $(SKYNET_SRC), src/$(v)) 
 	$(CC) $(CFLAGS) -o $@ $^ -Isrc $(LDFLAGS) $(LIBS)
+
+$(SERVICE_PATH)/liblogger.so : service-src/service_logger.c 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHARED) $^ -o $@ -Isrc
 
 $(SERVICE_PATH)/libharbor.so : service-src/service_harbor.c 
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SHARED) $^ -o $@ -Isrc

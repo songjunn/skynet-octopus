@@ -1,9 +1,9 @@
 #include "skynet.h"
-
 #include "hashid.h"
 #include "databuffer.h"
 
 #define BACKLOG 32
+#define BUFFER_MAX 20480
 #define CLUSTER_ADDR_MAX 32
 #define SERVICE_NAME_MAX 64
 #define HARBOR_CLUSTER_MAX 32
@@ -27,7 +27,7 @@ struct harbor {
     int listen_port;
     int remote_service_count;
     struct hashid hash;
-    struct databuffer buffer[HARBOR_CLUSTER_MAX];
+    struct databuffer * buffer[HARBOR_CLUSTER_MAX];
     struct harbor_cluster hcs[HARBOR_CLUSTER_MAX];
     struct remote_service rss[REMOTE_SERVICE_MAX];
 };
@@ -75,15 +75,13 @@ int load_service(struct skynet_service * ctx, struct harbor * h, int harbor_id, 
 
 int load_cluster(struct skynet_service * ctx, struct harbor * h, char * name) {
     int harbor_id, port;
-    char * m;
-    char * service_name = skynet_malloc(1024);
-    char * cluster_addr = skynet_malloc(1024);
-    char * cluster_service = skynet_malloc(1024);
+    char * m, * p;
+    char service_name[1024], cluster_addr[1024], cluster_service[1024];
 
     skynet_config_int(name, "harbor", &harbor_id);
     skynet_config_int(name, "port", &port);
-    skynet_config_string(name, "addr", cluster_addr, 1024);
-    skynet_config_string(name, "services", cluster_service, 1024);
+    skynet_config_string(name, "addr", cluster_addr, sizeof(cluster_addr));
+    skynet_config_string(name, "services", cluster_service, sizeof(cluster_service));
 
     if (harbor_id < 0 && harbor_id >= HARBOR_CLUSTER_MAX) {
         skynet_logger_error(ctx, "[harbor]invalid harobr id=%d", harbor_id);
@@ -99,96 +97,70 @@ int load_cluster(struct skynet_service * ctx, struct harbor * h, char * name) {
         skynet_logger_debug(ctx, "[harbor]create cluster:%s harbor:%d %s:%d fd:%d", 
             name, cluster->harbor_id, cluster->addr, cluster->port, cluster->fd);
 
-        while (m = strchr(cluster_service, ',')) {
-            snprintf(service_name, m-cluster_service+1, "%s", cluster_service);
-            cluster_service = m + 1;
+        p = cluster_service;
+        while (m = strchr(p, ',')) {
+            snprintf(service_name, m-p+1, "%s", p);
+            p = m + 1;
 
             if (load_service(ctx, h, harbor_id, service_name)) {
                 return 1;
             }
         }
-        return load_service(ctx, h, harbor_id, cluster_service);
+        return load_service(ctx, h, harbor_id, p);
     }
 
     return 0;
 }
 
 int load_clusters(struct skynet_service * ctx, struct harbor * h) {
-    char * p;
-    char * cluster_name = skynet_malloc(1024);
-    char * cluster_list = skynet_malloc(1024);
+    char * m, * p;
+    char cluster_name[1024], cluster_list[1024];
 
-    skynet_config_string("skynet", "cluster_list", cluster_list, 1024);
+    skynet_config_string("skynet", "cluster_list", cluster_list, sizeof(cluster_list));
 
-    while (p = strchr(cluster_list, ',')) {
-        snprintf(cluster_name, p-cluster_list+1, "%s", cluster_list);
-        cluster_list = p + 1;
+    p = cluster_list;
+    while (m = strchr(p, ',')) {
+        snprintf(cluster_name, m-p+1, "%s", p);
+        p = m + 1;
 
         if (load_cluster(ctx, h, cluster_name)) {
             return 1;
         }
     }
-    return load_cluster(ctx, h, cluster_list);
+    return load_cluster(ctx, h, p);
 }
 
-void send_remote_message(struct skynet_service * ctx, const void * msg, size_t sz) {
-    struct skynet_remote_message rmsg;
-    memcpy(&rmsg, msg, sz);
-
+void forward_remote_message(struct skynet_service * ctx, const void * msg, size_t sz) {
+    struct skynet_remote_message * rmsg = msg;
     struct harbor_cluster * cluster = NULL;
-    if (rmsg.handle != 0) {
-        cluster = get_cluster_handle(ctx->hook, rmsg.handle);
+    if (rmsg->handle != 0) {
+        cluster = get_cluster_handle(ctx->hook, rmsg->handle);
     } else {
-        cluster = get_cluster_name(ctx->hook, rmsg.name);
+        cluster = get_cluster_name(ctx->hook, rmsg->name);
     }
     if (cluster == NULL) {
         skynet_logger_error(ctx, "[harbor]find cluster failed");
         return;
     }
 
-    uint32_t idx = 0;
-    uint32_t ulen = sizeof(rmsg) - sizeof(rmsg.data) + rmsg.size + sizeof(uint32_t);
+    uint32_t head = skynet_remote_message_header() + rmsg->size;
+    uint32_t ulen = head + sizeof(head);
     char * buffer = (char *)skynet_malloc(ulen);
-
-    memcpy(buffer+idx, (char *)&ulen, sizeof(ulen));
-    idx += sizeof(ulen);
-
-    memcpy(buffer+idx, (char *)rmsg.name, sizeof(rmsg.name));
-    idx += sizeof(rmsg.name);
-
-    memcpy(buffer+idx, (char *)&rmsg.handle, sizeof(rmsg.handle));
-    idx += sizeof(rmsg.handle);
-
-    memcpy(buffer+idx, (char *)&rmsg.source, sizeof(rmsg.source));
-    idx += sizeof(rmsg.source);
-
-    memcpy(buffer+idx, (char *)&rmsg.session, sizeof(rmsg.session));
-    idx += sizeof(rmsg.session);
-
-    memcpy(buffer+idx, (char *)&rmsg.type, sizeof(rmsg.type));
-    idx += sizeof(rmsg.type);
-
-    memcpy(buffer+idx, (char *)&rmsg.size, sizeof(rmsg.size));
-    idx += sizeof(rmsg.size);
-
-    memcpy(buffer+idx, (char *)rmsg.data, rmsg.size);
-    idx += rmsg.size;
-
-    assert(ulen == idx);
+    memcpy(buffer, (char *)&head, sizeof(head));
+    skynet_remote_message_push(rmsg, buffer + sizeof(head), ulen);
     skynet_socket_send(ctx, cluster->fd, buffer, ulen);
 }
 
-void recv_remote_message(struct skynet_service * ctx, struct databuffer * buffer) {
-    int sz = databuffer_readheader(buffer->chunk);
+void forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
+    int sz = databuffer_readheader(buffer);
     if (sz > 0) {
-        struct skynet_remote_message rmsg;
-        sz = databuffer_read(buffer->chunk, &rmsg, sz);
+        char data[BUFFER_MAX];
+        sz = databuffer_read(buffer, data, sz);
         if (sz > 0) {
-            if (rmsg.handle > 0) {
-                skynet_sendhandle(rmsg.handle, rmsg.source, rmsg.session, rmsg.type, rmsg.data, rmsg.size);
-            } else {
-                skynet_sendname(rmsg.name, rmsg.source, rmsg.session, rmsg.type, rmsg.data, rmsg.size);
-            }
+            struct skynet_remote_message * rmsg = data;
+            skynet_local_message_forward(rmsg, sz);
+            skynet_logger_debug(ctx, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
+                rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
         }
     }
 }
@@ -217,7 +189,9 @@ bool harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
 }
 
 void harbor_release(struct skynet_service * ctx) {
+    struct harbor * h = ctx->hook;
     skynet_harbor_exit();
+    hashid_clear(&h->hash);
     skynet_free(ctx->hook);
 }
 
@@ -225,7 +199,7 @@ bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
     struct harbor * h = ctx->hook;
     switch (type) {
         case SERVICE_REMOTE: {
-            send_remote_message(ctx, msg, sz);
+            forward_remote_message(ctx, msg, sz);
             break;
         }
         case SERVICE_SOCKET: {
@@ -237,12 +211,12 @@ bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
                     skynet_logger_debug(ctx, "[harbor]recv fd=%d size=%d", smsg->id, smsg->ud);
                     int id = hashid_lookup(&h->hash, smsg->id);
                     if (id >= 0) {
-                        if (databuffer_push(&h->buffer[id], smsg->buffer, smsg->ud) <= 0) {
+                        if (databuffer_push(h->buffer[id], smsg->buffer, smsg->ud) <= 0) {
                             skynet_logger_error(ctx, "[harbor]connection %d recv data too long, size:%d", smsg->id, smsg->ud);
                             skynet_socket_close(ctx, smsg->id);
                             skynet_free(smsg->buffer);
                         }
-                        recv_remote_message(ctx, &h->buffer[id]);
+                        forward_local_message(ctx, h->buffer[id]);
                     } else {
                         skynet_logger_error(ctx, "[harbor]recv unknown connection %d message", smsg->id);
                         skynet_socket_close(ctx, smsg->id);
@@ -255,7 +229,8 @@ bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
                         skynet_socket_close(ctx, smsg->ud);
                         skynet_logger_debug(ctx, "[harbor]accept max fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
                     } else {
-                        hashid_insert(&h->hash, smsg->ud);
+                        int id = hashid_insert(&h->hash, smsg->ud);
+                        h->buffer[id] = databuffer_create(BUFFER_MAX);
                         skynet_socket_start(ctx, smsg->ud);
                         skynet_logger_debug(ctx, "[harbor]accept fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
                     }
@@ -272,9 +247,7 @@ bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
 
                     int id = hashid_lookup(&h->hash, smsg->id);
                     if (id >= 0) {
-                        databuffer_reset(&h->buffer[id]);
-                    } else {
-                        skynet_logger_error(ctx, "[harbor]close unknown connection %d", smsg->id);
+                        databuffer_free(h->buffer[id]);
                     }
                     break;
                 }
