@@ -158,7 +158,7 @@ void skynet_service_release(struct skynet_service * ctx) {
 
 void skynet_service_releaseall() {
 	int i;
-	for (i=M->count-1; i>=0; i--) { // release by desc, except logger service
+	for (i=M->count-1; i>=0; i--) { // release by desc
 		struct skynet_service * ctx = &M->m[i];
 		while (skynet_service_message_dispatch(ctx) == 0);
 		skynet_service_release(ctx);
