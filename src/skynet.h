@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define SERVICE_TEXT 0
 #define SERVICE_SOCKET 1
 #define SERVICE_TIMER 2
 #define SERVICE_REMOTE 3
@@ -42,6 +43,7 @@ typedef void (*service_dl_release)(struct skynet_service * ctx);
 typedef bool (*service_dl_callback)(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 struct skynet_service {
+	int closing;
 	char * name;
 	void * module;
 	void * hook;

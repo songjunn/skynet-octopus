@@ -86,6 +86,7 @@ struct skynet_service * _load(int harbor, const char * name, const char * module
 	if (result == NULL && M->count < MAX_MODULE_TYPE) {
 		int index = M->count;
 		if (_open(&M->m[index], M->path, module)) {
+			M->m[index].closing = 0;
 			M->m[index].name = skynet_strdup(name);
 			M->m[index].handle = skynet_harbor_handle(harbor, index);
 			M->count ++;
@@ -126,6 +127,7 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 		return NULL;
 	}
 
+	M->m[index].closing = 0;
 	M->m[index].name = skynet_strdup(ctx->name);
 	M->m[index].handle = skynet_harbor_handle(harbor, index);
 	M->m[index].create = ctx->create;
@@ -160,6 +162,7 @@ void skynet_service_releaseall() {
 	int i;
 	for (i=M->count-1; i>=0; i--) { // release by desc
 		struct skynet_service * ctx = &M->m[i];
+		ctx->closing = 1;
 		while (skynet_service_message_dispatch(ctx) == 0);
 		skynet_service_release(ctx);
 	}

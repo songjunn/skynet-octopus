@@ -33,7 +33,7 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
     }
     int overload = skynet_mq_overload(ctx->queue);
     if (overload) {
-        skynet_logger_error(ctx, "May overload, message queue length = %d", overload);
+        skynet_logger_warn(ctx, "May overload, message queue length = %d", overload);
     }
 
     if (ctx->cb != NULL) {
