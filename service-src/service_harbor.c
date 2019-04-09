@@ -174,7 +174,7 @@ void cluster_reconnect(struct skynet_service * ctx, struct harbor * h, int harbo
     }
 }
 
-bool harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
+int harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
     struct harbor * h = (struct harbor *) skynet_malloc(sizeof(struct harbor));
     h->harbor_id = harbor;
     ctx->hook = h;
@@ -182,19 +182,19 @@ bool harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
     hashid_init(&h->hash, HARBOR_CLUSTER_MAX);
 
     if (load_clusters(ctx, h)) {
-        return false;
+        return 1;
     }
 
     h->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", h->listen_port, BACKLOG);
     if (h->listen_fd < 0) {
-        return false;
+        return 1;
     }
 
     skynet_harbor_start(ctx);
     skynet_socket_start(ctx, h->listen_fd);
     skynet_logger_notice(ctx, "[harbor]listen port:%d fd %d", h->listen_port, h->listen_fd);
 
-    return true;
+    return 0;
 }
 
 void harbor_release(struct skynet_service * ctx) {
@@ -204,7 +204,7 @@ void harbor_release(struct skynet_service * ctx) {
     skynet_free(ctx->hook);
 }
 
-bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
+int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     struct harbor * h = ctx->hook;
     switch (type) {
         case SERVICE_REMOTE: {
@@ -281,5 +281,5 @@ bool harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
             break;
     }
 
-    return true;
+    return 0;
 }

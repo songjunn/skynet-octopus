@@ -20,7 +20,7 @@ struct services {
 
 static struct services * M = NULL;
 
-bool _open(struct skynet_service * service, const char * path, const char * name) {
+int _open(struct skynet_service * service, const char * path, const char * name) {
 	size_t path_size = strlen(path);
 	size_t name_size = strlen(name);
 
@@ -31,7 +31,7 @@ bool _open(struct skynet_service * service, const char * path, const char * name
 	service->module = dlopen(fullpath, RTLD_NOW | RTLD_GLOBAL);
 	if (service->module == NULL) {
 		skynet_logger_error(NULL, "try open %s failed : %s", fullpath, dlerror());
-		return false;
+		return 1;
 	}
 
 	char tmp[name_size + 10]; // create/release/callback , longest name is callback (8)
@@ -55,12 +55,12 @@ bool _open(struct skynet_service * service, const char * path, const char * name
 		goto failed;
 	}
 
-	return true;
+	return 0;
 
 failed:
 	skynet_logger_error(NULL, "%s sym %s failed : %s", fullpath, tmp, dlerror());
 	dlclose(service->module);
-	return false;
+	return 1;
 }
 
 struct skynet_service * _query(const char * name) {
@@ -85,7 +85,7 @@ struct skynet_service * _load(int harbor, const char * name, const char * module
 
 	if (result == NULL && M->count < MAX_MODULE_TYPE) {
 		int index = M->count;
-		if (_open(&M->m[index], M->path, module)) {
+		if (!_open(&M->m[index], M->path, module)) {
 			M->m[index].closing = 0;
 			M->m[index].name = skynet_strdup(name);
 			M->m[index].handle = skynet_harbor_handle(harbor, index);
@@ -107,7 +107,7 @@ struct skynet_service * skynet_service_create(const char * name, int harbor, con
 
 	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
 
-	if (ctx->create(ctx, harbor, args)) {
+	if (!ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
 		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", name, ctx->handle, args);
 		return ctx;
@@ -139,7 +139,7 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 	struct skynet_service * service = &M->m[index];
 	service->queue = skynet_mq_create(service->handle, concurrent);
 
-	if (service->create(service, harbor, args)) {
+	if (!service->create(service, harbor, args)) {
 		skynet_globalmq_push(service->queue);
 		skynet_logger_notice(NULL, "create service %s success handle:%d args:%s", service->name, service->handle, args);
 		return service;

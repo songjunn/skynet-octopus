@@ -54,7 +54,7 @@ FILE * _open_file(char * filename, size_t size, const char * basename) {
     return handle;
 }
 
-bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
+int logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     struct skynet_logger * l = skynet_malloc(sizeof(struct skynet_logger));
     l->size = 0;
     l->close = 0;
@@ -67,12 +67,12 @@ bool logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     if (strlen(l->basename) > 0) {
         l->handle = _open_file(l->filename, sizeof(l->filename), l->basename);
         if (l->handle == NULL) {
-            return false;
+            return 1;
         }
         l->close = 1;
     }
     skynet_logger_start(ctx);
-    return true;
+    return 0;
 }
 
 void logger_release(struct skynet_service * ctx) {
@@ -84,10 +84,10 @@ void logger_release(struct skynet_service * ctx) {
     skynet_free(l);
 }
 
-bool logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int level, void * msg, size_t sz) {
+int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int level, void * msg, size_t sz) {
     struct skynet_logger * l = ctx->hook;
     if (level < l->level) {
-        return false;
+        return 1;
     }
 
     if (sz >= LOG_MESSAGE_SIZE) {
@@ -119,5 +119,5 @@ bool logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t sess
         l->size += strlen(content);
     }
 
-    return true;
+    return 0;
 }

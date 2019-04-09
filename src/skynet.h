@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -38,9 +37,9 @@
 struct skynet_service;
 struct skynet_remote_message;
 
-typedef bool (*service_dl_create)(struct skynet_service * ctx, int harbor, const char * parm);
+typedef int (*service_dl_create)(struct skynet_service * ctx, int harbor, const char * parm);
 typedef void (*service_dl_release)(struct skynet_service * ctx);
-typedef bool (*service_dl_callback)(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
+typedef int (*service_dl_callback)(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 struct skynet_service {
 	int closing;
