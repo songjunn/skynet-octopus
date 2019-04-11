@@ -8,7 +8,7 @@
 #include <time.h>
 
 #define LOG_FILE_SIZE 20480000
-#define LOG_MESSAGE_SIZE 20480
+#define LOG_MESSAGE_SIZE 204800
 
 struct skynet_logger {
     int size;

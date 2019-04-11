@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define LOG_MESSAGE_SIZE 20480
+#define LOG_MESSAGE_SIZE 204800
 
 static struct skynet_service * LOGGER = 0;
 
@@ -32,6 +32,9 @@ void skynet_logger_print(struct skynet_service * ctx, int level, const char * ms
             source = skynet_service_handle(ctx);
         } else {
             source = 0;
+        }
+        if (len >= LOG_MESSAGE_SIZE) {
+            len = LOG_MESSAGE_SIZE - 1;
         }
         skynet_send(LOGGER, source, 0, level, (void *)tmp, len);
     }
