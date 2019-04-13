@@ -13,6 +13,7 @@ SKYNET_SRC = skynet_main.c skynet_service.c skynet_mq.c \
 all : \
   $(SERVICE_PATH) \
   $(BUILD_PATH)/skynet \
+  $(SERVICE_PATH)/libgate.so \
   $(SERVICE_PATH)/liblogger.so \
   $(SERVICE_PATH)/libharbor.so \
 
@@ -21,6 +22,9 @@ $(SERVICE_PATH) :
 
 $(BUILD_PATH)/skynet : $(foreach v, $(SKYNET_SRC), src/$(v)) 
 	$(CC) $(CFLAGS) -o $@ $^ -Isrc $(LDFLAGS) $(LIBS)
+
+$(SERVICE_PATH)/libgate.so : service-src/service_gate.c 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHARED) $^ -o $@ -Isrc
 
 $(SERVICE_PATH)/liblogger.so : service-src/service_logger.c 
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SHARED) $^ -o $@ -Isrc
