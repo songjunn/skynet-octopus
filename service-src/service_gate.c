@@ -21,6 +21,20 @@ struct gate {
     struct connection * conn;
 };
 
+void forward_accept(struct skynet_service * ctx, struct connection * conn) {
+    struct gate * g = ctx->hook;
+    char msg[64];
+    sprintf(msg, "connect|%s", conn->remote_name);
+    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
+}
+
+void forward_close(struct skynet_service * ctx, struct connection * conn) {
+    struct gate * g = ctx->hook;
+    char msg[16];
+    sprintf(msg, "disconnect");
+    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
+}
+
 void forward_message(struct skynet_service * ctx, struct connection * conn) {
     struct gate * g = ctx->hook;
     int sz = databuffer_readheader(conn->buffer);
@@ -37,59 +51,32 @@ void forward_message(struct skynet_service * ctx, struct connection * conn) {
     }
 }
 
-void forward_accept(struct skynet_service * ctx, struct connection * conn) {
+void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
     struct gate * g = ctx->hook;
-    char msg[64];
-    sprintf(msg, "connect|%s", conn->remote_name);
-    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
-}
-
-void forward_close(struct skynet_service * ctx, struct connection * conn) {
-    struct gate * g = ctx->hook;
-    char msg[16];
-    sprintf(msg, "disconnect");
-    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
-}
-
-int gate_create(struct skynet_service * ctx, int harbor, const char * args) {
+    char * command = msg;
     int i;
-    struct gate * g = skynet_malloc(sizeof(struct gate));
-    sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
-
-    g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
-    if (g->listen_fd < 0) {
-        return 1;
-    }
-
-    hashid_init(&g->hash, g->connect_max);
-    g->conn = skynet_malloc(g->connect_max * sizeof(struct connection));
-    memset(g->conn, 0, g->connect_max * sizeof(struct connection));
-    for (i=0; i<g->connect_max; i++) {
-        g->conn[i].fd = -1;
-    }
-    ctx->hook = g;
-
-    skynet_logger_notice(ctx, "[gate]listen port:%d fd %d", g->listen_port, g->listen_fd);
-    skynet_socket_start(ctx, g->listen_fd);
-    return 0;
-}
-
-void gate_release(struct skynet_service * ctx) {
-    int i;
-    struct gate * g = ctx->hook;
-    for (i=0; i<g->connect_max; i++) {
-        struct connection * c = &g->conn[i];
-        if (c->fd >= 0) {
-            databuffer_free(c->buffer);
-            skynet_socket_close(ctx, c->fd);
+    if (sz == 0)
+        return;
+    for (i=0;i<sz;i++) {
+        if (command[i]=='|') {
+            break;
         }
     }
-    if (g->listen_fd >= 0) {
-        skynet_socket_close(ctx, g->listen_fd);
+
+    if (memcmp(command, "forward", i) == 0) {
+        int fd = *(int *) (command+i+1);
+        int size = i+sizeof(fd)+2;
+        skynet_socket_send(ctx, fd, command+size, sz-size);
+    } else if (memcmp(command, "kick", i) == 0) {
+        int fd = *(int *) (command+i+1);
+        skynet_socket_close(ctx, fd);
+    } else if (memcmp(command, "connect", i) == 0) {
+        int port = *(int *) (command+i+1);
+        int size = i+sizeof(fd)+2;
+        char addr[sz-size+1];
+        snprintf(addr, sz-size, "%s", command+size);
+        skynet_socket_connect(ctx, addr, port);
     }
-    hashid_clear(&g->hash);
-    skynet_free(g->conn);
-    skynet_free(g);
 }
 
 void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
@@ -166,32 +153,45 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
     }
 }
 
-void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
-    struct gate * g = ctx->hook;
-    char * command = msg;
+int gate_create(struct skynet_service * ctx, int harbor, const char * args) {
     int i;
-    if (sz == 0)
-        return;
-    for (i=0;i<sz;i++) {
-        if (command[i]=='|') {
-            break;
-        }
+    struct gate * g = skynet_malloc(sizeof(struct gate));
+    sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
+
+    g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
+    if (g->listen_fd < 0) {
+        return 1;
     }
 
-    if (memcmp(command, "forward", i) == 0) {
-        int fd = *(int *) (command+i+1);
-        int size = i+sizeof(fd)+2;
-        skynet_socket_send(ctx, fd, command+size, sz-size);
-    } else if (memcmp(command, "kick", i) == 0) {
-        int fd = *(int *) (command+i+1);
-        skynet_socket_close(ctx, fd);
-    } else if (memcmp(command, "connect", i) == 0) {
-        int port = *(int *) (command+i+1);
-        int size = i+sizeof(fd)+2;
-        char addr[sz-size+1];
-        snprintf(addr, sz-size, "%s", command+size);
-        skynet_socket_connect(ctx, addr, port);
+    hashid_init(&g->hash, g->connect_max);
+    g->conn = skynet_malloc(g->connect_max * sizeof(struct connection));
+    memset(g->conn, 0, g->connect_max * sizeof(struct connection));
+    for (i=0; i<g->connect_max; i++) {
+        g->conn[i].fd = -1;
     }
+    ctx->hook = g;
+
+    skynet_logger_notice(ctx, "[gate]listen port:%d fd %d", g->listen_port, g->listen_fd);
+    skynet_socket_start(ctx, g->listen_fd);
+    return 0;
+}
+
+void gate_release(struct skynet_service * ctx) {
+    int i;
+    struct gate * g = ctx->hook;
+    for (i=0; i<g->connect_max; i++) {
+        struct connection * c = &g->conn[i];
+        if (c->fd >= 0) {
+            databuffer_free(c->buffer);
+            skynet_socket_close(ctx, c->fd);
+        }
+    }
+    if (g->listen_fd >= 0) {
+        skynet_socket_close(ctx, g->listen_fd);
+    }
+    hashid_clear(&g->hash);
+    skynet_free(g->conn);
+    skynet_free(g);
 }
 
 int gate_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
