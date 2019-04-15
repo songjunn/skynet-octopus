@@ -72,7 +72,7 @@ void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
         skynet_socket_close(ctx, fd);
     } else if (memcmp(command, "connect", i) == 0) {
         int port = *(int *) (command+i+1);
-        int size = i+sizeof(fd)+2;
+        int size = i+sizeof(port)+2;
         char addr[sz-size+1];
         snprintf(addr, sz-size, "%s", command+size);
         skynet_socket_connect(ctx, addr, port);
