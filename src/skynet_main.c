@@ -125,8 +125,6 @@ void skynet_start(unsigned harbor, unsigned thread) {
 }
 
 void skynet_shutdown(int sig) {
-    skynet_logger_notice(NULL, "recv signal:%d", sig);
-
     m->quit = 1;
 
     // wakeup socket thread
@@ -140,6 +138,8 @@ void skynet_shutdown(int sig) {
 
 void skynet_coredump(int sig) {
     unsigned i;
+
+    printf("skynet coredump. sig:%d\n", sig);
 
     skynet_shutdown(sig);
 

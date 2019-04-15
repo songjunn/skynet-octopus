@@ -4,6 +4,7 @@
 
 #define BACKLOG 32
 #define BUFFER_MAX 20480
+#define MESSAGE_BUFFER_MAX 20496
 
 struct connection {
     int fd;
@@ -21,25 +22,33 @@ struct gate {
 };
 
 void forward_message(struct skynet_service * ctx, struct connection * conn) {
-    int sz = databuffer_readheader(buffer);
+    struct gate * g = ctx->hook;
+    int sz = databuffer_readheader(conn->buffer);
     if (sz > 0) {
         char data[BUFFER_MAX];
-        sz = databuffer_read(buffer, data, sz);
+        sz = databuffer_read(conn->buffer, data, sz);
         if (sz > 0) {
-            struct skynet_remote_message * rmsg = data;
-            skynet_local_message_forward(rmsg, sz);
-            skynet_logger_debug(ctx, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
-                rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
+            char msg[MESSAGE_BUFFER_MAX];
+            sprintf(msg, "forward,%d", sz);
+            memcpy(msg+strlen(msg), data, sz);
+
+            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
         }
     }
 }
 
 void forward_accept(struct skynet_service * ctx, struct connection * conn) {
-
+    struct gate * g = ctx->hook;
+    char msg[64];
+    sprintf(msg, "connect,%s", conn->remote_name);
+    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
 void forward_close(struct skynet_service * ctx, struct connection * conn) {
-
+    struct gate * g = ctx->hook;
+    char msg[16];
+    sprintf(msg, "disconnect");
+    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
 int gate_create(struct skynet_service * ctx, int harbor, const char * args) {

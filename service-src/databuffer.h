@@ -55,4 +55,8 @@ void databuffer_reset(struct databuffer * buffer) {
 	buffer->ptr = 0;
 }
 
+char * databuffer_dataptr(struct databuffer * buffer) {
+	
+}
+
 #endif //SKYNET_DATABUFFER_H
