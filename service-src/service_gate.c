@@ -29,7 +29,7 @@ void forward_message(struct skynet_service * ctx, struct connection * conn) {
         sz = databuffer_read(conn->buffer, data, sz);
         if (sz > 0) {
             char msg[MESSAGE_BUFFER_MAX];
-            sprintf(msg, "forward,%d", sz);
+            sprintf(msg, "forward|%d|", sz);
             memcpy(msg+strlen(msg), data, sz);
 
             skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
@@ -40,7 +40,7 @@ void forward_message(struct skynet_service * ctx, struct connection * conn) {
 void forward_accept(struct skynet_service * ctx, struct connection * conn) {
     struct gate * g = ctx->hook;
     char msg[64];
-    sprintf(msg, "connect,%s", conn->remote_name);
+    sprintf(msg, "connect|%s", conn->remote_name);
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
@@ -166,10 +166,41 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
     }
 }
 
+void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
+    struct gate * g = ctx->hook;
+    char * command = msg;
+    int i;
+    if (sz == 0)
+        return;
+    for (i=0;i<sz;i++) {
+        if (command[i]=='|') {
+            break;
+        }
+    }
+
+    if (memcmp(command, "forward", i) == 0) {
+        int fd = *(int *) (command+i+1);
+        int size = i+sizeof(fd)+2;
+        skynet_socket_send(ctx, fd, command+size, sz-size);
+    } else if (memcmp(command, "kick", i) == 0) {
+        int fd = *(int *) (command+i+1);
+        skynet_socket_close(ctx, fd);
+    } else if (memcmp(command, "connect", i) == 0) {
+        int port = *(int *) (command+i+1);
+        int size = i+sizeof(fd)+2;
+        char addr[sz-size+1];
+        snprintf(addr, sz-size, "%s", command+size);
+        skynet_socket_connect(ctx, addr, port);
+    }
+}
+
 int gate_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     switch(type) {
         case SERVICE_SOCKET:
             dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
+            break;
+        case SERVICE_TEXT:
+            cmd_ctrl(ctx, msg, sz);
             break;
         default:
             break;
