@@ -1,6 +1,8 @@
 BUILD_PATH ?= .
 SERVICE_PATH ?= service-libs
 
+CC := gcc
+
 CFLAGS := -g -ggdb -O0 -w -m64 -DDEBUG
 LDFLAGS := -Wl,-E
 LIBS := -lrt -ldl -lm -lpthread
