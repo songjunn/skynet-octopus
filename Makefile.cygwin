@@ -1,0 +1,47 @@
+BIN_PATH ?= bin
+LIB_PATH ?= bin/lib
+
+PLATFORM_INC ?= platform
+
+CC := gcc -std=gnu99
+CFLAGS := -g -O2 -Wall -I$(PLATFORM_INC)
+SKYNET_DEFINES :=-DFD_SETSIZE=4096
+
+# link
+LDFLAGS := -lplatform -lpthread -lws2_32 -L$(BIN_PATH)
+SHARED := --shared
+EXPORT := -Wl,-E
+SHAREDLDFLAGS := -lskynet -lplatform -lws2_32 -L$(BIN_PATH)
+
+# skynet
+SKYNET_SRC = skynet_service.c skynet_mq.c \
+  skynet_server.c skynet_timer.c skynet_config.c skynet_harbor.c \
+  skynet_logger.c skynet_socket.c socket_server.c
+
+SKYNET_EXE_SRC = skynet_main.c
+
+SERVICE = logger gate harbor
+
+all : \
+ 	$(BIN_PATH)/platform.dll \
+ 	$(BIN_PATH)/skynet.dll \
+ 	$(BIN_PATH)/skynet.exe \
+	$(foreach v, $(SERVICE), $(LIB_PATH)/lib$(v).so) \
+
+$(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
+
+$(BIN_PATH)/skynet.dll : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
+	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(SHARED) -o $@ $^ -Iskynet-src $(LDFLAGS) -includeplatform.h 
+
+$(BIN_PATH)/skynet.exe : $(foreach v, $(SKYNET_EXE_SRC), skynet-src/$(v))
+	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(EXPORT) -o $@ $^ -Iskynet-src $(LDFLAGS) $(SHAREDLDFLAGS) 
+
+define CSERVICE_TEMP
+  $$(LIB_PATH)/lib$(1).so : service-src/service_$(1).c
+	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Iskynet-src $$(SHAREDLDFLAGS) 
+endef
+$(foreach v, $(SERVICE), $(eval $(call CSERVICE_TEMP,$(v))))
+
+clean :
+	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so

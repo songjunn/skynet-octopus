@@ -6,12 +6,9 @@
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/resource.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <string.h>
 
 static bool 
 sp_invalid(int efd) {
@@ -61,7 +58,9 @@ sp_wait(int efd, struct event *e, int max) {
 		e[i].s = ev[i].data.ptr;
 		unsigned flag = ev[i].events;
 		e[i].write = (flag & EPOLLOUT) != 0;
-		e[i].read = (flag & EPOLLIN) != 0;
+		e[i].read = (flag & (EPOLLIN | EPOLLHUP)) != 0;
+		e[i].error = (flag & EPOLLERR) != 0;
+		e[i].eof = false;
 	}
 
 	return n;
@@ -76,22 +75,5 @@ sp_nonblocking(int fd) {
 
 	fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 }
-
-/*static int
-sp_setlimits() {
-	int maxconn = 100000;
-	struct rlimit srl;
-	srl.rlim_cur = maxconn + 10;
-	srl.rlim_max = maxconn + 10;
-	return setrlimit(RLIMIT_NOFILE, &srl);
-}
-
-static int
-sp_setSignal() {
-	struct sigaction sa;
-	memset(&sa, 0, sizeof (sa));
-	sa.sa_handler = SIG_IGN;
-	return sigaction(SIGPIPE, &sa, NULL);
-}*/
 
 #endif

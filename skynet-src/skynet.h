@@ -80,6 +80,7 @@ extern void skynet_logger_print(struct skynet_service * ctx, int level, const ch
 extern void skynet_send(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 extern void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
+extern uint32_t skynet_service_handle(struct skynet_service * ctx);
 
 // harbor
 extern int skynet_harbor_id(uint32_t handle);

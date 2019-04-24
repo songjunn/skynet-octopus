@@ -61,7 +61,7 @@ link_clear(struct link_list *list) {
 }
 
 static inline void
-link(struct link_list *list,struct timer_node *node) {
+link_t(struct link_list *list,struct timer_node *node) {
 	list->tail->next = node;
 	list->tail = node;
 	node->next=0;
@@ -73,7 +73,7 @@ add_node(struct timer * T,struct timer_node * node) {
 	uint32_t current_time = T->time;
 	
 	if ((time|TIME_NEAR_MASK)==(current_time|TIME_NEAR_MASK)) {
-		link(&T->near[time&TIME_NEAR_MASK],node);
+		link_t(&T->near[time&TIME_NEAR_MASK],node);
 	} else {
 		int i;
 		uint32_t mask=TIME_NEAR << TIME_LEVEL_SHIFT;
@@ -84,7 +84,7 @@ add_node(struct timer * T,struct timer_node * node) {
 			mask <<= TIME_LEVEL_SHIFT;
 		}
 
-		link(&T->t[i][((time>>(TIME_NEAR_SHIFT + i*TIME_LEVEL_SHIFT)) & TIME_LEVEL_MASK)],node);	
+		link_t(&T->t[i][((time>>(TIME_NEAR_SHIFT + i*TIME_LEVEL_SHIFT)) & TIME_LEVEL_MASK)],node);	
 	}
 }
 

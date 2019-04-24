@@ -1,4 +1,5 @@
 #include "skynet.h"
+#include "skynet_socket.h"
 #include "hashid.h"
 #include "databuffer.h"
 

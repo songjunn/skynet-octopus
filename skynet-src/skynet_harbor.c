@@ -1,6 +1,5 @@
 #include "skynet.h"
 #include "skynet_harbor.h"
-#include "skynet_service.h"
 
 #include <string.h>
 #include <stdio.h>
