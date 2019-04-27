@@ -6,11 +6,11 @@ PLATFORM_INC ?= platform
 CC := gcc 
 
 CFLAGS := -std=gnu99 -g -O2 -Wall -I$(PLATFORM_INC)
-SKYNET_DEFINES :=-DFD_SETSIZE=4096
+SKYNET_DEFINES :=-DFD_SETSIZE=1024
 
 # link
 LDFLAGS := -lplatform -lpthread -lws2_32 -L$(BIN_PATH)
-SHARED := -shared
+SHARED := -shared -fPIC
 EXPORT := -Wl,-E
 SHAREDLDFLAGS := -lskynet -lplatform -lws2_32 -L$(BIN_PATH)
 
@@ -21,15 +21,15 @@ SKYNET_SRC = skynet_service.c skynet_mq.c \
 
 SKYNET_EXE_SRC = skynet_main.c
 
-SERVICE = logger gate harbor
-
 all : \
 	$(BIN_PATH)/platform.dll \
 	$(BIN_PATH)/skynet.dll \
 	$(BIN_PATH)/skynet.exe \
+	$(LIB_PATH) \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
+	$(LIB_PATH)/libpython.so \
 
 $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
@@ -40,6 +40,9 @@ $(BIN_PATH)/skynet.dll : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
 $(BIN_PATH)/skynet.exe : $(foreach v, $(SKYNET_EXE_SRC), skynet-src/$(v))
 	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(EXPORT) -o $@ $^ -Iskynet-src $(LDFLAGS) $(SHAREDLDFLAGS) 
 
+$(LIB_PATH) :
+	mkdir $(LIB_PATH)
+
 $(LIB_PATH)/libgate.so : service-src/service_gate.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
 
@@ -48,6 +51,9 @@ $(LIB_PATH)/liblogger.so : service-src/service_logger.c
 
 $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
+
+$(LIB_PATH)/libpython.so : service-src/service_python.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python2.7 -lpython2.7
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so

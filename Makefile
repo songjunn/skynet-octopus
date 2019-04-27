@@ -7,7 +7,6 @@ CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -DDEBUG
 EXPORT := -Wl,-E
 LIBS := -lrt -ldl -lpthread
 SHARED := -shared -fPIC
-SKYNET_DEFINES :=-DFD_SETSIZE=4096
 
 SKYNET_SRC = skynet_main.c skynet_service.c skynet_mq.c \
 	skynet_server.c skynet_timer.c skynet_config.c skynet_harbor.c \
@@ -19,12 +18,13 @@ all : \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
+	$(LIB_PATH)/libpython.so \
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
 
 $(BIN_PATH)/skynet : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(EXPORT) $(LIBS) $(SKYNET_DEFINES) $^ -o $@ -Iskynet-src
+	$(CC) $(CFLAGS) $(EXPORT) $(LIBS) $^ -o $@ -Iskynet-src
 
 $(LIB_PATH)/libgate.so : service-src/service_gate.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
@@ -34,6 +34,9 @@ $(LIB_PATH)/liblogger.so : service-src/service_logger.c
 
 $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
+
+$(LIB_PATH)/libpython.so : service-src/service_python.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python2.7 -lpython2.7
 
 clean :
 	rm -f $(BIN_PATH)/skynet $(LIB_PATH)/*.so
