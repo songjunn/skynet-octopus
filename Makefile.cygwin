@@ -53,7 +53,7 @@ $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python2.7 -lpython2.7
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python2.7 -lpython27
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so

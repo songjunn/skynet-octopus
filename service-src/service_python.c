@@ -14,9 +14,6 @@ int python_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance->module_name = (char *)skynet_malloc(sizeof(char) * 64);
     sscanf(args, "%s", instance->module_name);
 
-    //Py_SetPythonHome("c:/Python27");
-    //Py_SetPythonHome("c:/Python27/Lib");
-
     Py_Initialize();
 
     // 检查初始化是否成功
