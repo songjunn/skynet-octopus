@@ -9,7 +9,7 @@
 
 struct connection {
     int fd;
-    char remote_name[32];
+    char * remote_name;
     struct databuffer * buffer;
 };
 
@@ -115,7 +115,9 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
                 struct connection *c = &g->conn[id];
                 c->fd = message->ud;
                 c->buffer = databuffer_create(BUFFER_MAX);
-                snprintf(c->remote_name, sizeof(c->remote_name)-1, "%s", remote_name);
+                c->remote_name = skynet_malloc(sz+1);
+                memcpy(c->remote_name, remote_name, sz);
+                c->remote_name[sz] = '\0';
 
                 forward_accept(ctx, c);
                 skynet_socket_start(ctx, c->fd);
@@ -131,6 +133,7 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
                 struct connection *c = &g->conn[id];
                 forward_close(ctx, c);
                 c->fd = -1;
+                skynet_free(c->remote_name);
                 databuffer_free(c->buffer);
             }
             break;
@@ -184,6 +187,7 @@ void gate_release(struct skynet_service * ctx) {
     for (i=0; i<g->connect_max; i++) {
         struct connection * c = &g->conn[i];
         if (c->fd >= 0) {
+            skynet_free(c->remote_name);
             databuffer_free(c->buffer);
             skynet_socket_close(ctx, c->fd);
         }
