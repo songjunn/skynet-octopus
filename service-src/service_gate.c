@@ -45,9 +45,10 @@ void forward_message(struct skynet_service * ctx, struct connection * conn) {
         if (sz > 0) {
             char msg[MESSAGE_BUFFER_MAX];
             sprintf(msg, "forward|%d|", sz);
-            memcpy(msg+strlen(msg), data, sz);
+            int hsz = strlen(msg);
+            memcpy(msg+hsz, data, sz);
 
-            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
+            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+sz);
         }
     }
 }
