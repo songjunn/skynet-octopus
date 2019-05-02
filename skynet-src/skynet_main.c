@@ -28,7 +28,7 @@ static struct monitor *m = NULL;
 
 void create_thread(pthread_t *thread, void *(*start_routine) (void *), void *arg) {
     if (pthread_create(thread,NULL, start_routine, arg)) {
-        skynet_logger_error(NULL, "Create thread failed");
+        skynet_logger_error(0, "Create thread failed");
         exit(1);
     }
 }
@@ -76,7 +76,7 @@ void * thread_worker(void *p) {
                     pthread_cond_wait(&m->cond, &m->mutex);
                 -- m->sleep;
                 if (pthread_mutex_unlock(&m->mutex)) {
-                    skynet_logger_error(NULL, "unlock mutex error");
+                    skynet_logger_error(0, "unlock mutex error");
                     exit(1);
                 }
             }
@@ -96,11 +96,11 @@ void skynet_start(unsigned harbor, unsigned thread) {
     m->pids = skynet_malloc(sizeof(*m->pids) * (thread+2));
 
     if (pthread_mutex_init(&m->mutex, NULL)) {
-        skynet_logger_error(NULL, "Init mutex error");
+        skynet_logger_error(0, "Init mutex error");
         exit(1);
     }
     if (pthread_cond_init(&m->cond, NULL)) {
-        skynet_logger_error(NULL, "Init cond error");
+        skynet_logger_error(0, "Init cond error");
         exit(1);
     }
 
@@ -110,13 +110,13 @@ void skynet_start(unsigned harbor, unsigned thread) {
     create_thread(m->pids+i, thread_timer, m);
     create_thread(m->pids+i+1, thread_socket, m);
 
-    skynet_logger_notice(NULL, "skynet start, harbor:%u workers:%u", harbor, thread);
+    skynet_logger_notice(0, "skynet start, harbor:%u workers:%u", harbor, thread);
 
     for (i=0;i<thread;i++) {
         pthread_join(*(m->pids+i), NULL); 
     }
 
-    skynet_logger_notice(NULL, "skynet shutdown, harbor:%u", harbor);
+    skynet_logger_notice(0, "skynet shutdown, harbor:%u", harbor);
 
     pthread_mutex_destroy(&m->mutex);
     pthread_cond_destroy(&m->cond);

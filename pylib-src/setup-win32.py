@@ -4,11 +4,11 @@ skynetExt = [
     Extension(
         'pySkynet',
         sources=['py-skynet.c'],
-        libraries=[],
+        libraries=['skynet'],
         extra_compile_args=[],
-        extra_link_args=['-shared', '-fPIC'],
+        extra_link_args=[],
         include_dirs = ['../skynet-src'],
-        library_dirs = []
+        library_dirs = ['../bin']
     )
 ]
 

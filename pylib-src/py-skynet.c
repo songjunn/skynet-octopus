@@ -34,7 +34,7 @@ static PyObject* py_skynet_sendhandle(PyObject *self, PyObject *args)
 
 static PyMethodDef PyModuleMethods[] = {
     {"skynet_sendname", py_skynet_sendname, METH_VARARGS, NULL},
-    {"skynet_sendhandle", py_skynet_sendname, METH_VARARGS, NULL},
+    {"skynet_sendhandle", py_skynet_sendhandle, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
  
