@@ -32,9 +32,23 @@ static PyObject* py_skynet_sendhandle(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject* py_skynet_logger_debug(PyObject *self, PyObject *args)
+{
+    char *msg;
+    uint32_t source;
+ 
+    if (!PyArg_ParseTuple(args, "is", &source, &msg))
+        return NULL;
+
+    skynet_logger_print(source, LOGGER_DEBUG, msg);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef PyModuleMethods[] = {
     {"skynet_sendname", py_skynet_sendname, METH_VARARGS, NULL},
     {"skynet_sendhandle", py_skynet_sendhandle, METH_VARARGS, NULL},
+    {"skynet_logger_debug", py_skynet_logger_debug, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
  
