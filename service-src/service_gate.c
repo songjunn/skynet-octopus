@@ -7,7 +7,7 @@
 #define BUFFER_MAX 20480
 #define MESSAGE_BUFFER_MAX 20496
 
-struct connection {
+struct gate_connection {
     int fd;
     char * remote_name;
     struct databuffer * buffer;
@@ -19,24 +19,24 @@ struct gate {
     int connect_max;
     char forward[64];
     struct hashid hash;
-    struct connection * conn;
+    struct gate_connection * conn;
 };
 
-void forward_accept(struct skynet_service * ctx, struct connection * conn) {
+void gate_accept(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     char msg[64];
     sprintf(msg, "connect|%s", conn->remote_name);
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
-void forward_close(struct skynet_service * ctx, struct connection * conn) {
+void gate_close(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     char msg[16];
     sprintf(msg, "disconnect");
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
-void forward_message(struct skynet_service * ctx, struct connection * conn) {
+void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     int sz = databuffer_readheader(conn->buffer);
     if (sz > 0) {
@@ -53,7 +53,7 @@ void forward_message(struct skynet_service * ctx, struct connection * conn) {
     }
 }
 
-void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
+void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
     struct gate * g = ctx->hook;
     char * command = msg;
     int i;
@@ -81,20 +81,20 @@ void cmd_ctrl(struct skynet_service * ctx, const char * msg, size_t sz) {
     }
 }
 
-void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
+void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
     struct gate * g = ctx->hook;
     switch(message->type) {
         case SKYNET_SOCKET_TYPE_DATA: {
             skynet_logger_debug(ctx->handle, "[gate]recv data fd %d size:%d", message->id, message->ud);
             int id = hashid_lookup(&g->hash, message->id);
             if (id >= 0) {
-                struct connection *c = &g->conn[id];
+                struct gate_connection *c = &g->conn[id];
                 if (databuffer_push(c->buffer, message->buffer, message->ud) <= 0) {
                     skynet_logger_error(ctx->handle, "[gate]connection recv data too long fd=%d size=%d", message->id, message->ud);
                     skynet_socket_close(ctx, message->id);
                     skynet_free(message->buffer);
                 } else {
-                    forward_message(ctx, c);
+                    gate_message(ctx, c);
                 }
             } else {
                 skynet_logger_error(ctx->handle, "[gate]recv unknown connection data fd=%d size=%d", message->id, message->ud);
@@ -112,14 +112,14 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
                 int id = hashid_insert(&g->hash, message->ud);
                 const char * remote_name = (const char *) (message + 1);
 
-                struct connection *c = &g->conn[id];
+                struct gate_connection *c = &g->conn[id];
                 c->fd = message->ud;
                 c->buffer = databuffer_create(BUFFER_MAX);
                 c->remote_name = skynet_malloc(sz+1);
                 memcpy(c->remote_name, remote_name, sz);
                 c->remote_name[sz] = '\0';
 
-                forward_accept(ctx, c);
+                gate_accept(ctx, c);
                 skynet_socket_start(ctx, c->fd);
                 skynet_logger_debug(ctx->handle, "[gate]accept fd=%d addr=%s", c->fd, c->remote_name);
             }
@@ -130,8 +130,8 @@ void dispatch_socket_message(struct skynet_service * ctx, const struct skynet_so
             skynet_logger_debug(ctx->handle, "[gate]close or error %d fd %d", message->type, message->id);
             int id = hashid_remove(&g->hash, message->id);
             if (id >= 0) {
-                struct connection *c = &g->conn[id];
-                forward_close(ctx, c);
+                struct gate_connection *c = &g->conn[id];
+                gate_close(ctx, c);
                 c->fd = -1;
                 skynet_free(c->remote_name);
                 databuffer_free(c->buffer);
@@ -169,14 +169,14 @@ int gate_create(struct skynet_service * ctx, int harbor, const char * args) {
     }
 
     hashid_init(&g->hash, g->connect_max);
-    g->conn = skynet_malloc(g->connect_max * sizeof(struct connection));
-    memset(g->conn, 0, g->connect_max * sizeof(struct connection));
+    g->conn = skynet_malloc(g->connect_max * sizeof(struct gate_connection));
+    memset(g->conn, 0, g->connect_max * sizeof(struct gate_connection));
     for (i=0; i<g->connect_max; i++) {
         g->conn[i].fd = -1;
     }
     ctx->hook = g;
 
-    skynet_logger_notice(ctx->handle, "[gate]listen port:%d fd %d", g->listen_port, g->listen_fd);
+    skynet_logger_notice(ctx->handle, "[gate]listen port:%d fd:%d", g->listen_port, g->listen_fd);
     skynet_socket_start(ctx, g->listen_fd);
     return 0;
 }
@@ -185,7 +185,7 @@ void gate_release(struct skynet_service * ctx) {
     int i;
     struct gate * g = ctx->hook;
     for (i=0; i<g->connect_max; i++) {
-        struct connection * c = &g->conn[i];
+        struct gate_connection * c = &g->conn[i];
         if (c->fd >= 0) {
             skynet_free(c->remote_name);
             databuffer_free(c->buffer);
@@ -203,10 +203,10 @@ void gate_release(struct skynet_service * ctx) {
 int gate_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     switch(type) {
         case SERVICE_SOCKET:
-            dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
+            gate_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
             break;
         case SERVICE_TEXT:
-            cmd_ctrl(ctx, msg, sz);
+            gate_dispatch_cmd(ctx, msg, sz);
             break;
         default:
             break;

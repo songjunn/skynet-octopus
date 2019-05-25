@@ -22,6 +22,7 @@ all : \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
 	$(LIB_PATH)/libpython.so \
+	$(LIB_PATH)/libhttp.so \
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
@@ -43,6 +44,9 @@ $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/local/python3/include/python3.7m -lpython3
+
+$(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/http
 
 clean :
 	rm -f $(BIN_PATH)/skynet $(LIB_PATH)/*.so
