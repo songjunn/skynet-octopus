@@ -25,14 +25,15 @@ struct gate {
 void gate_accept(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     char msg[64];
-    sprintf(msg, "connect|%s", conn->remote_name);
+    size_t sz = 
+    sprintf(msg, "connect|%d|%s", strlen(conn->remote_name), conn->remote_name);
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
 void gate_close(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     char msg[16];
-    sprintf(msg, "disconnect");
+    sprintf(msg, "disconnect|0|");
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
