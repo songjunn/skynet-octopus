@@ -55,6 +55,59 @@ void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
 }
 
 void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
+    int i;
+    struct gate * g = ctx->hook;
+    char * command = msg;
+
+    if (sz == 0)
+        return;
+    for (i=0;i<sz;i++) {
+        if (command[i]=='|') {
+            break;
+        }
+    }
+
+    if (memcmp(command, "forward", i) == 0) {
+        if (i >= sz || i+1 >= sz) {
+            return;
+        }
+        char * param = command+i+1;
+        char * fdstr = strsep(param, "|");
+        if (fdstr == NULL) {
+            return;
+        }
+        int fd = strtol(param, fdstr, 10);
+        int size = sz-(fdstr-command)-1;
+        if (size > 0) {
+            skynet_socket_send(ctx, fd, fdstr+1, size);
+        }
+    } else if (memcmp(command, "kick", i) == 0) {
+        if (i >= sz || i+1 >= sz) {
+            return;
+        }
+        char * param = command+i+1;
+        int fd = strtol(param, NULL, 10);
+        skynet_socket_close(ctx, fd);
+    } else if (memcmp(command, "connect", i) == 0) {
+        if (i >= sz || i+1 >= sz) {
+            return;
+        }
+        char * param = command+i+1;
+        char * portstr = strsep(param, "|");
+        if (portstr == NULL) {
+            return;
+        }
+        int port = strtol(param, portstr, 10);
+        int size = sz-(portstr-command)-1;
+        if (size > 0) {
+            char addr[size];
+            snprintf(addr, size, "%s", portstr+1);
+            skynet_socket_connect(ctx, addr, port);
+        }
+    }
+}
+
+/*void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
     struct gate * g = ctx->hook;
     char * command = msg;
     int i;
@@ -80,7 +133,7 @@ void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz)
         snprintf(addr, sz-size, "%s", command+size);
         skynet_socket_connect(ctx, addr, port);
     }
-}
+}*/
 
 void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
     struct gate * g = ctx->hook;
