@@ -44,19 +44,32 @@ void http_message(struct skynet_service * ctx, struct http_connection * conn) {
 }
 
 void http_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
+    int i;
     struct http * g = ctx->hook;
     char * command = msg;
-    int i;
-    if (sz == 0)
-        return;
+
     for (i=0;i<sz;i++) {
         if (command[i]=='|') {
             break;
         }
     }
+    if (i >= sz || i+1 >= sz) {
+        return;
+    }
 
+    char * param = command+i+1;
     if (memcmp(command, "response", i) == 0) {
-
+        char * fdstr = strchr(param, '|');
+        if (fdstr == NULL) {
+            return;
+        }
+        int size = sz-(fdstr-command)-1;
+        if (size > 0) {
+            int fd = atoi(param);
+            char * buffer = (char *)skynet_malloc(size);
+            memcpy(buffer, fdstr+1, size);
+            skynet_socket_send(ctx, fd, (void *)buffer, size);
+        }
     } else if (memcmp(command, "request", i) == 0) {
 
     }

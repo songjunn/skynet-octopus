@@ -54,86 +54,42 @@ void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
     }
 }
 
-void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
+void gate_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, size_t sz) {
     int i;
     struct gate * g = ctx->hook;
     char * command = msg;
 
-    if (sz == 0)
-        return;
     for (i=0;i<sz;i++) {
         if (command[i]=='|') {
             break;
         }
     }
-
+    
     if (memcmp(command, "forward", i) == 0) {
-        if (i >= sz || i+1 >= sz) {
-            return;
-        }
-        char * param = command+i+1;
-        char * fdstr = strsep(param, "|");
-        if (fdstr == NULL) {
-            return;
-        }
-        int fd = strtol(param, fdstr, 10);
-        int size = sz-(fdstr-command)-1;
+        int size = sz-i-1;
         if (size > 0) {
-            skynet_socket_send(ctx, fd, fdstr+1, size);
+            char * param = command+i+1;
+            char * buffer = (char *)skynet_malloc(size);
+            memcpy(buffer, param, size);
+            skynet_socket_send(ctx, fd, (void *)buffer, size);
         }
     } else if (memcmp(command, "kick", i) == 0) {
-        if (i >= sz || i+1 >= sz) {
-            return;
-        }
-        char * param = command+i+1;
-        int fd = strtol(param, NULL, 10);
         skynet_socket_close(ctx, fd);
     } else if (memcmp(command, "connect", i) == 0) {
-        if (i >= sz || i+1 >= sz) {
-            return;
-        }
         char * param = command+i+1;
-        char * portstr = strsep(param, "|");
+        char * portstr = strchr(param, "|");
         if (portstr == NULL) {
             return;
         }
-        int port = strtol(param, portstr, 10);
         int size = sz-(portstr-command)-1;
         if (size > 0) {
-            char addr[size];
+            int port = atoi(param);
+            char addr[size+1];
             snprintf(addr, size, "%s", portstr+1);
             skynet_socket_connect(ctx, addr, port);
         }
     }
 }
-
-/*void gate_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
-    struct gate * g = ctx->hook;
-    char * command = msg;
-    int i;
-    if (sz == 0)
-        return;
-    for (i=0;i<sz;i++) {
-        if (command[i]=='|') {
-            break;
-        }
-    }
-
-    if (memcmp(command, "forward", i) == 0) {
-        int fd = *(int *) (command+i+1);
-        int size = i+sizeof(fd)+2;
-        skynet_socket_send(ctx, fd, command+size, sz-size);
-    } else if (memcmp(command, "kick", i) == 0) {
-        int fd = *(int *) (command+i+1);
-        skynet_socket_close(ctx, fd);
-    } else if (memcmp(command, "connect", i) == 0) {
-        int port = *(int *) (command+i+1);
-        int size = i+sizeof(port)+2;
-        char addr[sz-size+1];
-        snprintf(addr, sz-size, "%s", command+size);
-        skynet_socket_connect(ctx, addr, port);
-    }
-}*/
 
 void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
     struct gate * g = ctx->hook;
@@ -260,7 +216,7 @@ int gate_callback(struct skynet_service * ctx, uint32_t source, uint32_t session
             gate_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
             break;
         case SERVICE_TEXT:
-            gate_dispatch_cmd(ctx, msg, sz);
+            gate_dispatch_cmd(ctx, session, msg, sz);
             break;
         default:
             break;

@@ -176,7 +176,7 @@ void harbor_cluster_reconnect(struct skynet_service * ctx, struct harbor * h, in
 }
 
 int harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
-    struct harbor * h = (struct harbor *) skynet_malloc(sizeof(struct harbor));
+    struct harbor * h = skynet_malloc(sizeof(struct harbor));
     h->harbor_id = harbor;
     ctx->hook = h;
     sscanf(args, "%d", &h->listen_port);

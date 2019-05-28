@@ -23,7 +23,7 @@ int python_create(struct skynet_service * ctx, int harbor, const char * args) {
     PyRun_SimpleString("import sys");
     PyRun_SimpleString(cmd);
 
-    struct python_client * instance = (struct python_client *)skynet_malloc(sizeof(struct python_client));
+    struct python_client * instance = skynet_malloc(sizeof(struct python_client));
     ctx->hook = instance;
 
     instance->pModule = PyImport_ImportModule(name);
