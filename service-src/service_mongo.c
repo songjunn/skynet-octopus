@@ -46,7 +46,7 @@ void mongo_insert(struct skynet_service * ctx, const char * dbname, const char *
         skynet_logger_error(ctx, "[MongoDB] Insert value error, %s:%s, %s", dbname, collection, value);
         skynet_logger_error(ctx, "[MongoDB] Exception: %s ", error.message);
     } else {
-        client = mongoc_client_get_collection ((struct mongo_client *)ctx->hook, dbname, collection);
+        client = mongoc_client_get_collection (((struct mongo_client *)ctx->hook)->client, dbname, collection);
         if (!mongoc_collection_insert (client, MONGOC_INSERT_NONE, bson, NULL, &error)) {
             skynet_logger_error(ctx, "[MongoDB] Insert Failed, %s:%s, %s", dbname, collection, value);
             skynet_logger_error(ctx, "[MongoDB] Exception: %s ", error.message);
@@ -71,7 +71,7 @@ void mongo_remove(struct skynet_service * ctx, const char * dbname, const char *
     } else {
         bson_query = bson_new ();
     }
-    client = mongoc_client_get_collection (mc, dbname, collection);
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_remove (client, MONGOC_REMOVE_SINGLE_REMOVE, bson_query, NULL, &error)) {
         skynet_logger_error(ctx, "[MongoDB] Delete Failed, %s:%s, %s", dbname, collection, query);
@@ -97,7 +97,7 @@ void mongo_update(struct skynet_service * ctx, const char * dbname, const char *
         bson_query = bson_new ();
     }
     bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
-    client = mongoc_client_get_collection (mc, dbname, collection);
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_update (client, MONGOC_UPDATE_NONE, bson_query, bson_value, NULL, &error)) {
         skynet_logger_error(ctx, "[MongoDB] Update Failed, %s:%s, %s, %s", dbname, collection, query, value);
@@ -125,7 +125,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
         bson_query = bson_new ();
     }
     bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
-    client = mongoc_client_get_collection (mc, dbname, collection);
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_update (client, MONGOC_UPDATE_UPSERT, bson_query, bson_value, NULL, &error)) {
         skynet_logger_error(ctx, "[MongoDB] Upsert Failed, %s:%s, %s, %s", dbname, collection, query, value);
@@ -228,11 +228,20 @@ int mongo_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
                 break;
             }
 
-            if (memcmp(command, "insert", i) == 0) {
+            if (memcmp(command, "update", i) == 0) {
+
+            } else if (memcmp(command, "upsert", i) == 0) {
+
+            } else if (memcmp(command, "insert", i) == 0) {
                 char * param = command+i+1;
+                if (param == NULL) break;
                 char * dbname = strsep(&param, "|");
+                if (dbname == NULL) break;
                 char * collec = strsep(&param, "|");
+                if (collec == NULL) break;
                 mongo_insert(ctx, dbname, collec, param);
+            } else if (memcmp(command, "remove", i)) {
+
             }
         } break;
         default: break;
