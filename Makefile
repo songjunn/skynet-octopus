@@ -23,7 +23,7 @@ all : \
 	$(LIB_PATH)/libharbor.so \
 	$(LIB_PATH)/libpython.so \
 	$(LIB_PATH)/libhttp.so \
-	$(LIB_PATH)/libmongo.so \
+	#$(LIB_PATH)/libmongo.so \
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
