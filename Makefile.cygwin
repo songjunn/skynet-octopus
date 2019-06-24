@@ -30,6 +30,8 @@ all : \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
 	$(LIB_PATH)/libpython.so \
+	$(LIB_PATH)/libhttp.so \
+	#$(LIB_PATH)/libmongo.so \
 
 $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
@@ -53,7 +55,13 @@ $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python2.7 -lpython27
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python3.7m -lpython37
+
+$(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/http
+
+$(LIB_PATH)/libmongo.so : service-src/service_mongo.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I3rd/mongoc/include/libbson-1.0 -I3rd/mongoc/include/libmongoc-1.0 -L3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so

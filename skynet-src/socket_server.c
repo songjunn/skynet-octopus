@@ -340,17 +340,17 @@ socket_server_create(uint64_t time) {
 	int fd[2];
 	poll_fd efd = sp_create();
 	if (sp_invalid(efd)) {
-		skynet_logger_error(NULL, "socket-server: create event pool failed.\n");
+		skynet_logger_error(0, "socket-server: create event pool failed.\n");
 		return NULL;
 	}
 	if (pipe(fd)) {
 		sp_release(efd);
-		skynet_logger_error(NULL, "socket-server: create socket pair failed.\n");
+		skynet_logger_error(0, "socket-server: create socket pair failed.\n");
 		return NULL;
 	}
 	if (sp_add(efd, fd[0], NULL)) {
 		// add recvctrl_fd to event poll
-		skynet_logger_error(NULL, "socket-server: can't add server fd to event pool.\n");
+		skynet_logger_error(0, "socket-server: can't add server fd to event pool.\n");
 		close(fd[0]);
 		close(fd[1]);
 		sp_release(efd);
@@ -648,7 +648,7 @@ send_list_udp(struct socket_server *ss, struct socket *s, struct wb_list *list, 
 		union sockaddr_all sa;
 		socklen_t sasz = udp_socket_address(s, tmp->udp_address, &sa);
 		if (sasz == 0) {
-			skynet_logger_error(NULL, "socket-server : udp (%d) type mismatch.\n", s->id);
+			skynet_logger_error(0, "socket-server : udp (%d) type mismatch.\n", s->id);
 			drop_udp(ss, s, list, tmp);
 			return -1;
 		}
@@ -659,7 +659,7 @@ send_list_udp(struct socket_server *ss, struct socket *s, struct wb_list *list, 
 			case AGAIN_WOULDBLOCK:
 				return -1;
 			}
-			skynet_logger_error(NULL, "socket-server : udp (%d) sendto error %s.\n",s->id, strerror(errno));
+			skynet_logger_error(0, "socket-server : udp (%d) sendto error %s.\n",s->id, strerror(errno));
 			drop_udp(ss, s, list, tmp);
 			return -1;
 		}
@@ -852,7 +852,7 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 		return -1;
 	}
 	if (s->type == SOCKET_TYPE_PLISTEN || s->type == SOCKET_TYPE_LISTEN) {
-		skynet_logger_error(NULL, "socket-server: write to listen fd %d.\n", id);
+		skynet_logger_error(0, "socket-server: write to listen fd %d.\n", id);
 		so.free_func(request->buffer);
 		return -1;
 	}
@@ -868,7 +868,7 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 			socklen_t sasz = udp_socket_address(s, udp_address, &sa);
 			if (sasz == 0) {
 				// udp type mismatch, just drop it.
-				skynet_logger_error(NULL, "socket-server: udp socket (%d) type mistach.\n", id);
+				skynet_logger_error(0, "socket-server: udp socket (%d) type mistach.\n", id);
 				so.free_func(request->buffer);
 				return -1;
 			}
@@ -1032,7 +1032,7 @@ block_readpipe(int pipefd, void *buffer, int sz) {
 		if (n<0) {
 			if (errno == EINTR)
 				continue;
-			skynet_logger_error(NULL, "socket-server : read pipe error %s.\n",strerror(errno));
+			skynet_logger_error(0, "socket-server : read pipe error %s.\n",strerror(errno));
 			return;
 		}
 		// must atomic read from a pipe
@@ -1182,7 +1182,7 @@ ctrl_cmd(struct socket_server *ss, struct socket_message *result) {
 		add_udp_socket(ss, (struct request_udp *)buffer);
 		return -1;
 	default:
-		skynet_logger_error(NULL, "socket-server: Unknown ctrl %c.\n",type);
+		skynet_logger_error(0, "socket-server: Unknown ctrl %c.\n",type);
 		return -1;
 	};
 
@@ -1201,7 +1201,7 @@ forward_message_tcp(struct socket_server *ss, struct socket *s, struct socket_lo
 		case EINTR:
 			break;
 		case AGAIN_WOULDBLOCK:
-			skynet_logger_error(NULL, "socket-server: EAGAIN capture.\n");
+			skynet_logger_error(0, "socket-server: EAGAIN capture.\n");
 			break;
 		default:
 			// close when error
@@ -1462,7 +1462,7 @@ socket_server_poll(struct socket_server *ss, struct socket_message * result, int
 			break;
 		}
 		case SOCKET_TYPE_INVALID:
-			skynet_logger_error(NULL, "socket-server: invalid socket\n");
+			skynet_logger_error(0, "socket-server: invalid socket\n");
 			break;
 		default:
 			if (e->read) {
@@ -1526,7 +1526,7 @@ send_request(struct socket_server *ss, struct request_package *request, char typ
 		ssize_t n = write(ss->sendctrl_fd, &request->header[6], len+2);
 		if (n<0) {
 			if (errno != EINTR) {
-				skynet_logger_error(NULL, "socket-server : send ctrl command error %s.\n", strerror(errno));
+				skynet_logger_error(0, "socket-server : send ctrl command error %s.\n", strerror(errno));
 			}
 			continue;
 		}
@@ -1539,7 +1539,7 @@ static int
 open_request(struct socket_server *ss, struct request_package *req, uintptr_t opaque, const char *addr, int port) {
 	int len = strlen(addr);
 	if (len + sizeof(req->u.open) >= 256) {
-		skynet_logger_error(NULL, "socket-server : Invalid addr %s.\n",addr);
+		skynet_logger_error(0, "socket-server : Invalid addr %s.\n",addr);
 		return -1;
 	}
 	int id = reserve_id(ss);
@@ -1594,7 +1594,7 @@ socket_server_send(struct socket_server *ss, int id, const void * buffer, int sz
 				union sockaddr_all sa;
 				socklen_t sasz = udp_socket_address(s, s->p.udp_address, &sa);
 				if (sasz == 0) {
-					skynet_logger_error(NULL, "socket-server : set udp (%d) address first.\n", id);
+					skynet_logger_error(0, "socket-server : set udp (%d) address first.\n", id);
 					socket_unlock(&l);
 					so.free_func((void *)buffer);
 					return -1;

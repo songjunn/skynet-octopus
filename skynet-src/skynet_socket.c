@@ -108,7 +108,7 @@ skynet_socket_poll() {
 		forward_message(SKYNET_SOCKET_TYPE_WARNING, false, &result);
 		break;
 	default:
-		skynet_logger_error(NULL, "Unknown socket message type %d.",type);
+		skynet_logger_error(0, "Unknown socket message type %d.",type);
 		return -1;
 	}
 	if (more) {

@@ -2,7 +2,6 @@
 #include "skynet.h"
 
 struct python_client {
-    char * module_name;
     PyObject * pModule;
     PyObject * pFuncCreate;
     PyObject * pFuncRelease;
@@ -10,9 +9,9 @@ struct python_client {
 };
 
 int python_create(struct skynet_service * ctx, int harbor, const char * args) {
-    struct python_client * instance = (struct python_client *)skynet_malloc(sizeof(struct python_client));
-    instance->module_name = (char *)skynet_malloc(sizeof(char) * 64);
-    sscanf(args, "%s", instance->module_name);
+    char name[64], path[256], cmd[512];
+    sscanf(args, "%[^','],%s", path, name);
+    sprintf(cmd, "sys.path.append('%s')", path);
 
     Py_Initialize();
 
@@ -22,11 +21,12 @@ int python_create(struct skynet_service * ctx, int harbor, const char * args) {
     }
 
     PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append('./scripts')");
+    PyRun_SimpleString(cmd);
 
+    struct python_client * instance = skynet_malloc(sizeof(struct python_client));
     ctx->hook = instance;
 
-    instance->pModule = PyImport_ImportModule(instance->module_name);
+    instance->pModule = PyImport_ImportModule(name);
     PyErr_Print();
 
     instance->pFuncCreate = PyObject_GetAttrString(instance->pModule, "create");
