@@ -208,78 +208,78 @@ void harbor_release(struct skynet_service * ctx) {
 int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     struct harbor * h = ctx->hook;
     switch (type) {
-        case SERVICE_REMOTE: {
-            harbor_forward_remote_message(ctx, msg, sz);
-            break;
-        }
-        case SERVICE_SOCKET: {
-            const struct skynet_socket_message * smsg = (const struct skynet_socket_message *) msg;
-            //size_t size = sz - sizeof(struct skynet_socket_message);
+    case SERVICE_REMOTE: {
+        harbor_forward_remote_message(ctx, msg, sz);
+        break;
+    }
+    case SERVICE_SOCKET: {
+        const struct skynet_socket_message * smsg = (const struct skynet_socket_message *) msg;
+        //size_t size = sz - sizeof(struct skynet_socket_message);
 
-            switch(smsg->type) {
-                case SKYNET_SOCKET_TYPE_DATA: {
-                    skynet_logger_debug(ctx->handle, "[harbor]recv fd=%d size=%d", smsg->id, smsg->ud);
-                    int id = hashid_lookup(&h->hash, smsg->id);
-                    if (id >= 0) {
-                        if (databuffer_push(h->buffer[id], smsg->buffer, smsg->ud) <= 0) {
-                            skynet_logger_error(ctx->handle, "[harbor]connection %d recv data too long, size:%d", smsg->id, smsg->ud);
-                            skynet_socket_close(ctx, smsg->id);
-                            skynet_free(smsg->buffer);
-                        }
-                        harbor_forward_local_message(ctx, h->buffer[id]);
-                    } else {
-                        skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
-                        skynet_socket_close(ctx, smsg->id);
-                        skynet_free(smsg->buffer);
-                    }
-                    break;
+        switch(smsg->type) {
+        case SKYNET_SOCKET_TYPE_DATA: {
+            skynet_logger_debug(ctx->handle, "[harbor]recv fd=%d size=%d", smsg->id, smsg->ud);
+            int id = hashid_lookup(&h->hash, smsg->id);
+            if (id >= 0) {
+                if (databuffer_push(h->buffer[id], smsg->buffer, smsg->ud) <= 0) {
+                    skynet_logger_error(ctx->handle, "[harbor]connection %d recv data too long, size:%d", smsg->id, smsg->ud);
+                    skynet_socket_close(ctx, smsg->id);
+                    skynet_free(smsg->buffer);
                 }
-                case SKYNET_SOCKET_TYPE_ACCEPT: {
-                    if (hashid_full(&h->hash)) {
-                        skynet_socket_close(ctx, smsg->ud);
-                        skynet_logger_debug(ctx->handle, "[harbor]accept max fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
-                    } else {
-                        int id = hashid_insert(&h->hash, smsg->ud);
-                        h->buffer[id] = databuffer_create(BUFFER_MAX);
-                        skynet_socket_start(ctx, smsg->ud);
-                        skynet_logger_debug(ctx->handle, "[harbor]accept fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
-                    }
-                    break;
-                }
-                case SKYNET_SOCKET_TYPE_CLOSE:
-                case SKYNET_SOCKET_TYPE_ERROR: {
-                    skynet_logger_debug(ctx->handle, "[harbor]close fd=%d", smsg->id);
-                    struct harbor_cluster * cluster = harbor_get_cluster_fd(h, smsg->id);
-                    if (cluster) {
-                        cluster->fd = 0;
-                        skynet_timer_register(ctx->handle, &cluster->harbor_id, sizeof(cluster->harbor_id), 1000);
-                    }
-
-                    int id = hashid_lookup(&h->hash, smsg->id);
-                    if (id >= 0) {
-                        databuffer_free(h->buffer[id]);
-                    }
-                    break;
-                }
-                case SKYNET_SOCKET_TYPE_CONNECT:
-                    skynet_logger_debug(ctx->handle, "[harbor]connected fd=%d", smsg->id);
-                    break;
-                case SKYNET_SOCKET_TYPE_WARNING:
-                    skynet_logger_warn(ctx->handle, "[harbor]fd (%d) send buffer (%d)K", smsg->id, smsg->ud);
-                    break;
-                default:
-                    skynet_logger_error(ctx->handle, "[harbor]recv error message type %d", smsg->type);
-                    break;
+                harbor_forward_local_message(ctx, h->buffer[id]);
+            } else {
+                skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
+                skynet_socket_close(ctx, smsg->id);
+                skynet_free(smsg->buffer);
             }
             break;
         }
-        case SERVICE_TIMER: {
-            int harbor_id = *(int *) msg;
-            harbor_cluster_reconnect(ctx, h, harbor_id);
+        case SKYNET_SOCKET_TYPE_ACCEPT: {
+            if (hashid_full(&h->hash)) {
+                skynet_socket_close(ctx, smsg->ud);
+                skynet_logger_debug(ctx->handle, "[harbor]accept max fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
+            } else {
+                int id = hashid_insert(&h->hash, smsg->ud);
+                h->buffer[id] = databuffer_create(BUFFER_MAX);
+                skynet_socket_start(ctx, smsg->ud);
+                skynet_logger_debug(ctx->handle, "[harbor]accept fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
+            }
             break;
         }
-        default:
+        case SKYNET_SOCKET_TYPE_CLOSE:
+        case SKYNET_SOCKET_TYPE_ERROR: {
+            skynet_logger_debug(ctx->handle, "[harbor]close fd=%d", smsg->id);
+            struct harbor_cluster * cluster = harbor_get_cluster_fd(h, smsg->id);
+            if (cluster) {
+                cluster->fd = 0;
+                skynet_timer_register(ctx->handle, &cluster->harbor_id, sizeof(cluster->harbor_id), 1000);
+            }
+
+            int id = hashid_lookup(&h->hash, smsg->id);
+            if (id >= 0) {
+                databuffer_free(h->buffer[id]);
+            }
             break;
+        }
+        case SKYNET_SOCKET_TYPE_CONNECT:
+            skynet_logger_debug(ctx->handle, "[harbor]connected fd=%d", smsg->id);
+            break;
+        case SKYNET_SOCKET_TYPE_WARNING:
+            skynet_logger_warn(ctx->handle, "[harbor]fd (%d) send buffer (%d)K", smsg->id, smsg->ud);
+            break;
+        default:
+            skynet_logger_error(ctx->handle, "[harbor]recv error message type %d", smsg->type);
+            break;
+        }
+        break;
+    }
+    case SERVICE_TIMER: {
+        int harbor_id = *(int *) msg;
+        harbor_cluster_reconnect(ctx, h, harbor_id);
+        break;
+    }
+    default:
+        break;
     }
 
     return 0;

@@ -40,11 +40,11 @@ void logger_format_time(char * buffer, size_t size) {
 
 void logger_format_head(char * buffer, size_t size, int level, uint32_t source) {
     switch (level) {
-        case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x] ", source); break;
-        case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x] ", source); break;
-        case LOGGER_NOTICE: snprintf(buffer, size, "NOTICE [:%04x] ", source); break;
-        case LOGGER_ERROR: snprintf(buffer, size, "ERROR [:%04x] ", source); break;
-        default: break;
+    case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x] ", source); break;
+    case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x] ", source); break;
+    case LOGGER_NOTICE: snprintf(buffer, size, "NOTICE [:%04x] ", source); break;
+    case LOGGER_ERROR: snprintf(buffer, size, "ERROR [:%04x] ", source); break;
+    default: break;
     }
 }
 

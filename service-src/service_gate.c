@@ -94,77 +94,77 @@ void gate_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, si
 void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
     struct gate * g = ctx->hook;
     switch(message->type) {
-        case SKYNET_SOCKET_TYPE_DATA: {
-            skynet_logger_debug(ctx->handle, "[gate]recv data fd %d size:%d", message->id, message->ud);
-            int id = hashid_lookup(&g->hash, message->id);
-            if (id >= 0) {
-                struct gate_connection *c = &g->conn[id];
-                if (databuffer_push(c->buffer, message->buffer, message->ud) <= 0) {
-                    skynet_logger_error(ctx->handle, "[gate]connection recv data too long fd=%d size=%d", message->id, message->ud);
-                    skynet_socket_close(ctx, message->id);
-                    skynet_free(message->buffer);
-                } else {
-                    gate_message(ctx, c);
-                }
-            } else {
-                skynet_logger_error(ctx->handle, "[gate]recv unknown connection data fd=%d size=%d", message->id, message->ud);
+    case SKYNET_SOCKET_TYPE_DATA: {
+        skynet_logger_debug(ctx->handle, "[gate]recv data fd %d size:%d", message->id, message->ud);
+        int id = hashid_lookup(&g->hash, message->id);
+        if (id >= 0) {
+            struct gate_connection *c = &g->conn[id];
+            if (databuffer_push(c->buffer, message->buffer, message->ud) <= 0) {
+                skynet_logger_error(ctx->handle, "[gate]connection recv data too long fd=%d size=%d", message->id, message->ud);
                 skynet_socket_close(ctx, message->id);
                 skynet_free(message->buffer);
-            }
-            break;
-        }
-        case SKYNET_SOCKET_TYPE_ACCEPT: {
-            assert(g->listen_fd == message->id);
-            if (hashid_full(&g->hash)) {
-                skynet_logger_error(ctx->handle, "[gate]full on accepting, alloc:%d, accepted:%d, close socket:%d", g->connect_max, g->hash.count, message->ud);
-                skynet_socket_close(ctx, message->ud);
             } else {
-                int id = hashid_insert(&g->hash, message->ud);
-                const char * remote_name = (const char *) (message + 1);
+                gate_message(ctx, c);
+            }
+        } else {
+            skynet_logger_error(ctx->handle, "[gate]recv unknown connection data fd=%d size=%d", message->id, message->ud);
+            skynet_socket_close(ctx, message->id);
+            skynet_free(message->buffer);
+        }
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_ACCEPT: {
+        assert(g->listen_fd == message->id);
+        if (hashid_full(&g->hash)) {
+            skynet_logger_error(ctx->handle, "[gate]full on accepting, alloc:%d, accepted:%d, close socket:%d", g->connect_max, g->hash.count, message->ud);
+            skynet_socket_close(ctx, message->ud);
+        } else {
+            int id = hashid_insert(&g->hash, message->ud);
+            const char * remote_name = (const char *) (message + 1);
 
-                struct gate_connection *c = &g->conn[id];
-                c->fd = message->ud;
-                c->buffer = databuffer_create(BUFFER_MAX);
-                c->remote_name = skynet_malloc(sz+1);
-                memcpy(c->remote_name, remote_name, sz);
-                c->remote_name[sz] = '\0';
+            struct gate_connection *c = &g->conn[id];
+            c->fd = message->ud;
+            c->buffer = databuffer_create(BUFFER_MAX);
+            c->remote_name = skynet_malloc(sz+1);
+            memcpy(c->remote_name, remote_name, sz);
+            c->remote_name[sz] = '\0';
 
-                gate_accept(ctx, c);
-                skynet_socket_start(ctx, c->fd);
-                skynet_logger_debug(ctx->handle, "[gate]accept fd=%d addr=%s", c->fd, c->remote_name);
-            }
-            break;
+            gate_accept(ctx, c);
+            skynet_socket_start(ctx, c->fd);
+            skynet_logger_debug(ctx->handle, "[gate]accept fd=%d addr=%s", c->fd, c->remote_name);
         }
-        case SKYNET_SOCKET_TYPE_CLOSE:
-        case SKYNET_SOCKET_TYPE_ERROR: {
-            skynet_logger_debug(ctx->handle, "[gate]close or error %d fd %d", message->type, message->id);
-            int id = hashid_remove(&g->hash, message->id);
-            if (id >= 0) {
-                struct gate_connection *c = &g->conn[id];
-                gate_close(ctx, c);
-                c->fd = -1;
-                skynet_free(c->remote_name);
-                databuffer_free(c->buffer);
-            }
-            break;
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_CLOSE:
+    case SKYNET_SOCKET_TYPE_ERROR: {
+        skynet_logger_debug(ctx->handle, "[gate]close or error %d fd %d", message->type, message->id);
+        int id = hashid_remove(&g->hash, message->id);
+        if (id >= 0) {
+            struct gate_connection *c = &g->conn[id];
+            gate_close(ctx, c);
+            c->fd = -1;
+            skynet_free(c->remote_name);
+            databuffer_free(c->buffer);
         }
-        case SKYNET_SOCKET_TYPE_CONNECT: {
-            if (message->id == g->listen_fd) {
-                break; // start listening
-            }
-            int id = hashid_lookup(&g->hash, message->id);
-            if (id <= 0) {
-                skynet_logger_error(ctx->handle, "[gate]connected unknown connection %d message", message->id);
-                skynet_socket_close(ctx, message->id);
-            }
-            break;
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_CONNECT: {
+        if (message->id == g->listen_fd) {
+            break; // start listening
         }
-        case SKYNET_SOCKET_TYPE_WARNING:
-            skynet_logger_warn(ctx->handle, "[gate]fd (%d) send buffer (%d)K", message->id, message->ud);
-            break;
-        default:
-            skynet_logger_error(ctx->handle, "[gate]recv error message type %d", message->type);
-            break;
+        int id = hashid_lookup(&g->hash, message->id);
+        if (id <= 0) {
+            skynet_logger_error(ctx->handle, "[gate]connected unknown connection %d message", message->id);
+            skynet_socket_close(ctx, message->id);
+        }
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_WARNING:
+        skynet_logger_warn(ctx->handle, "[gate]fd (%d) send buffer (%d)K", message->id, message->ud);
+        break;
+    default:
+        skynet_logger_error(ctx->handle, "[gate]recv error message type %d", message->type);
+        break;
     }
 }
 
@@ -212,14 +212,14 @@ void gate_release(struct skynet_service * ctx) {
 
 int gate_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     switch(type) {
-        case SERVICE_SOCKET:
-            gate_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
-            break;
-        case SERVICE_TEXT:
-            gate_dispatch_cmd(ctx, session, msg, sz);
-            break;
-        default:
-            break;
+    case SERVICE_SOCKET:
+        gate_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
+        break;
+    case SERVICE_TEXT:
+        gate_dispatch_cmd(ctx, session, msg, sz);
+        break;
+    default:
+        break;
     }
     return 0;
 }

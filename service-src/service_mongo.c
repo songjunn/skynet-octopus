@@ -215,36 +215,61 @@ void mongo_release(struct skynet_service * ctx) {
 
 int mongo_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz) {
     switch(type) {
-        case SERVICE_TEXT: {
-            int i;
-            char * command = msg;
+    case SERVICE_TEXT: {
+        int i;
+        char * command = msg;
 
-            for (i=0;i<sz;i++) {
-                if (command[i]=='|') {
-                    break;
-                }
-            }
-            if (i >= sz || i+1 >= sz) {
+        for (i=0;i<sz;i++) {
+            if (command[i]=='|') {
                 break;
             }
+        }
+        if (i >= sz || i+1 >= sz) {
+            break;
+        }
 
-            if (memcmp(command, "update", i) == 0) {
-
-            } else if (memcmp(command, "upsert", i) == 0) {
-
-            } else if (memcmp(command, "insert", i) == 0) {
-                char * param = command+i+1;
-                if (param == NULL) break;
-                char * dbname = strsep(&param, "|");
-                if (dbname == NULL) break;
-                char * collec = strsep(&param, "|");
-                if (collec == NULL) break;
-                mongo_insert(ctx, dbname, collec, param);
-            } else if (memcmp(command, "remove", i)) {
-
-            }
-        } break;
-        default: break;
+        if (memcmp(command, "update", i) == 0) {
+            char * param = command+i+1;
+            if (param == NULL) break;
+            char * dbname = strsep(&param, "|");
+            if (dbname == NULL) break;
+            char * collec = strsep(&param, "|");
+            if (collec == NULL) break;
+            char * query = strsep(&param, "|");
+            if (query == NULL) break;
+            mongo_update(ctx, dbname, collec, query, param);
+        } else if (memcmp(command, "upsert", i) == 0) {
+            char * param = command+i+1;
+            if (param == NULL) break;
+            char * dbname = strsep(&param, "|");
+            if (dbname == NULL) break;
+            char * collec = strsep(&param, "|");
+            if (collec == NULL) break;
+            char * query = strsep(&param, "|");
+            if (query == NULL) break;
+            mongo_upsert(ctx, dbname, collec, query, param);
+        } else if (memcmp(command, "insert", i) == 0) {
+            char * param = command+i+1;
+            if (param == NULL) break;
+            char * dbname = strsep(&param, "|");
+            if (dbname == NULL) break;
+            char * collec = strsep(&param, "|");
+            if (collec == NULL) break;
+            mongo_insert(ctx, dbname, collec, param);
+        } else if (memcmp(command, "findone", i) == 0) {
+        } else if (memcmp(command, "remove", i) == 0) {
+            char * param = command+i+1;
+            if (param == NULL) break;
+            char * dbname = strsep(&param, "|");
+            if (dbname == NULL) break;
+            char * collec = strsep(&param, "|");
+            if (collec == NULL) break;
+            mongo_remove(ctx, dbname, collec, param);
+        }
+        break;
+    }
+    default: 
+        break;
     }
 
     return 0;

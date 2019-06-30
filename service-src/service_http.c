@@ -78,78 +78,78 @@ void http_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz)
 void http_dispatch_socket_message(struct skynet_service * ctx, const struct skynet_socket_message * message, size_t sz) {
     struct http * g = ctx->hook;
     switch(message->type) {
-        case SKYNET_SOCKET_TYPE_DATA: {
-            skynet_logger_debug(ctx->handle, "[http]recv data fd %d size:%d", message->id, message->ud);
-            int id = hashid_lookup(&g->hash, message->id);
-            if (id >= 0) {
-                struct http_connection *c = &g->conn[id];
-                int nparsed = proxy_parse(c->buffer, message->buffer, message->ud);
-                if (nparsed < 0) {
-                    skynet_logger_error(ctx->handle, "[http]connection recv data too long fd=%d size=%d", message->id, message->ud);
-                    skynet_socket_close(ctx, message->id);
-                    skynet_free(message->buffer);
-                } else if (nparsed > 0) {
-                    http_message(ctx, c);
-                }
-            } else {
-                skynet_logger_error(ctx->handle, "[http]recv unknown connection data fd=%d size=%d", message->id, message->ud);
+    case SKYNET_SOCKET_TYPE_DATA: {
+        skynet_logger_debug(ctx->handle, "[http]recv data fd %d size:%d", message->id, message->ud);
+        int id = hashid_lookup(&g->hash, message->id);
+        if (id >= 0) {
+            struct http_connection *c = &g->conn[id];
+            int nparsed = proxy_parse(c->buffer, message->buffer, message->ud);
+            if (nparsed < 0) {
+                skynet_logger_error(ctx->handle, "[http]connection recv data too long fd=%d size=%d", message->id, message->ud);
                 skynet_socket_close(ctx, message->id);
                 skynet_free(message->buffer);
+            } else if (nparsed > 0) {
+                http_message(ctx, c);
             }
-            break;
+        } else {
+            skynet_logger_error(ctx->handle, "[http]recv unknown connection data fd=%d size=%d", message->id, message->ud);
+            skynet_socket_close(ctx, message->id);
+            skynet_free(message->buffer);
         }
-        case SKYNET_SOCKET_TYPE_ACCEPT: {
-            assert(g->listen_fd == message->id);
-            if (hashid_full(&g->hash)) {
-                skynet_logger_error(ctx->handle, "[http]full on accepting, alloc:%d, accepted:%d, close socket:%d", g->connect_max, g->hash.count, message->ud);
-                skynet_socket_close(ctx, message->ud);
-            } else {
-                int id = hashid_insert(&g->hash, message->ud);
-                const char * remote_name = (const char *) (message + 1);
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_ACCEPT: {
+        assert(g->listen_fd == message->id);
+        if (hashid_full(&g->hash)) {
+            skynet_logger_error(ctx->handle, "[http]full on accepting, alloc:%d, accepted:%d, close socket:%d", g->connect_max, g->hash.count, message->ud);
+            skynet_socket_close(ctx, message->ud);
+        } else {
+            int id = hashid_insert(&g->hash, message->ud);
+            const char * remote_name = (const char *) (message + 1);
 
-                struct http_connection *c = &g->conn[id];
-                c->fd = message->ud;
-                c->buffer = proxy_create(HTTP_REQUEST, message->ud, remote_name, sz);
-                c->remote_name = skynet_malloc(sz+1);
-                memcpy(c->remote_name, remote_name, sz);
-                c->remote_name[sz] = '\0';
+            struct http_connection *c = &g->conn[id];
+            c->fd = message->ud;
+            c->buffer = proxy_create(HTTP_REQUEST, message->ud, remote_name, sz);
+            c->remote_name = skynet_malloc(sz+1);
+            memcpy(c->remote_name, remote_name, sz);
+            c->remote_name[sz] = '\0';
 
-                http_accept(ctx, c);
-                skynet_socket_start(ctx, c->fd);
-                skynet_logger_debug(ctx->handle, "[http]accept fd=%d addr=%s", c->fd, c->remote_name);
-            }
-            break;
+            http_accept(ctx, c);
+            skynet_socket_start(ctx, c->fd);
+            skynet_logger_debug(ctx->handle, "[http]accept fd=%d addr=%s", c->fd, c->remote_name);
         }
-        case SKYNET_SOCKET_TYPE_CLOSE:
-        case SKYNET_SOCKET_TYPE_ERROR: {
-            skynet_logger_debug(ctx->handle, "[http]close or error %d fd %d", message->type, message->id);
-            int id = hashid_remove(&g->hash, message->id);
-            if (id >= 0) {
-                struct http_connection *c = &g->conn[id];
-                http_close(ctx, c);
-                c->fd = -1;
-                proxy_destroy(c->buffer);
-                skynet_free(c->remote_name);
-            }
-            break;
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_CLOSE:
+    case SKYNET_SOCKET_TYPE_ERROR: {
+        skynet_logger_debug(ctx->handle, "[http]close or error %d fd %d", message->type, message->id);
+        int id = hashid_remove(&g->hash, message->id);
+        if (id >= 0) {
+            struct http_connection *c = &g->conn[id];
+            http_close(ctx, c);
+            c->fd = -1;
+            proxy_destroy(c->buffer);
+            skynet_free(c->remote_name);
         }
-        case SKYNET_SOCKET_TYPE_CONNECT: {
-            if (message->id == g->listen_fd) {
-                break; // start listening
-            }
-            int id = hashid_lookup(&g->hash, message->id);
-            if (id <= 0) {
-                skynet_logger_error(ctx->handle, "[http]connected unknown connection %d message", message->id);
-                skynet_socket_close(ctx, message->id);
-            }
-            break;
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_CONNECT: {
+        if (message->id == g->listen_fd) {
+            break; // start listening
         }
-        case SKYNET_SOCKET_TYPE_WARNING:
-            skynet_logger_warn(ctx->handle, "[http]fd (%d) send buffer (%d)K", message->id, message->ud);
-            break;
-        default:
-            skynet_logger_error(ctx->handle, "[http]recv error message type %d", message->type);
-            break;
+        int id = hashid_lookup(&g->hash, message->id);
+        if (id <= 0) {
+            skynet_logger_error(ctx->handle, "[http]connected unknown connection %d message", message->id);
+            skynet_socket_close(ctx, message->id);
+        }
+        break;
+    }
+    case SKYNET_SOCKET_TYPE_WARNING:
+        skynet_logger_warn(ctx->handle, "[http]fd (%d) send buffer (%d)K", message->id, message->ud);
+        break;
+    default:
+        skynet_logger_error(ctx->handle, "[http]recv error message type %d", message->type);
+        break;
     }
 }
 
@@ -197,14 +197,14 @@ void http_release(struct skynet_service * ctx) {
 
 int http_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, const void * msg, size_t sz) {
     switch(type) {
-        case SERVICE_SOCKET:
-            http_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
-            break;
-        case SERVICE_TEXT:
-            http_dispatch_cmd(ctx, msg, sz);
-            break;
-        default:
-            break;
+    case SERVICE_SOCKET:
+        http_dispatch_socket_message(ctx, (const struct skynet_socket_message *)msg, (int)(sz-sizeof(struct skynet_socket_message)));
+        break;
+    case SERVICE_TEXT:
+        http_dispatch_cmd(ctx, msg, sz);
+        break;
+    default:
+        break;
     }
     return 0;
 }
