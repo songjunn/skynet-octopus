@@ -66,7 +66,7 @@ failed:
 struct skynet_service * _query(const char * name) {
 	int i;
 	for (i=0;i<M->count;i++) {
-		if (strcmp(M->m[i].name,name)==0) {
+		if (strcmp(M->m[i].name,name)==0 && !M->m[i].closing) {
 			return &M->m[i];
 		}
 	}
@@ -174,7 +174,7 @@ struct skynet_service * skynet_service_find(uint32_t handle) {
 
 	SPIN_LOCK(M)
 
-	if (index >= 0 && index < (uint32_t)M->count) {
+	if (index >= 0 && index < (uint32_t)M->count && !M->m[index].closing) {
 		result = &M->m[index];
 	}
 
