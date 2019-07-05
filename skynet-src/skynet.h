@@ -10,6 +10,7 @@
 #define SERVICE_SOCKET 1
 #define SERVICE_TIMER 2
 #define SERVICE_REMOTE 3
+#define SERVICE_RESPONSE 4
 
 #define LOGGER_DEBUG 0
 #define LOGGER_WARN 1

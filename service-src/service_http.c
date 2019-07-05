@@ -45,7 +45,6 @@ void http_message(struct skynet_service * ctx, struct http_connection * conn) {
 
 void http_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz) {
     int i;
-    struct http * g = ctx->hook;
     char * command = msg;
 
     for (i=0;i<sz;i++) {

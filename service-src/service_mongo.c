@@ -66,11 +66,7 @@ void mongo_remove(struct skynet_service * ctx, const char * dbname, const char *
     MONGO_BSON *bson_query;
 
     mc = ctx->hook;
-    if (strlen(query) > 0) {
-        bson_query = bson_new_from_json((const uint8_t*)query, strlen(query), &error);
-    } else {
-        bson_query = bson_new ();
-    }
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
     client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_remove (client, MONGOC_REMOVE_SINGLE_REMOVE, bson_query, NULL, &error)) {
@@ -91,11 +87,7 @@ void mongo_update(struct skynet_service * ctx, const char * dbname, const char *
     MONGO_BSON *bson_value, *bson_query;
 
     mc = ctx->hook;
-    if (strlen(query) > 0) {
-        bson_query = bson_new_from_json((const uint8_t*)query, strlen(query), &error);
-    } else {
-        bson_query = bson_new ();
-    }
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
     bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
     client = mongoc_client_get_collection (mc->client, dbname, collection);
 
@@ -119,11 +111,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     MONGO_BSON *bson_value, *bson_query;
     
     mc = ctx->hook;
-    if (strlen(query) > 0) {
-        bson_query = bson_new_from_json((const uint8_t*)query, strlen(query), &error);
-    } else {
-        bson_query = bson_new ();
-    }
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
     bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
     client = mongoc_client_get_collection (mc->client, dbname, collection);
 
@@ -140,18 +128,20 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 }
 
-/*void _selectAll(vector<string> &result, const char * dbname, const char * collection, const char * query, const char * opts) {
+/*char * mongo_selectall(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts) {
+    struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
     MONGO_CURSOR *cursor;
     MONGO_BSON *bson_query;
     MONGO_BSON *bson_opts;
     const MONGO_BSON *doc;
-    char *str;
+    char *str, *result = NULL;
 
-    bson_opts = opts != NULL ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
-    bson_query = query != NULL ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new();
-    client = mongoc_client_get_collection (instance->client, dbname, collection);
+    mc = ctx->hook;
+    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new();
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
     while (mongoc_cursor_next (cursor, &doc)) {
@@ -164,36 +154,97 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     bson_destroy (bson_query);
     mongoc_cursor_destroy (cursor);
     mongoc_collection_destroy (client);
-}
 
-void _selectOne(string& result, const char * dbname, const char * collection, const char * query, const char * opts) {
+    return result;
+}*/
+
+char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts) {
+    struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
     MONGO_CURSOR *cursor;
     MONGO_BSON *bson_query;
     MONGO_BSON *bson_opts;
     const MONGO_BSON *doc;
-    char *str;
+    char *str, *result = NULL;
 
-    bson_opts = opts != NULL ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
-    bson_query = query != NULL ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new();
-    client = mongoc_client_get_collection (instance->client, dbname, collection);
+    mc = ctx->hook;
+    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
     if (mongoc_cursor_next (cursor, &doc)) {
         str = bson_as_json (doc, NULL);
-        //skynet_logger_debug(instance->ctx, "[MongoDB] SelectOne Success, %s:%s, %s, %s", dbname, collection, query, str);
-        result = str;
+        result = skynet_strdup(str);
         bson_free (str);
+        //skynet_logger_debug(ctx, "[MongoDB] SelectOne Success, %s:%s, %s, %s", dbname, collection, query, str);
     } else {
-        skynet_logger_error(instance->ctx, "[MongoDB] SelectOne Failed, %s:%s, %s", dbname, collection, query);
+        skynet_logger_error(ctx, "[MongoDB] SelectOne Failed, %s:%s, %s", dbname, collection, query);
     }
     
     bson_destroy (bson_opts);
     bson_destroy (bson_query);
     mongoc_cursor_destroy (cursor);
     mongoc_collection_destroy (client);
-}*/
+
+    return result;
+}
+
+void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t session, const char * msg, size_t sz) {
+    int i;
+    char * command = msg;
+
+    skynet_logger_debug(ctx, "[MongoDB] dispatch command: %s", msg);
+
+    for (i=0;i<sz;i++) {
+        if (command[i]=='|') {
+            break;
+        }
+    }
+    if (i >= sz || i+1 >= sz) {
+        return;
+    }
+
+    char * param = command+i+1;
+    if (param == NULL) return;
+
+#define GET_CMD_ARGS(name, args) \
+    char * name = strsep(&args, "|"); \
+    if (name == NULL) return; \
+//end define
+
+    if (memcmp(command, "update", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+        GET_CMD_ARGS(query, param)
+        mongo_update(ctx, dbname, collec, query, param);
+    } else if (memcmp(command, "upsert", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+        GET_CMD_ARGS(query, param)
+        mongo_upsert(ctx, dbname, collec, query, param);
+    } else if (memcmp(command, "insert", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+        mongo_insert(ctx, dbname, collec, param);
+    } else if (memcmp(command, "findone", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+
+        char * value = mongo_selectone(ctx, dbname, collec, param, "");
+        if (value != NULL) {
+            skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
+            skynet_free(value);
+        } else {
+            skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);
+        }
+    } else if (memcmp(command, "remove", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+        mongo_remove(ctx, dbname, collec, param);
+    }
+}
 
 int mongo_create(struct skynet_service * ctx, int harbor, const char * args) {
     struct mongo_client * mc = skynet_malloc(sizeof(struct mongo_client));
@@ -215,59 +266,9 @@ void mongo_release(struct skynet_service * ctx) {
 
 int mongo_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz) {
     switch(type) {
-    case SERVICE_TEXT: {
-        int i;
-        char * command = msg;
-
-        for (i=0;i<sz;i++) {
-            if (command[i]=='|') {
-                break;
-            }
-        }
-        if (i >= sz || i+1 >= sz) {
-            break;
-        }
-
-        if (memcmp(command, "update", i) == 0) {
-            char * param = command+i+1;
-            if (param == NULL) break;
-            char * dbname = strsep(&param, "|");
-            if (dbname == NULL) break;
-            char * collec = strsep(&param, "|");
-            if (collec == NULL) break;
-            char * query = strsep(&param, "|");
-            if (query == NULL) break;
-            mongo_update(ctx, dbname, collec, query, param);
-        } else if (memcmp(command, "upsert", i) == 0) {
-            char * param = command+i+1;
-            if (param == NULL) break;
-            char * dbname = strsep(&param, "|");
-            if (dbname == NULL) break;
-            char * collec = strsep(&param, "|");
-            if (collec == NULL) break;
-            char * query = strsep(&param, "|");
-            if (query == NULL) break;
-            mongo_upsert(ctx, dbname, collec, query, param);
-        } else if (memcmp(command, "insert", i) == 0) {
-            char * param = command+i+1;
-            if (param == NULL) break;
-            char * dbname = strsep(&param, "|");
-            if (dbname == NULL) break;
-            char * collec = strsep(&param, "|");
-            if (collec == NULL) break;
-            mongo_insert(ctx, dbname, collec, param);
-        } else if (memcmp(command, "findone", i) == 0) {
-        } else if (memcmp(command, "remove", i) == 0) {
-            char * param = command+i+1;
-            if (param == NULL) break;
-            char * dbname = strsep(&param, "|");
-            if (dbname == NULL) break;
-            char * collec = strsep(&param, "|");
-            if (collec == NULL) break;
-            mongo_remove(ctx, dbname, collec, param);
-        }
+    case SERVICE_TEXT:
+        mongo_dispatch_cmd(ctx, source, session, msg, sz);
         break;
-    }
     default: 
         break;
     }
