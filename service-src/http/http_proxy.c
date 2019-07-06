@@ -1,4 +1,5 @@
 #include "http_proxy.h"
+#include "http_encode.h"
 #include "skynet.h"
 #include <stdio.h>
 
@@ -32,8 +33,9 @@ int on_header_value(http_parser* parser, const char* at, size_t length) {
 int on_url(http_parser* parser, const char* at, size_t length) {
   http_proxy * proxy = (http_proxy *)parser->data;
   proxy->url = (char *) malloc(sizeof(char) * length);
-  proxy->url_ptr = length;
-  memcpy(proxy->url, at, length);
+  //proxy->url_ptr = length;
+  //memcpy(proxy->url, at, length);
+  proxy->url_ptr = urldecode(at, length, proxy->url);
   skynet_logger_debug(NULL, "Url: %.*s", (int)proxy->url_ptr, proxy->url);
   return 0;
 }
