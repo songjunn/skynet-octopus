@@ -61,7 +61,7 @@ $(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/http
 
 $(LIB_PATH)/libmongo.so : service-src/service_mongo.c
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I3rd/mongoc/include/libbson-1.0 -I3rd/mongoc/include/libmongoc-1.0 -L3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so
