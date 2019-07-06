@@ -31,7 +31,7 @@ all : \
 	$(LIB_PATH)/libharbor.so \
 	$(LIB_PATH)/libpython.so \
 	$(LIB_PATH)/libhttp.so \
-	$(LIB_PATH)/libmongo.so \
+	#$(LIB_PATH)/libmongo.so \
 
 $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024

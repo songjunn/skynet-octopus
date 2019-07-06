@@ -38,7 +38,7 @@ int python_create(struct skynet_service * ctx, int harbor, const char * args) {
     instance->pFuncCallback = PyObject_GetAttrString(instance->pModule, "handle");
     PyErr_Print();
     
-    PyObject_CallFunction(instance->pFuncCreate, "ii", harbor, ctx->handle);
+    PyObject_CallFunction(instance->pFuncCreate, "iis#", harbor, ctx->handle, args, strlen(args));
     PyErr_Print();
     
     return 0;
