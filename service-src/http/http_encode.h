@@ -4,7 +4,7 @@ static unsigned char char_to_hex(unsigned char x) {
 }
 
 static int is_alpha_number_char(unsigned char c) {
-  retrun (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
 }
 
 void urlencode(unsigned char * src, int  src_len, unsigned char * dest, int  dest_len) {

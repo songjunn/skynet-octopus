@@ -53,7 +53,8 @@ void python_release(struct skynet_service * ctx) {
     Py_DECREF(inst->pFuncRelease);
     Py_DECREF(inst->pFuncCallback);
     Py_DECREF(inst->pModule);
-    Py_Finalize();
+    //存在多个python服务时，会导致第二个及后续的服务执行python脚本失败
+    //Py_Finalize();
 
     skynet_free(inst);
 }
