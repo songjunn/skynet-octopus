@@ -30,10 +30,10 @@ all : \
 	$(LIB_PATH) \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
+	$(LIB_PATH)/libhttp.so \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/libgatews.so \
-	$(LIB_PATH)/libpython.so \
-	$(LIB_PATH)/libhttp.so \
+	#$(LIB_PATH)/libpython.so \
 	#$(LIB_PATH)/libmongo.so \
 
 $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
@@ -54,6 +54,9 @@ $(LIB_PATH)/liblogger.so : service-src/service_logger.c
 $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@
 
+$(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/http
+
 $(LIB_PATH)/libgate.so : service-src/service_gate.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@
 
@@ -62,9 +65,6 @@ $(LIB_PATH)/libgatews.so : service-src/service_gatews.c service-src/websocket/we
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.7m -lpython37
-
-$(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/http
 
 $(LIB_PATH)/libmongo.so : service-src/service_mongo.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
