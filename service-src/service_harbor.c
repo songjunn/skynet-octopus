@@ -154,7 +154,7 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
 }
 
 void harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
-    int sz = databuffer_readheader(buffer);
+    int sz = databuffer_readint(buffer);
     if (sz > 0) {
         char data[BUFFER_MAX];
         sz = databuffer_read(buffer, data, sz);

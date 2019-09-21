@@ -39,7 +39,7 @@ void gate_close(struct skynet_service * ctx, struct gate_connection * conn) {
 
 void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
-    int sz = databuffer_readheader(conn->buffer);
+    int sz = databuffer_readint(conn->buffer);
     if (sz > 0) {
         char data[BUFFER_MAX];
         sz = databuffer_read(conn->buffer, data, sz);

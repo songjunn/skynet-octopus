@@ -44,7 +44,7 @@ int databuffer_read(struct databuffer * buffer, void * data, int bsz) {
 	return bsz;
 }
 
-int databuffer_readheader(struct databuffer * buffer) {
+int databuffer_readint(struct databuffer * buffer) {
 	if (buffer->ptr < sizeof(int)) {
 		return -1;
 	}

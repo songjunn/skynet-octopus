@@ -1,11 +1,13 @@
 BIN_PATH ?= bin
 LIB_PATH ?= bin/lib
 
+SKYNET_INC ?= skynet-src
+SERVICE_INC ?= service-src/util
 PLATFORM_INC ?= platform
 
 CC := gcc 
 
-CFLAGS := -std=gnu99 -g -O2 -Wall -I$(PLATFORM_INC)
+CFLAGS := -std=gnu99 -g -O2 -Wall -I$(SKYNET_INC) -I$(SERVICE_INC) -I$(PLATFORM_INC)
 SKYNET_DEFINES :=-DFD_SETSIZE=1024
 
 # link
@@ -26,9 +28,10 @@ all : \
 	$(BIN_PATH)/skynet.dll \
 	$(BIN_PATH)/skynet.exe \
 	$(LIB_PATH) \
-	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
+	$(LIB_PATH)/libgate.so \
+	$(LIB_PATH)/libgatews.so \
 	$(LIB_PATH)/libpython.so \
 	$(LIB_PATH)/libhttp.so \
 	#$(LIB_PATH)/libmongo.so \
@@ -37,31 +40,34 @@ $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
 
 $(BIN_PATH)/skynet.dll : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(SHARED) -o $@ $^ -Iskynet-src $(LDFLAGS) -includeplatform.h 
+	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(SHARED) -o $@ $^ $(LDFLAGS) -includeplatform.h 
 
 $(BIN_PATH)/skynet.exe : $(foreach v, $(SKYNET_EXE_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(EXPORT) -o $@ $^ -Iskynet-src $(LDFLAGS) $(SHAREDLDFLAGS) 
+	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(EXPORT) -o $@ $^ $(LDFLAGS) $(SHAREDLDFLAGS) 
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
 
-$(LIB_PATH)/libgate.so : service-src/service_gate.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
-
 $(LIB_PATH)/liblogger.so : service-src/service_logger.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@
 
 $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@
+
+$(LIB_PATH)/libgate.so : service-src/service_gate.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@
+
+$(LIB_PATH)/libgatews.so : service-src/service_gatews.c service-src/websocket/websocket.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/websocket
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -I/usr/include/python3.7m -lpython37
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.7m -lpython37
 
 $(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
-	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/http
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/http
 
 $(LIB_PATH)/libmongo.so : service-src/service_mongo.c
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iskynet-src -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so
