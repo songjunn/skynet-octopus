@@ -7,7 +7,7 @@ PLATFORM_INC ?= platform
 
 CC := gcc 
 
-CFLAGS := -std=gnu99 -g -O2 -Wall -I$(SKYNET_INC) -I$(SERVICE_INC) -I$(PLATFORM_INC)
+CFLAGS := -std=gnu99 -g -O0 -Wall -I$(SKYNET_INC) -I$(SERVICE_INC) -I$(PLATFORM_INC)
 SKYNET_DEFINES :=-DFD_SETSIZE=1024
 
 # link
