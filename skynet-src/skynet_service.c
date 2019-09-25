@@ -30,7 +30,7 @@ int _open(struct skynet_service * service, const char * path, const char * name)
 
 	service->module = dlopen(fullpath, RTLD_NOW | RTLD_GLOBAL);
 	if (service->module == NULL) {
-		skynet_logger_error(0, "try open %s failed : %s", fullpath, dlerror());
+		skynet_logger_error(0, "[skynet]try open %s failed : %s", fullpath, dlerror());
 		return 1;
 	}
 
@@ -58,7 +58,7 @@ int _open(struct skynet_service * service, const char * path, const char * name)
 	return 0;
 
 failed:
-	skynet_logger_error(0, "%s sym %s failed : %s", fullpath, tmp, dlerror());
+	skynet_logger_error(0, "[skynet]%s sym %s failed : %s", fullpath, tmp, dlerror());
 	dlclose(service->module);
 	return 1;
 }
@@ -109,10 +109,10 @@ struct skynet_service * skynet_service_create(const char * name, int harbor, con
 
 	if (!ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
-		skynet_logger_notice(0, "create service %s success handle:%d args:%s", name, ctx->handle, args);
+		skynet_logger_notice(0, "[skynet]create service %s success handle:%d args:%s", name, ctx->handle, args);
 		return ctx;
 	} else {
-		skynet_logger_error(0, "create service %s failed args:%s", name, args);
+		skynet_logger_error(0, "[skynet]create service %s failed args:%s", name, args);
 		skynet_service_release(ctx);
 		return NULL;
 	}
@@ -123,7 +123,7 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 	int index = M->count;
 	if (index >= MAX_MODULE_TYPE) {
 		SPIN_UNLOCK(M)
-		skynet_logger_error(0, "create service %s failed, becasue of services's count %d", ctx->name, index);
+		skynet_logger_error(0, "[skynet]create service %s failed, becasue of services's count %d", ctx->name, index);
 		return NULL;
 	}
 
@@ -141,17 +141,17 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 
 	if (!service->create(service, harbor, args)) {
 		skynet_globalmq_push(service->queue);
-		skynet_logger_notice(0, "create service %s success handle:%d args:%s", service->name, service->handle, args);
+		skynet_logger_notice(0, "[skynet]create service %s success handle:%d args:%s", service->name, service->handle, args);
 		return service;
 	} else {
 		skynet_service_release(service);
-		skynet_logger_error(0, "create service %s failed args:%s", service->name, args);
+		skynet_logger_error(0, "[skynet]create service %s failed args:%s", service->name, args);
 		return NULL;
 	}
 }
 
 void skynet_service_release(struct skynet_service * ctx) {
-	skynet_logger_notice(0, "release service %s success handle:%d", ctx->name, ctx->handle);
+	skynet_logger_notice(0, "[skynet]release service %s success handle:%d", ctx->name, ctx->handle);
 	ctx->release(ctx);
 	if (ctx->module) dlclose(ctx->module);
 	if (ctx->name) skynet_free(ctx->name);

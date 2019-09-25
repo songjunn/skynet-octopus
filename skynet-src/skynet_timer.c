@@ -268,7 +268,7 @@ void
 skynet_updatetime(void) {
 	uint64_t cp = gettime();
 	if(cp < TI->current_point) {
-		skynet_logger_error(0, "time diff error: change from %lld to %lld", cp, TI->current_point);
+		skynet_logger_error(0, "[skynet]time diff error: change from %lld to %lld", cp, TI->current_point);
 		TI->current_point = cp;
 	} else if (cp != TI->current_point) {
 		uint32_t diff = (uint32_t)(cp - TI->current_point);

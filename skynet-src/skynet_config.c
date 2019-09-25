@@ -39,7 +39,7 @@ int config_parse(FILE * fp, const char * section, const char * option, char * va
 			continue;
 		} else {
 			if (buff[0] == '[' && buff[len-1] == ']') {
-				skynet_logger_error(0, "fail to find %s:%s in config file: %s\n", section, option, config_file);
+				skynet_logger_error(0, "[skynet]fail to find %s:%s in config file: %s\n", section, option, config_file);
 				printf("fail to find %s:%s in config file: %s\n", section, option, config_file);
 				break;
 			}
@@ -53,7 +53,7 @@ int config_parse(FILE * fp, const char * section, const char * option, char * va
 				memcpy(value, split+1, len-(split-buff));
 				return 0;
 			} else {
-				skynet_logger_error(0, "fail to parse config file: %s\n", config_file);
+				skynet_logger_error(0, "[skynet]fail to parse config file: %s\n", config_file);
 				printf("fail to parse config file: %s\n", config_file);
 				break;
 			}
@@ -68,7 +68,7 @@ int skynet_config_string(const char * section, const char * option, char * value
 
 	fp = fopen(config_file, "r+");
 	if (fp == NULL) {
-		skynet_logger_error(0, "fail to open config file: %s\n", config_file);
+		skynet_logger_error(0, "[skynet]fail to open config file: %s\n", config_file);
 		printf("fail to open config file: %s\n", config_file);
         return 1;
 	}
