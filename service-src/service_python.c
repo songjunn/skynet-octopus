@@ -68,7 +68,6 @@ int python_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
     PyTuple_SetItem(pArgs, 2, Py_BuildValue("i", session));
     PyTuple_SetItem(pArgs, 3, Py_BuildValue("i", type));
     PyTuple_SetItem(pArgs, 4, Py_BuildValue("y#", (const char *) msg, sz));
-    //PyTuple_SetItem(pArgs, 4, Py_BuildValue("O&", (const char *) msg, sz));
     PyObject_CallObject(inst->pFuncCallback, pArgs);
     PyErr_Print();
 
