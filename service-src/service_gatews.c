@@ -58,7 +58,7 @@ int conn_pushdata(struct gatews_conn * conn, void * data, int sz) {
     return sz;
 }
 
-int conn_popdata(struct gatews_conn * conn, int sz) {
+int conn_popdata(struct gatews_conn * conn, void * data, int sz) {
     if (conn->sz <= sz) {
         sz = conn->sz;
         conn->sz = 0;
@@ -67,6 +67,10 @@ int conn_popdata(struct gatews_conn * conn, int sz) {
         conn->sz -= sz;
     }
     return sz;
+}
+
+void conn_cleardata(struct gatews_conn * conn) {
+    conn->sz = 0;
 }
 
 void gatews_accept(struct skynet_service * ctx, struct gatews_conn * conn) {
@@ -124,28 +128,26 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             char * frame = (char *)skynet_malloc(frameSize);
             wsGetHandshakeAnswer(hs, frame, &frameSize);
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
-            conn_popdata(conn, BUFFER_MAX);
+            conn_cleardata(conn);
             conn->state = WS_STATE_NORMAL;
             skynet_logger_debug(ctx->handle, "[gatews]handshake success fd=%d", conn->fd);
         }
     } else {
-        if (frameType == WS_CLOSING_FRAME) {
+        if (frameType == WS_BINARY_FRAME || frameType == WS_TEXT_FRAME) {
+            char msg[MESSAGE_BUFFER_MAX];
+            sprintf(msg, "forward|%d|", dataSize);
+            int hsz = strlen(msg);
+            memcpy(msg+hsz, data, dataSize);
+            conn_popdata(conn, readSize);
+            skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d msg=%s", hsz+dataSize, msg);
+            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
+        } else if (frameType == WS_CLOSING_FRAME) {
             if (conn->state != WS_STATE_CLOSING) {
                 char * frame = (char *)skynet_malloc(frameSize);
                 wsMakeFrame(NULL, 0, frame, &frameSize, WS_CLOSING_FRAME);
                 skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
                 skynet_socket_close(ctx, conn->fd);
             }
-        } else if (frameType == WS_BINARY_FRAME) {
-            
-        } else if (frameType == WS_TEXT_FRAME) {
-            char msg[MESSAGE_BUFFER_MAX];
-            sprintf(msg, "forward|%d|", dataSize);
-            int hsz = strlen(msg);
-            memcpy(msg+hsz, data, dataSize);
-            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
-            conn_popdata(conn, readSize);
-            skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d msg=%s", hsz+dataSize, msg);
         }
     }
 }
