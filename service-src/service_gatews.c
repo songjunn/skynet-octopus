@@ -131,7 +131,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             skynet_logger_debug(ctx->handle, "[gatews]handshake success fd=%d", conn->fd);
         }
     } else {
-        if (frameType == WS_BINARY_FRAME || frameType == WS_TEXT_FRAME) {
+        if (frameType == WS_BINARY_FRAME /*|| frameType == WS_TEXT_FRAME*/) {
             char msg[MESSAGE_BUFFER_MAX];
             sprintf(msg, "forward|%d|", dataSize);
             int hsz = strlen(msg);
@@ -167,7 +167,7 @@ void gatews_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, 
             size_t frameSize = BUFFER_MAX;
             char * param = command+i+1;
             char * frame = (char *)skynet_malloc(frameSize);
-            wsMakeFrame(param, size, frame, &frameSize, WS_TEXT_FRAME);
+            wsMakeFrame(param, size, frame, &frameSize, WS_BINARY_FRAME);
             skynet_socket_send(ctx, fd, (void *)frame, frameSize);
         }
     } else if (memcmp(command, "kick", i) == 0) {
