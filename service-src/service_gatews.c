@@ -56,7 +56,7 @@ int conn_pushdata(struct gatews_conn * conn, void * data, int sz) {
     return sz;
 }
 
-int conn_popdata(struct gatews_conn * conn, void * data, int sz) {
+int conn_popdata(struct gatews_conn * conn, int sz) {
     if (conn->sz <= sz) {
         sz = conn->sz;
         conn->sz = 0;
