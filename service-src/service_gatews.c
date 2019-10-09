@@ -12,7 +12,6 @@ struct gatews_conn {
     char * remote_name;
     char * buffer;
     size_t sz;
-    size_t maxsz;
     struct handshake * hs;
     enum wsState state;
 };
@@ -29,7 +28,6 @@ struct gatews {
 void conn_init(struct gatews_conn * conn, int fd, char * remote_name, size_t sz) {
     conn->fd = fd;
     conn->sz = 0;
-    conn->maxsz = BUFFER_MAX;
     conn->buffer = skynet_malloc(sizeof(char) * BUFFER_MAX);
     memset(conn->buffer, '\0', BUFFER_MAX);
     conn->remote_name = skynet_malloc(sz+1);
@@ -49,7 +47,7 @@ void conn_free(struct gatews_conn * conn) {
 }
 
 int conn_pushdata(struct gatews_conn * conn, void * data, int sz) {
-    if (sz + conn->sz > conn->maxsz) {
+    if (sz + conn->sz > BUFFER_MAX) {
         return -1;
     }
 
@@ -105,7 +103,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
 
     //skynet_logger_debug(ctx->handle, "[gatews]parse state=%d frameType=%d", conn->state, frameType);
 
-    if ((frameType == WS_INCOMPLETE_FRAME && conn->sz == conn->maxsz) || frameType == WS_ERROR_FRAME) {
+    if ((frameType == WS_INCOMPLETE_FRAME && conn->sz == BUFFER_MAX) || frameType == WS_ERROR_FRAME) {
         skynet_logger_error(ctx->handle, "[gatews]parse message error, fd=%d frameType=%d", conn->fd, frameType);
             
         if (conn->state == WS_STATE_OPENING) {
@@ -139,7 +137,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             int hsz = strlen(msg);
             memcpy(msg+hsz, data, dataSize);
             conn_popdata(conn, readSize);
-            skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d msg=%s", hsz+dataSize, msg);
+            skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d", hsz+dataSize);
             skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
         } else if (frameType == WS_CLOSING_FRAME) {
             if (conn->state != WS_STATE_CLOSING) {
@@ -181,7 +179,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
     struct gatews * g = ctx->hook;
     switch(message->type) {
     case SKYNET_SOCKET_TYPE_DATA: {
-        skynet_logger_debug(ctx->handle, "[gatews]recv data fd %d size:%d buf=%s", message->id, message->ud, message->buffer);
+        skynet_logger_debug(ctx->handle, "[gatews]recv data fd %d size:%d", message->id, message->ud);
         int id = hashid_lookup(&g->hash, message->id);
         if (id >= 0) {
             struct gatews_conn *c = &g->conn[id];
