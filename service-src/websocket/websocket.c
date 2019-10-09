@@ -160,6 +160,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
     if (!hs->host || !hs->key || !connectionFlag || !upgradeFlag || subprotocolFlag
         || versionMismatch)
     {
+        printf("host=%s key=%s conn=%d upgrade=%d proto=%d\n", hs->host, hs->key, connectionFlag, upgradeFlag, subprotocolFlag);
         hs->frameType = WS_ERROR_FRAME;
     } else {
         hs->frameType = WS_OPENING_FRAME;

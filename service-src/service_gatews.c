@@ -31,6 +31,7 @@ void conn_init(struct gatews_conn * conn, int fd, char * remote_name, size_t sz)
     conn->sz = 0;
     conn->maxsz = BUFFER_MAX;
     conn->buffer = skynet_malloc(sizeof(char) * BUFFER_MAX);
+    memset(conn->buffer, '\0', BUFFER_MAX);
     conn->remote_name = skynet_malloc(sz+1);
     memcpy(conn->remote_name, remote_name, sz);
     conn->remote_name[sz] = '\0';
@@ -125,6 +126,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
             conn_popdata(conn, BUFFER_MAX);
             conn->state = WS_STATE_NORMAL;
+            skynet_logger_debug(ctx->handle, "[gatews]handshake success fd=%d", conn->fd);
         }
     } else {
         if (frameType == WS_CLOSING_FRAME) {
@@ -134,6 +136,8 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
                 skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
                 skynet_socket_close(ctx, conn->fd);
             }
+        } else if (frameType == WS_BINARY_FRAME) {
+            
         } else if (frameType == WS_TEXT_FRAME) {
             char msg[MESSAGE_BUFFER_MAX];
             sprintf(msg, "forward|%d|", dataSize);
@@ -141,7 +145,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             memcpy(msg+hsz, data, dataSize);
             skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
             conn_popdata(conn, readSize);
-            //skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d msg=%s", hsz+dataSize, msg);
+            skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d msg=%s", hsz+dataSize, msg);
         }
     }
 }
@@ -175,7 +179,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
     struct gatews * g = ctx->hook;
     switch(message->type) {
     case SKYNET_SOCKET_TYPE_DATA: {
-        skynet_logger_debug(ctx->handle, "[gatews]recv data fd %d size:%d", message->id, message->ud);
+        skynet_logger_debug(ctx->handle, "[gatews]recv data fd %d size:%d buf=%s", message->id, message->ud, message->buffer);
         int id = hashid_lookup(&g->hash, message->id);
         if (id >= 0) {
             struct gatews_conn *c = &g->conn[id];
