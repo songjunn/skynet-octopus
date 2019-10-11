@@ -6,7 +6,7 @@ SERVICE_INC ?= service-src/util
 
 CC := gcc
 
-CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -DDEBUG -I$(SKYNET_INC) -I$(SERVICE_INC)
+CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -I$(SKYNET_INC) -I$(SERVICE_INC)
 EXPORT := -Wl,-E
 LIBS := -lrt -ldl -lpthread
 SHARED := -shared -fPIC
@@ -27,7 +27,7 @@ all : \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/libgatews.so \
 	#$(LIB_PATH)/libpython.so \
-	#$(LIB_PATH)/libmongo.so \
+	$(LIB_PATH)/libmongo.so \
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
@@ -54,7 +54,7 @@ $(LIB_PATH)/libgatews.so : service-src/service_gatews.c service-src/websocket/we
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/websocket
 
 $(LIB_PATH)/libpython.so : service-src/service_python.c
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I/usr/local/python3/include/python3.7m -lpython3
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.6m -lpython3.6m
 
 $(LIB_PATH)/libmongo.so : service-src/service_mongo.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
