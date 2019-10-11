@@ -62,13 +62,9 @@ void python_release(struct skynet_service * ctx) {
 int python_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz) {
     struct python_client * inst = (struct python_client *) ctx->hook;
 
-    PyObject * pArgs = PyTuple_New(5);
-    PyTuple_SetItem(pArgs, 0, Py_BuildValue("i", ctx->handle));
-    PyTuple_SetItem(pArgs, 1, Py_BuildValue("i", source));
-    PyTuple_SetItem(pArgs, 2, Py_BuildValue("i", session));
-    PyTuple_SetItem(pArgs, 3, Py_BuildValue("i", type));
-    PyTuple_SetItem(pArgs, 4, Py_BuildValue("y#", (const char *) msg, sz));
-    PyObject_CallObject(inst->pFuncCallback, pArgs);
+    //PyGILState_STATE state = PyGILState_Ensure();
+    PyObject_CallFunction(inst->pFuncCallback, "iiiiy#", ctx->handle, source, session, type, (const char *)msg, sz);
+    //PyGILState_Release(state);
     PyErr_Print();
 
     return 0;
