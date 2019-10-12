@@ -26,7 +26,8 @@ all : \
 	$(LIB_PATH)/libhttp.so \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/libgatews.so \
-	#$(LIB_PATH)/libpython.so \
+	$(LIB_PATH)/libsnlua.so \
+	$(LIB_PATH)/libpython.so \
 	$(LIB_PATH)/libmongo.so \
 
 $(LIB_PATH) :
@@ -53,11 +54,15 @@ $(LIB_PATH)/libgate.so : service-src/service_gate.c
 $(LIB_PATH)/libgatews.so : service-src/service_gatews.c service-src/websocket/websocket.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/websocket
 
-$(LIB_PATH)/libpython.so : service-src/service_python.c
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.6m -lpython3.6m
-
 $(LIB_PATH)/libmongo.so : service-src/service_mongo.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
+
+$(LIB_PATH)/libpython.so : service-src/service_python.c
+	#$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/pypy3/include -Lservice-src/3rd/pypy3/bin -lpypy3-c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.6m -lpython3.6m
+
+$(LIB_PATH)/libsnlua.so : service-src/service_snlua.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/lua/include -Lservice-src/3rd/lua/lib -llua
 
 clean :
 	rm -f $(BIN_PATH)/skynet $(LIB_PATH)/*.so
