@@ -33,8 +33,9 @@ all : \
 	$(LIB_PATH)/libhttp.so \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/libgatews.so \
-	#$(LIB_PATH)/libpython.so \
+	$(LIB_PATH)/libsnlua.so \
 	#$(LIB_PATH)/libmongo.so \
+	#$(LIB_PATH)/libpython.so \
 
 $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
@@ -63,11 +64,14 @@ $(LIB_PATH)/libgate.so : service-src/service_gate.c
 $(LIB_PATH)/libgatews.so : service-src/service_gatews.c service-src/websocket/websocket.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/websocket
 
+$(LIB_PATH)/libmongo.so : service-src/service_mongo.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
+
 $(LIB_PATH)/libpython.so : service-src/service_python.c
 	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -I/usr/include/python3.7m -lpython37
 
-$(LIB_PATH)/libmongo.so : service-src/service_mongo.c
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/mongoc/include/libbson-1.0 -Iservice-src/3rd/mongoc/include/libmongoc-1.0 -Lservice-src/3rd/mongoc/lib -lbson-1.0 -lmongoc-1.0
+$(LIB_PATH)/libsnlua.so : service-src/service_snlua.c
+	$(CC) $(CFLAGS) $(SHAREDLDFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/lua/include -Lservice-src/3rd/lua/lib -llua53
 
 clean :
 	rm -f $(BIN_PATH)/skynet.exe $(BIN_PATH)/skynet.dll $(BIN_PATH)/platform.dll $(LIB_PATH)/*.so
