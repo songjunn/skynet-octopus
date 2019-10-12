@@ -36,12 +36,12 @@ int mongo_connect(struct skynet_service * ctx, struct mongo_client * mc) {
     return 0;
 }
 
-void mongo_insert(struct skynet_service * ctx, const char * dbname, const char * collection, const char * value) {
+void mongo_insert(struct skynet_service * ctx, const char * dbname, const char * collection, const char * value, size_t sz) {
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
     MONGO_BSON *bson;
     
-    bson = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
+    bson = bson_new_from_json((const uint8_t*)value, sz, &error);
     if (bson == NULL) {
         skynet_logger_error(ctx, "[MongoDB] Insert value error, %s:%s, %s", dbname, collection, value);
         skynet_logger_error(ctx, "[MongoDB] Exception: %s ", error.message);
@@ -80,7 +80,7 @@ void mongo_remove(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 }
 
-void mongo_update(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value) {
+void mongo_update(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value, size_t sz) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -88,7 +88,7 @@ void mongo_update(struct skynet_service * ctx, const char * dbname, const char *
 
     mc = ctx->hook;
     bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
-    bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
+    bson_value = bson_new_from_json((const uint8_t*)value, sz, &error);
     client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_update (client, MONGOC_UPDATE_NONE, bson_query, bson_value, NULL, &error)) {
@@ -104,7 +104,7 @@ void mongo_update(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 }
 
-void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value) {
+void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value, size_t sz) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -112,7 +112,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     
     mc = ctx->hook;
     bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
-    bson_value = bson_new_from_json((const uint8_t*)value, strlen(value), &error);
+    bson_value = bson_new_from_json((const uint8_t*)value, sz, &error);
     client = mongoc_client_get_collection (mc->client, dbname, collection);
 
     if (!mongoc_collection_update (client, MONGOC_UPDATE_UPSERT, bson_query, bson_value, NULL, &error)) {
@@ -158,7 +158,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     return result;
 }*/
 
-char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts) {
+char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -170,7 +170,7 @@ char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const c
 
     mc = ctx->hook;
     bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
-    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, sz, &error) : bson_new ();
     client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
@@ -218,21 +218,21 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
         GET_CMD_ARGS(query, param)
-        mongo_update(ctx, dbname, collec, query, param);
+        mongo_update(ctx, dbname, collec, query, param, sz-param+msg);
     } else if (memcmp(command, "upsert", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
         GET_CMD_ARGS(query, param)
-        mongo_upsert(ctx, dbname, collec, query, param);
+        mongo_upsert(ctx, dbname, collec, query, param, sz-param+msg);
     } else if (memcmp(command, "insert", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
-        mongo_insert(ctx, dbname, collec, param);
+        mongo_insert(ctx, dbname, collec, param, sz-param+msg);
     } else if (memcmp(command, "findone", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
 
-        char * value = mongo_selectone(ctx, dbname, collec, param, "");
+        char * value = mongo_selectone(ctx, dbname, collec, param, sz-param+msg, "");
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
@@ -242,7 +242,7 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     } else if (memcmp(command, "remove", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
-        mongo_remove(ctx, dbname, collec, param);
+        mongo_remove(ctx, dbname, collec, param, sz-param+msg);
     }
 }
 
