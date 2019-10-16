@@ -145,8 +145,8 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
         return ret;
     }
     lua_getglobal(l->L, "create");  
-    lua_pushnumber(l->L, harbor);
-    lua_pushnumber(l->L, ctx->handle);
+    lua_pushinteger(l->L, harbor);
+    lua_pushinteger(l->L, ctx->handle);
     lua_pushstring(l->L, args);
     ret = lua_pcall(l->L, 3, 1, 1);
     if (ret != LUA_OK) {
@@ -185,10 +185,10 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
         skynet_logger_error(ctx->handle, "[snlua]Load error:%s", lua_tostring(l->L, -1));
     } else {
         lua_getglobal(l->L, "handle");  
-        lua_pushnumber(l->L, ctx->handle);
+        lua_pushinteger(l->L, ctx->handle);
         lua_pushstring(l->L, source);
-        lua_pushnumber(l->L, session);
-        lua_pushnumber(l->L, type);
+        lua_pushinteger(l->L, session);
+        lua_pushinteger(l->L, type);
         lua_pushlstring(l->L, msg, sz);
         ret = lua_pcall(l->L, 5, 1, 0);
         if (ret != LUA_OK) {
