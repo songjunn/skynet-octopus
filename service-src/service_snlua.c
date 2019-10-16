@@ -21,7 +21,7 @@ struct snlua {
 
 static int llogger_debug(lua_State* L) {
     int source = luaL_checkinteger(L, 1);
-    const char* args = lua_checkstring(L, 2);
+    const char* args = luaL_checkstring(L, 2);
 
     skynet_logger_debug(source, args);
     return 0;
@@ -29,7 +29,7 @@ static int llogger_debug(lua_State* L) {
 
 static int llogger_warn(lua_State* L) {
     int source = luaL_checkinteger(L, 1);
-    const char* args = lua_checkstring(L, 2);
+    const char* args = luaL_checkstring(L, 2);
 
     skynet_logger_warn(source, args);
     return 0;
@@ -37,7 +37,7 @@ static int llogger_warn(lua_State* L) {
 
 static int llogger_notice(lua_State* L) {
     int source = luaL_checkinteger(L, 1);
-    const char* args = lua_checkstring(L, 2);
+    const char* args = luaL_checkstring(L, 2);
 
     skynet_logger_notice(source, args);
     return 0;
@@ -45,7 +45,7 @@ static int llogger_notice(lua_State* L) {
 
 static int llogger_error(lua_State* L) {
     int source = luaL_checkinteger(L, 1);
-    const char* args = lua_checkstring(L, 2);
+    const char* args = luaL_checkstring(L, 2);
 
     skynet_logger_error(source, args);
     return 0;
@@ -53,19 +53,19 @@ static int llogger_error(lua_State* L) {
 
 static int ltimer_register(lua_State* L) {
     int handle = luaL_checkinteger(L, 1);
-    const char* args = lua_checkstring(L, 2);
-    int time = luaL_checkinteger(L, 3);
+    const char* args = luaL_checkstring(L, 2);
+    int time = luaL_checkinteger(L, 3);
 
     skynet_timer_register(handle, args, strlen(args), time);
-    return 0;
+    return 0;
 }
 
 static int lsend_name(lua_State* L) {
-    const char* name = lua_checkstring(L, 1);
+    const char* name = luaL_checkstring(L, 1);
     int source = luaL_checkinteger(L, 2);
     int session = luaL_checkinteger(L, 3);
     int type = luaL_checkinteger(L, 4);
-    const char* msg = lua_checkstring(L, 5);
+    const char* msg = luaL_checkstring(L, 5);
 
     skynet_sendname(name, source, session, type, msg, strlen(msg));
     return 0;
@@ -76,7 +76,7 @@ static int lsend_handle(lua_State* L) {
     int source = luaL_checkinteger(L, 2);
     int session = luaL_checkinteger(L, 3);
     int type = luaL_checkinteger(L, 4);
-    const char* msg = lua_checkstring(L, 5);
+    const char* msg = luaL_checkstring(L, 5);
 
     skynet_sendhandle(target, source, session, type, msg, strlen(msg));
     return 0;
@@ -130,17 +130,13 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     luaL_openlibs(l->L);
     lua_pushcfunction(l->L, traceback);
 
-    luaL_Reg reg[] = {
-        { "logger_debug", llogger_debug },
-        { "logger_warn", llogger_warn },
-        { "logger_notice", llogger_notice },
-        { "logger_error", llogger_error },
-        { "timer_register", ltimer_register },
-        { "send_name", lsend_name },
-        { "send_handle", lsend_handle },
-        { NULL, NULL },
-    };
-    luaL_newlib(l->L, reg);
+    lua_register(l->L, "skynet_logger_debug", llogger_debug);
+    lua_register(l->L, "skynet_logger_warn", llogger_warn);
+    lua_register(l->L, "skynet_logger_notice", llogger_notice);
+    lua_register(l->L, "skynet_logger_error", llogger_error);
+    lua_register(l->L, "skynet_timer_register", ltimer_register);
+    lua_register(l->L, "skynet_send_name", lsend_name);
+    lua_register(l->L, "skynet_send_handle", lsend_handle);
 
     lua_gc(l->L, LUA_GCSTOP, 0);
     int ret = luaL_dofile(l->L, l->mainfile);
