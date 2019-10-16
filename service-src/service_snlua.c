@@ -186,7 +186,7 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
     } else {
         lua_getglobal(l->L, "handle");  
         lua_pushinteger(l->L, ctx->handle);
-        lua_pushstring(l->L, source);
+        lua_pushinteger(l->L, source);
         lua_pushinteger(l->L, session);
         lua_pushinteger(l->L, type);
         lua_pushlstring(l->L, msg, sz);
