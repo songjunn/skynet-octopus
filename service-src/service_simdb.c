@@ -39,9 +39,9 @@ char * simdb_file_read(struct skynet_service * ctx, const char * file) {
 		return NULL;
 	}
 	fseek(fp, 0, SEEK_END);
-	fseek(fp, 0, SEEK_SET);
 	long sz = ftell(fp);
 	char * buffer = skynet_malloc(sz+1);
+	fseek(fp, 0, SEEK_SET);
 	fscanf(fp, "%s", buffer);
 	return buffer;
 }

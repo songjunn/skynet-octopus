@@ -8,7 +8,6 @@
 #include <time.h>
 
 #define LOG_FILE_SIZE 20480000
-#define LOG_MESSAGE_SIZE 204800
 
 struct logger {
     int size;
@@ -89,14 +88,9 @@ int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
         return 1;
     }
 
-    if (sz >= LOG_MESSAGE_SIZE) {
-        sz = LOG_MESSAGE_SIZE - 1;
-    }
-
-    char head[64] = {0}, time[64] = {0}, content[LOG_MESSAGE_SIZE] = {0};
+    char head[64] = {0}, time[64] = {0};
     logger_format_time(time, sizeof(time));
     logger_format_head(head, sizeof(head), level, source);
-    snprintf(content, sz+1, "%s", (const char*)msg);
 
     if (l->size >= LOG_FILE_SIZE) {
         l->close = 0;
@@ -112,10 +106,10 @@ int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
     if (l->handle) {
         fprintf(l->handle, time);
         fprintf(l->handle, head);
-        fprintf(l->handle, content);
+        fprintf(l->handle, "%.*s", sz, msg);
         fprintf(l->handle, "\n");
         fflush(l->handle);
-        l->size += strlen(content);
+        l->size += sz;
     }
 
     return 0;
