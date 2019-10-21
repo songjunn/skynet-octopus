@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-#define FILE_SIZE_MAX 1024*1024*5
-
 struct simdb {
 	char path[128];
 };
@@ -119,8 +117,6 @@ void simdb_upsert(struct skynet_service * ctx, const char * dbname, const char *
 char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
 	struct simdb * db = ctx->hook;
 
-	int size;
-	char * buffer;
 	char dbpath[256], tablepath[512], filepath[1024];
 
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
@@ -179,7 +175,6 @@ void simdb_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
 
         char * value = simdb_selectone(ctx, dbname, collec, param, sz-(param-msg), "");
         if (value != NULL) {
-        	skynet_logger_debug(ctx, "[simdb] selectone: %s", value);
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
         } else {
