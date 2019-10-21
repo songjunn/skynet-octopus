@@ -17,7 +17,6 @@ struct logger {
     FILE * handle;
     char basename[64];
     char filename[128];
-    struct skynet_service * ctx;
 };
 
 void logger_format_name(char * filename, size_t size, const char * basename) {
