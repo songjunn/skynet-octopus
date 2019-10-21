@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FILE_SIZE_MAX 1024*1024*5
-
 struct simdb {
 	char path[128];
 };
