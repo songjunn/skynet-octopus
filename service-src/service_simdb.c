@@ -33,6 +33,7 @@ char * simdb_file_read(struct skynet_service * ctx, const char * file) {
 		skynet_logger_error(ctx, "[simdb]read file failed: %s", file);
 		return NULL;
 	}
+
 	fseek(fp, 0, SEEK_END);
 	long sz = ftell(fp);
 	char * buffer = skynet_malloc(sz+1);
@@ -139,7 +140,7 @@ void simdb_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     int i;
     char * command = msg;
 
-    skynet_logger_debug(ctx, "[simdb] dispatch command: %s", msg);
+    //skynet_logger_debug(ctx, "[simdb] dispatch command: %s", msg);
 
     for (i=0;i<sz;i++) {
         if (command[i]=='|') {
