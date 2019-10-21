@@ -23,6 +23,7 @@ all : \
 	$(BIN_PATH)/skynet \
 	$(LIB_PATH)/liblogger.so \
 	$(LIB_PATH)/libharbor.so \
+	$(LIB_PATH)/libsimdb.so \
 	$(LIB_PATH)/libhttp.so \
 	$(LIB_PATH)/libgate.so \
 	$(LIB_PATH)/libgatews.so \
@@ -43,6 +44,9 @@ $(LIB_PATH)/liblogger.so : service-src/service_logger.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
 
 $(LIB_PATH)/libharbor.so : service-src/service_harbor.c
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+$(LIB_PATH)/libsimdb.so : service-src/service_simdb.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
 
 $(LIB_PATH)/libhttp.so : service-src/service_http.c service-src/http/http_parser.c service-src/http/http_proxy.c
