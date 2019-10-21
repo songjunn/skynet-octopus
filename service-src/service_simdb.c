@@ -1,11 +1,6 @@
 #include "skynet.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdarg.h>
-#include <time.h>
 
 #define FILE_SIZE_MAX 1024*1024*5
 
@@ -71,7 +66,7 @@ void simdb_insert(struct skynet_service * ctx, const char * dbname, const char *
 void simdb_remove(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024], filename[512];
+	char dbpath[256], tablepath[512], filepath[1024];
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
@@ -88,7 +83,7 @@ void simdb_remove(struct skynet_service * ctx, const char * dbname, const char *
 void simdb_update(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value, size_t sz) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024], filename[512];
+	char dbpath[256], tablepath[512], filepath[1024];
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
@@ -106,7 +101,7 @@ void simdb_update(struct skynet_service * ctx, const char * dbname, const char *
 void simdb_upsert(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * value, size_t sz) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024], filename[512];
+	char dbpath[256], tablepath[512], filepath[1024];
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
@@ -125,7 +120,7 @@ char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const c
 
 	int size;
 	char * buffer;
-	char dbpath[256], tablepath[512], filepath[1024], filename[512];
+	char dbpath[256], tablepath[512], filepath[1024];
 
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);

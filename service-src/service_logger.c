@@ -1,10 +1,6 @@
 #include "skynet.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdarg.h>
 #include <time.h>
 
 #define LOG_FILE_SIZE 20480000
