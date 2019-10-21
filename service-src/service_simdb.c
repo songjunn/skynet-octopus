@@ -1,6 +1,9 @@
 #include "skynet.h"
 
 #include <stdio.h>
+#include <string.h>
+
+#define FILE_SIZE_MAX 1024*1024*5
 
 struct simdb {
 	char path[128];
@@ -118,7 +121,6 @@ char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const c
 	struct simdb * db = ctx->hook;
 
 	char dbpath[256], tablepath[512], filepath[1024];
-
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
