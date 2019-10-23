@@ -1,13 +1,10 @@
 #include "skynet.h"
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
-#include <assert.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 #define MEMORY_WARNING_REPORT (1024 * 1024 * 32)
 
