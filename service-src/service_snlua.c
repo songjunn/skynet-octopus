@@ -13,72 +13,106 @@
 
 struct snlua {
     lua_State * L;
-    char mainfile[128];
     size_t mem;
     size_t mem_report;
     size_t mem_limit;
 };
 
 static int llogger_debug(lua_State* L) {
-    int source = luaL_checkinteger(L, 1);
-    const char* args = luaL_checkstring(L, 2);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
 
     skynet_logger_debug(source, args);
     return 0;
 }
 
 static int llogger_warn(lua_State* L) {
-    int source = luaL_checkinteger(L, 1);
-    const char* args = luaL_checkstring(L, 2);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
 
     skynet_logger_warn(source, args);
     return 0;
 }
 
 static int llogger_notice(lua_State* L) {
-    int source = luaL_checkinteger(L, 1);
-    const char* args = luaL_checkstring(L, 2);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
 
     skynet_logger_notice(source, args);
     return 0;
 }
 
 static int llogger_error(lua_State* L) {
-    int source = luaL_checkinteger(L, 1);
-    const char* args = luaL_checkstring(L, 2);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
 
     skynet_logger_error(source, args);
     return 0;
 }
 
 static int ltimer_register(lua_State* L) {
-    int handle = luaL_checkinteger(L, 1);
-    const char* args = luaL_checkstring(L, 2);
-    int time = luaL_checkinteger(L, 3);
+    int handle = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
+    int time = lua_tointeger(L, 3);
 
     skynet_timer_register(handle, args, strlen(args), time);
     return 0;
 }
 
-static int lsend_name(lua_State* L) {
-    const char* name = luaL_checkstring(L, 1);
-    int source = luaL_checkinteger(L, 2);
-    int session = luaL_checkinteger(L, 3);
-    int type = luaL_checkinteger(L, 4);
-    const char* msg = luaL_checkstring(L, 5);
+static int lsend_string(lua_State* L) {
+    const char * name, * msg;
+    int t, type, source, session, target, size;
 
-    skynet_sendname(name, source, session, type, msg, strlen(msg));
+    t = lua_type(L, 1);
+    if (t == LUA_TSTRING) {
+        name = lua_tostring(L, 1);
+    } 
+    else if (t == LUA_TNUMBER) {
+        target = lua_tointeger(L, 1);
+    }
+
+    source = lua_tointeger(L, 2);
+    session = lua_tointeger(L, 3);
+    type = lua_tointeger(L, 4);
+    msg = lua_tostring(L, 5);
+    size = lua_tointeger(L, 6);
+    
+    if (t == LUA_TSTRING) {
+        skynet_sendname(name, source, session, type, msg, size);
+    } 
+    else if (t == LUA_TNUMBER) {
+        skynet_sendhandle(target, source, session, type, msg, size);
+    }
+
     return 0;
 }
 
-static int lsend_handle(lua_State* L) {
-    int target = luaL_checkinteger(L, 1);
-    int source = luaL_checkinteger(L, 2);
-    int session = luaL_checkinteger(L, 3);
-    int type = luaL_checkinteger(L, 4);
-    const char* msg = luaL_checkstring(L, 5);
+static int lsend_buffer(lua_State* L) {
+    const char * name;
+    void * msg;
+    int t, type, source, session, target, size;
 
-    skynet_sendhandle(target, source, session, type, msg, strlen(msg));
+    t = lua_type(L, 1);
+    if (t == LUA_TSTRING) {
+        name = lua_tostring(L, 1);
+    } 
+    else if (t == LUA_TNUMBER) {
+        target = lua_tointeger(L, 1);
+    }
+
+    source = lua_tointeger(L, 2);
+    session = lua_tointeger(L, 3);
+    type = lua_tointeger(L, 4);
+    msg = lua_touserdata(L, 5);
+    size = lua_tointeger(L, 6);
+    
+    if (t == LUA_TSTRING) {
+        skynet_sendname(name, source, session, type, msg, size);
+    } 
+    else if (t == LUA_TNUMBER) {
+        skynet_sendhandle(target, source, session, type, msg, size);
+    }
+
     return 0;
 }
 
@@ -121,10 +155,12 @@ static int traceback (lua_State *L) {
 }
 
 int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
+    char mainfile[128];
+    sscanf(args, "%s", mainfile);
+
     struct snlua * l = skynet_malloc(sizeof(struct snlua));
-    ctx->hook = l;
     memset(l, 0, sizeof(*l));
-    sscanf(args, "%s", l->mainfile);
+    ctx->hook = l;
     l->mem_report = MEMORY_WARNING_REPORT;
     l->mem_limit = 0;
     l->L = lua_newstate(lalloc, ctx);
@@ -136,11 +172,11 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_register(l->L, "skynet_logger_notice", llogger_notice);
     lua_register(l->L, "skynet_logger_error", llogger_error);
     lua_register(l->L, "skynet_timer_register", ltimer_register);
-    lua_register(l->L, "skynet_send_name", lsend_name);
-    lua_register(l->L, "skynet_send_handle", lsend_handle);
+    lua_register(l->L, "skynet_send_string", lsend_string);
+    lua_register(l->L, "skynet_send_buffer", lsend_buffer);
 
     lua_gc(l->L, LUA_GCSTOP, 0);
-    int ret = luaL_dofile(l->L, l->mainfile);
+    int ret = luaL_dofile(l->L, mainfile);
     if (ret != LUA_OK) {
         skynet_logger_error(ctx->handle, "[snlua]Load error:%s", lua_tostring(l->L, -1));
         return ret;
