@@ -176,17 +176,17 @@ int http_create(struct skynet_service * ctx, int harbor, const char * args) {
     struct http * g = skynet_malloc(sizeof(struct http));
     sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
 
-    ctx->hook = g;
-    g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
-    if (g->listen_fd < 0) {
-        return 1;
-    }
-
     hashid_init(&g->hash, g->connect_max);
     g->conn = skynet_malloc(g->connect_max * sizeof(struct http_connection));
     memset(g->conn, 0, g->connect_max * sizeof(struct http_connection));
     for (i=0; i<g->connect_max; i++) {
         g->conn[i].fd = -1;
+    }
+    ctx->hook = g;
+
+    g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
+    if (g->listen_fd < 0) {
+        return 1;
     }
 
     skynet_logger_notice(ctx->handle, "[http]listen port:%d fd:%d", g->listen_port, g->listen_fd);
