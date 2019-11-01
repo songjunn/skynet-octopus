@@ -2,6 +2,7 @@
 #include "http_encode.h"
 #include "skynet.h"
 #include <stdio.h>
+#include <string.h>
 
 int on_message_begin(http_parser* parser) {
   skynet_logger_debug(NULL, "***MESSAGE BEGIN***");
