@@ -128,7 +128,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 }
 
-/*char * mongo_selectall(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts) {
+char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -156,7 +156,47 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 
     return result;
-}*/
+}
+
+char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
+    struct mongo_client *mc;
+    MONGO_COLLECTION *client;
+    MONGO_ERROR error;
+    MONGO_CURSOR *cursor;
+    MONGO_BSON *bson_query;
+    MONGO_BSON *bson_opts;
+    const MONGO_BSON *doc, *all;
+    char *str, *result = NULL;
+    char key[64];
+    int num = 0;
+
+    mc = ctx->hook;
+    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, sz, &error) : bson_new ();
+    client = mongoc_client_get_collection (mc->client, dbname, collection);
+    cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
+
+    while (mongoc_cursor_next (cursor, &doc)) {
+        itoa(num++, key, 10);
+        bson_append_document (all, key, strlen(key), doc);
+        //skynet_logger_debug(ctx, "[MongoDB] SelectMore Success, %s:%s, %s, %s", dbname, collection, query, str);
+    } else {
+        skynet_logger_error(ctx, "[MongoDB] SelectMore Failed, %s:%s, %s", dbname, collection, query);
+    }
+
+    if (num > 0) {
+        str = bson_array_as_json(all, NULL);
+        result = skynet_strdup(str);
+        bson_free (str);
+    }
+    
+    bson_destroy (bson_opts);
+    bson_destroy (bson_query);
+    mongoc_cursor_destroy (cursor);
+    mongoc_collection_destroy (client);
+
+    return result;
+}
 
 char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
     struct mongo_client *mc;
@@ -233,6 +273,17 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         GET_CMD_ARGS(collec, param)
 
         char * value = mongo_selectone(ctx, dbname, collec, param, sz-(param-msg), "");
+        if (value != NULL) {
+            skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
+            skynet_free(value);
+        } else {
+            skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);
+        }
+    } else if (memcmp(command, "findmore", i) == 0) {
+        GET_CMD_ARGS(dbname, param)
+        GET_CMD_ARGS(collec, param)
+
+        char * value = mongo_selectmore(ctx, dbname, collec, param, sz-(param-msg), "");
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
