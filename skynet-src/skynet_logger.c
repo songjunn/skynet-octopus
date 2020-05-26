@@ -11,6 +11,15 @@
 
 static struct skynet_service * LOGGER = 0;
 
+int gettid() {
+#ifdef __linux__
+    return syscall(224);
+#endif
+#ifdef WIN32
+    return GetCurrentThreadId();
+#endif
+}
+
 void skynet_logger_start(struct skynet_service * ctx) {
     LOGGER = ctx;
 }
