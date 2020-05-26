@@ -215,10 +215,22 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
     lua_pushinteger(l->L, session);
     lua_pushinteger(l->L, type);
     lua_pushlstring(l->L, msg, sz);
+
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    long start = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+
     int ret = lua_pcall(l->L, 5, 0, 0);
     if (ret != LUA_OK) {
         skynet_logger_error(ctx->handle, "[snlua]Runtime error:%s", lua_tostring(l->L, -1));
     }
+
+    gettimeofday(&tv,NULL);
+    long end = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    if (end - start > 1) {
+        skynet_logger_error(ctx->handle, "[snlua]lua_pcall cost:%d", (end-start));
+    }
+
     lua_settop(l->L, 0);
     lua_gc(l->L, LUA_GCRESTART, 0);
     return ret;

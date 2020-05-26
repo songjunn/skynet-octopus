@@ -85,8 +85,8 @@ int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
     }
 
     char head[64] = {0}, time[64] = {0};
-    logger_format_time(time, sizeof(time));
-    logger_format_head(head, sizeof(head), level, source);
+    //logger_format_time(time, sizeof(time));
+    //logger_format_head(head, sizeof(head), level, source);
 
     if (l->size >= LOG_FILE_SIZE) {
         l->close = 0;
