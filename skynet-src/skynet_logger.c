@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <time.h>
 
 #define LOG_MESSAGE_SIZE 204800
 #define LOG_MESSAGE_FORMAT 205824
@@ -19,10 +20,10 @@ void skynet_logger_exit() {
 
 void skynet_logger_format_head(char * buffer, size_t size, int level, uint32_t source) {
     switch (level) {
-    case LOGGER_DEBUG: snprintf(buffer, size, "DEBUG [:%04x][%d] ", source, getpid()); break;
-    case LOGGER_WARN: snprintf(buffer, size, "WARN [:%04x][%d] ", source, getpid()); break;
-    case LOGGER_NOTICE: snprintf(buffer, size, "NOTICE [:%04x][%d] ", source, getpid()); break;
-    case LOGGER_ERROR: snprintf(buffer, size, "ERROR [:%04x][%d] ", source, getpid()); break;
+    case LOGGER_DEBUG: snprintf(buffer, size, "[:%04x][%d] DEBUG ", source, getpid()); break;
+    case LOGGER_WARN: snprintf(buffer, size, "[:%04x][%d] WARN ", source, getpid()); break;
+    case LOGGER_NOTICE: snprintf(buffer, size, "[:%04x][%d] NOTICE ", source, getpid()); break;
+    case LOGGER_ERROR: snprintf(buffer, size, "[:%04x][%d] ERROR ", source, getpid()); break;
     default: break;
     }
 }
@@ -32,8 +33,12 @@ void skynet_logger_format_time(char * buffer, size_t size) {
     time_t aclock;
     time(&aclock);
     newtime = localtime(&aclock);
-    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime->tm_year+1900, 
-        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+
+    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d.%03d] ", newtime->tm_year+1900, 
+        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec, tv.tv_usec/1000);
 }
 
 void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
@@ -49,7 +54,7 @@ void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
     char head[64] = {0}, time[64] = {0}, message[LOG_MESSAGE_FORMAT] = {0};
     skynet_logger_format_time(time, time);
     skynet_logger_format_head(head, sizeof(head), level, source);
-    snprintf(message, LOG_MESSAGE_FORMAT, "%s%s%.*s", time, head, tmp, len);
+    snprintf(message, LOG_MESSAGE_FORMAT, "%s%s%.*s", time, head, len, tmp);
 
     fprintf(stdout, message);
     fprintf(stdout, "\n");
