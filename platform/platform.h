@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+int gettid();
+
 char *strsep(char **stringp, const char *delim);
 
 #define clock_gettime clock_gettime_platform

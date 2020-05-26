@@ -4,9 +4,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #define LOG_MESSAGE_SIZE 204800
-#define LOG_MESSAGE_FORMAT 205824
+#define LOG_MESSAGE_FORMAT LOG_MESSAGE_SIZE+1024
 
 static struct skynet_service * LOGGER = 0;
 
@@ -20,10 +21,10 @@ void skynet_logger_exit() {
 
 void skynet_logger_format_head(char * buffer, size_t size, int level, uint32_t source) {
     switch (level) {
-    case LOGGER_DEBUG: snprintf(buffer, size, "[:%04x][%d] DEBUG ", source, getpid()); break;
-    case LOGGER_WARN: snprintf(buffer, size, "[:%04x][%d] WARN ", source, getpid()); break;
-    case LOGGER_NOTICE: snprintf(buffer, size, "[:%04x][%d] NOTICE ", source, getpid()); break;
-    case LOGGER_ERROR: snprintf(buffer, size, "[:%04x][%d] ERROR ", source, getpid()); break;
+    case LOGGER_DEBUG: snprintf(buffer, size, "[:%04x][%d] DEBUG ", source, gettid()); break;
+    case LOGGER_WARN: snprintf(buffer, size, "[:%04x][%d] WARN ", source, gettid()); break;
+    case LOGGER_NOTICE: snprintf(buffer, size, "[:%04x][%d] NOTICE ", source, gettid()); break;
+    case LOGGER_ERROR: snprintf(buffer, size, "[:%04x][%d] ERROR ", source, gettid()); break;
     default: break;
     }
 }
@@ -52,7 +53,7 @@ void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
     va_end(ap);
 
     char head[64] = {0}, time[64] = {0}, message[LOG_MESSAGE_FORMAT] = {0};
-    skynet_logger_format_time(time, time);
+    skynet_logger_format_time(time, sizeof(time));
     skynet_logger_format_head(head, sizeof(head), level, source);
     snprintf(message, LOG_MESSAGE_FORMAT, "%s%s%.*s", time, head, len, tmp);
 
@@ -60,6 +61,6 @@ void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
     fprintf(stdout, "\n");
 
     if (LOGGER) {
-        skynet_send(LOGGER, source, 0, level, (void *)message, len);
+        skynet_send(LOGGER, source, 0, level, (void *)message, strlen(message));
     }
 }
