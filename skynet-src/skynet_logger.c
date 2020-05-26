@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 #define LOG_MESSAGE_SIZE 204800
 #define LOG_MESSAGE_FORMAT LOG_MESSAGE_SIZE+1024
@@ -13,7 +14,7 @@ static struct skynet_service * LOGGER = 0;
 
 int gettid() {
 #ifdef __linux__
-    return syscall(224);
+    return syscall(SYS_gettid);
 #endif
 #ifdef WIN32
     return GetCurrentThreadId();
