@@ -151,6 +151,8 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
     memcpy(buffer, (char *) &head, sizeof(head));
     skynet_remote_message_push(rmsg, buffer + sizeof(head), ulen);
     skynet_socket_send(ctx, cluster->fd, buffer, ulen);
+    skynet_logger_debug(ctx->handle, "[harbor]remote message forward name=%s handle=%d source=%d session=%d type=%d size=%d",
+                rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
 }
 
 void harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
@@ -262,6 +264,9 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
             break;
         }
         case SKYNET_SOCKET_TYPE_CONNECT:
+            if (smsg->id == h->listen_fd) {
+                break; // start listening
+            }
             skynet_logger_debug(ctx->handle, "[harbor]connected fd=%d", smsg->id);
             break;
         case SKYNET_SOCKET_TYPE_WARNING:
