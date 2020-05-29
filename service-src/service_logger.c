@@ -7,6 +7,7 @@
 
 struct logger {
     int size;
+    int maxsize;
     int level;
     int close;
     FILE * handle;
@@ -56,7 +57,7 @@ int logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     l->handle = NULL;
     ctx->hook = l;
 
-    sscanf(args, "%[^','],%d", l->basename, &l->level);
+    sscanf(args, "%[^','],%d,%d", l->basename, &l->maxsize, &l->level);
 
     if (strlen(l->basename) > 0) {
         l->handle = logger_open_file(l->filename, sizeof(l->filename), l->basename);
@@ -88,7 +89,7 @@ int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
     //logger_format_time(time, sizeof(time));
     //logger_format_head(head, sizeof(head), level, source);
 
-    if (l->size >= LOG_FILE_SIZE) {
+    if (l->size >= l->maxsize) {
         l->close = 0;
         fclose(l->handle);
 

@@ -21,7 +21,7 @@ void skynet_harbor_exit() {
 }
 
 int skynet_harbor_id(uint32_t handle) {
-    return (handle & 0xff00 >> 16);
+    return ((handle & 0xff00) >> 8);
 }
 
 int skynet_harbor_index(uint32_t handle) {
@@ -29,7 +29,7 @@ int skynet_harbor_index(uint32_t handle) {
 }
 
 uint32_t skynet_harbor_handle(int harbor, int index) {
-    return (harbor & 0xff00) | (index & 0x00ff);
+    return ((harbor << 8) & 0xff00) | (index & 0x00ff);
 }
 
 int skynet_harbor_isremote(uint32_t handle) {
