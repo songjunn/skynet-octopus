@@ -50,14 +50,16 @@ FILE * logger_open_file(char * filename, size_t size, const char * basename) {
 }
 
 int logger_create(struct skynet_service * ctx, int harbor, const char * args) {
+    int level, maxsize;
     struct logger * l = skynet_malloc(sizeof(struct logger));
+    sscanf(args, "%[^','],%d,%d", l->basename, &maxsize, &level);
+
+    l->maxsize = maxsize * 1024 * 1024;
+    l->level = level;
     l->size = 0;
     l->close = 0;
-    l->level = 0;
     l->handle = NULL;
     ctx->hook = l;
-
-    sscanf(args, "%[^','],%d,%d", l->basename, &l->maxsize, &l->level);
 
     if (strlen(l->basename) > 0) {
         l->handle = logger_open_file(l->filename, sizeof(l->filename), l->basename);
