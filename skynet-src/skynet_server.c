@@ -70,11 +70,13 @@ void skynet_sendname(const char * name, uint32_t source, uint32_t session, int t
 }
 
 void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-    struct skynet_service * context = skynet_service_find(target);
-    if (context != NULL) {
-        skynet_send(context, source, session, type, data, size);
-    } else {
+    if (skynet_harbor_isremote(target)) {
         skynet_harbor_sendhandle(target, source, session, type, data, size);
+    } else {
+        struct skynet_service * context = skynet_service_find(target);
+        if (context != NULL) {
+            skynet_send(context, source, session, type, data, size);
+        }
     }
 }
 
