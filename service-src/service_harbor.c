@@ -155,7 +155,7 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
                 rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
 }
 
-void harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
+int harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
     int sz = databuffer_readint(buffer);
     if (sz > 0) {
         char data[BUFFER_MAX];
@@ -165,8 +165,10 @@ void harbor_forward_local_message(struct skynet_service * ctx, struct databuffer
             skynet_local_message_forward(rmsg, sz);
             skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
                 rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
+            return 0;
         }
     }
+    return 1;
 }
 
 void harbor_cluster_reconnect(struct skynet_service * ctx, struct harbor * h, int harbor_id) {
@@ -228,7 +230,7 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                     skynet_socket_close(ctx, smsg->id);
                     skynet_free(smsg->buffer);
                 }
-                harbor_forward_local_message(ctx, h->buffer[id]);
+                while (!harbor_forward_local_message(ctx, h->buffer[id])) {}
             } else {
                 skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
                 skynet_socket_close(ctx, smsg->id);
@@ -257,7 +259,7 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                 skynet_timer_register(ctx->handle, &cluster->harbor_id, sizeof(cluster->harbor_id), 1000);
             }
 
-            int id = hashid_lookup(&h->hash, smsg->id);
+            int id = hashid_remove(&h->hash, smsg->id);
             if (id >= 0) {
                 databuffer_free(h->buffer[id]);
             }
