@@ -20,7 +20,6 @@ int skynet_socket_bind(struct skynet_service *ctx, int fd);
 void skynet_socket_close(struct skynet_service *ctx, int id);
 void skynet_socket_shutdown(struct skynet_service *ctx, int id);
 void skynet_socket_start(struct skynet_service *ctx, int id);
-void skynet_socket_nodelay(struct skynet_service *ctx, int id);
 
 int skynet_socket_udp(struct skynet_service *ctx, const char * addr, int port);
 int skynet_socket_udp_connect(struct skynet_service *ctx, int id, const char * addr, int port);

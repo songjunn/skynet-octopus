@@ -163,11 +163,6 @@ skynet_socket_start(struct skynet_service *ctx, int id) {
 	socket_server_start(SOCKET_SERVER, source, id);
 }
 
-void
-skynet_socket_nodelay(struct skynet_service *ctx, int id) {
-	socket_server_nodelay(SOCKET_SERVER, id);
-}
-
 int 
 skynet_socket_udp(struct skynet_service *ctx, const char * addr, int port) {
 	uint32_t source = skynet_service_handle(ctx);

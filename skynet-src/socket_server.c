@@ -298,7 +298,13 @@ write_buffer_free(struct socket_server *ss, struct write_buffer *wb) {
 static void
 socket_keepalive(int fd) {
 	int keepalive = 1;
-	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive));  
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive , sizeof(keepalive));
+}
+
+static void 
+socket_nodelay(int fd) {
+	int v = 1;
+	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(v));
 }
 
 static int
@@ -531,6 +537,7 @@ open_socket(struct socket_server *ss, struct request_open * request, struct sock
 			continue;
 		}
 		socket_keepalive(sock);
+		socket_nodelay(sock);
 		sp_nonblocking(sock);
 		status = connect( sock, ai_ptr->ai_addr, ai_ptr->ai_addrlen);
 		if ( status != 0 && errno != EINPROGRESS) {
@@ -1369,6 +1376,7 @@ report_accept(struct socket_server *ss, struct socket *s, struct socket_message 
 		return 0;
 	}
 	socket_keepalive(client_fd);
+	socket_nodelay(client_fd);
 	sp_nonblocking(client_fd);
 	struct socket *ns = new_fd(ss, id, client_fd, PROTOCOL_TCP, s->opaque, false);
 	if (ns == NULL) {
@@ -1785,11 +1793,11 @@ socket_server_start(struct socket_server *ss, uintptr_t opaque, int id) {
 }
 
 void
-socket_server_nodelay(struct socket_server *ss, int id) {
+socket_server_option(struct socket_server *ss, int id, int what, int value) {
 	struct request_package request;
 	request.u.setopt.id = id;
-	request.u.setopt.what = TCP_NODELAY;
-	request.u.setopt.value = 1;
+	request.u.setopt.what = what;
+	request.u.setopt.value = value;
 	send_request(ss, &request, 'T', sizeof(request.u.setopt));
 }
 
