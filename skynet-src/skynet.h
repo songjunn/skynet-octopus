@@ -83,6 +83,7 @@ extern void skynet_sendname(const char * name, uint32_t source, uint32_t session
 extern void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int type, void * msg, size_t sz);
 
 // harbor
+extern int skynet_harbor_local_id();
 extern int skynet_harbor_id(uint32_t handle);
 extern void skynet_harbor_start(struct skynet_service * ctx);
 extern void skynet_harbor_exit(void);

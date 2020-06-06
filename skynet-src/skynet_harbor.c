@@ -20,6 +20,10 @@ void skynet_harbor_exit() {
 	HARBOR = NULL;
 }
 
+int skynet_harbor_local_id() {
+    return HARBOR_ID;
+}
+
 int skynet_harbor_id(uint32_t handle) {
     return ((handle & 0xff00) >> 8);
 }

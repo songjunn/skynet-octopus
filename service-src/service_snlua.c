@@ -113,6 +113,32 @@ static int lsend_buffer(lua_State* L) {
     return 0;
 }
 
+static int lcreate_service(lua_State* L) {
+    const char * name = lua_tostring(L, 1);
+    const char * lib = lua_tostring(L, 2);
+    const char * args = lua_tostring(L, 3);
+    int harbor = skynet_harbor_local_id();
+    
+    struct skynet_service * service = skynet_service_create(name, harbor, lib, args, 0);
+    if (service == NULL) {
+        return 0;
+    }
+
+    lua_pushnumber(L, service->handle);
+    return 1;
+}
+
+static int lrelease_service(lua_State* L) {
+    int handle = lua_tointeger(L, 1);
+    
+    struct skynet_service * service = skynet_service_find(handle);
+    if (service != NULL) {
+        skynet_service_release(service);
+    }
+
+    return 0;
+}
+
 static void * lalloc(void * ud, void *ptr, size_t osize, size_t nsize) {
     struct skynet_service * ctx = ud;
     struct snlua *l = ctx->hook;
@@ -170,7 +196,8 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_register(l->L, "skynet_logger_error", llogger_error);
     lua_register(l->L, "skynet_timer_register", ltimer_register);
     lua_register(l->L, "skynet_send_string", lsend_string);
-    lua_register(l->L, "skynet_send_buffer", lsend_buffer);
+    lua_register(l->L, "skynet_create_service", lcreate_service);
+    lua_register(l->L, "skynet_release_service", lrelease_service);
 
     lua_gc(l->L, LUA_GCSTOP, 0);
     int ret = luaL_dofile(l->L, mainfile);
