@@ -151,7 +151,7 @@ struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int h
 }
 
 void skynet_service_close(struct skynet_service * ctx) {
-	M->m[index].closing = 1;
+	ctx->closing = 1;
 }
 
 void skynet_service_release(struct skynet_service * ctx) {
