@@ -19,7 +19,9 @@ int skynet_message_dispatch() {
 
     assert(q == ctx->queue);
     int ret = skynet_service_message_dispatch(ctx);
-    if (ret == 0) {
+    if (ctx->closing) {
+        skynet_service_release(ctx);
+    } else if (ret == 0) {
         skynet_globalmq_push(ctx->queue);
     }
 

@@ -12,8 +12,9 @@ struct skynet_service * skynet_service_create(const char * name, int harbor, con
 struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * args, int concurrent);
 struct skynet_service * skynet_service_query(const char * name);
 struct skynet_service * skynet_service_find(uint32_t handle);
-void skynet_service_releaseall();
+void skynet_service_close(struct skynet_service * ctx);
 void skynet_service_release(struct skynet_service * ctx);
+void skynet_service_releaseall();
 uint32_t skynet_service_handle(struct skynet_service * ctx);
 
 int skynet_service_pushmsg(uint32_t handle, struct skynet_message * message);
