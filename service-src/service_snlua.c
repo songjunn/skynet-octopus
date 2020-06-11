@@ -128,12 +128,12 @@ static int lcreate_service(lua_State* L) {
     return 1;
 }
 
-static int lrelease_service(lua_State* L) {
+static int lclose_service(lua_State* L) {
     int handle = lua_tointeger(L, 1);
     
     struct skynet_service * service = skynet_service_find(handle);
     if (service != NULL) {
-        skynet_service_release(service);
+        skynet_service_close(service);
     }
 
     return 0;
@@ -197,7 +197,7 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_register(l->L, "skynet_timer_register", ltimer_register);
     lua_register(l->L, "skynet_send_string", lsend_string);
     lua_register(l->L, "skynet_create_service", lcreate_service);
-    lua_register(l->L, "skynet_release_service", lrelease_service);
+    lua_register(l->L, "skynet_close_service", lclose_service);
 
     lua_gc(l->L, LUA_GCSTOP, 0);
     int ret = luaL_dofile(l->L, mainfile);
