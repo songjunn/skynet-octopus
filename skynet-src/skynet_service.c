@@ -9,7 +9,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-#define MAX_MODULE_TYPE 32
+#define MAX_MODULE_TYPE 1024
 
 struct services {
 	int count;
@@ -74,16 +74,10 @@ struct skynet_service * _query(const char * name) {
 }
 
 struct skynet_service * _load(int harbor, const char * name, const char * module) {
-	struct skynet_service * result = _query(name);
-	if (result) {
-		return result;
-	}
+	struct skynet_service * result = NULL;
 
 	SPIN_LOCK(M)
-
-	result = _query(name); // double check
-
-	if (result == NULL && M->count < MAX_MODULE_TYPE) {
+	if (M->count < MAX_MODULE_TYPE) {
 		int index = M->count;
 		if (!_open(&M->m[index], M->path, module)) {
 			M->m[index].closing = 0;
@@ -92,8 +86,7 @@ struct skynet_service * _load(int harbor, const char * name, const char * module
 			M->count ++;
 			result = &M->m[index];
 		}
-	}
-
+	} 
 	SPIN_UNLOCK(M)
 
 	return result;
