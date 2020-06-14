@@ -111,38 +111,6 @@ struct skynet_service * skynet_service_create(const char * name, int harbor, con
 	}
 }
 
-struct skynet_service * skynet_service_insert(struct skynet_service * ctx, int harbor, const char * args, int concurrent) {
-	SPIN_LOCK(M)
-	int index = M->count;
-	if (index >= MAX_MODULE_TYPE) {
-		SPIN_UNLOCK(M)
-		skynet_logger_error(0, "[skynet]create service %s failed, becasue of services's count %d", ctx->name, index);
-		return NULL;
-	}
-
-	M->m[index].closing = 0;
-	M->m[index].name = skynet_strdup(ctx->name);
-	M->m[index].handle = skynet_harbor_handle(harbor, index);
-	M->m[index].create = ctx->create;
-	M->m[index].release = ctx->release;
-	M->m[index].cb = ctx->cb;
-	M->count ++;
-	SPIN_UNLOCK(M)
-
-	struct skynet_service * service = &M->m[index];
-	service->queue = skynet_mq_create(service->handle, concurrent);
-
-	if (!service->create(service, harbor, args)) {
-		skynet_globalmq_push(service->queue);
-		skynet_logger_notice(0, "[skynet]create service %s success handle:%d args:%s", service->name, service->handle, args);
-		return service;
-	} else {
-		skynet_service_release(service);
-		skynet_logger_error(0, "[skynet]create service %s failed args:%s", service->name, args);
-		return NULL;
-	}
-}
-
 void skynet_service_close(struct skynet_service * ctx) {
 	ctx->closing = 1;
 }
