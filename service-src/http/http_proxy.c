@@ -33,7 +33,7 @@ int on_header_value(http_parser* parser, const char* at, size_t length) {
 
 int on_url(http_parser* parser, const char* at, size_t length) {
   http_proxy * proxy = (http_proxy *)parser->data;
-  proxy->url = (char *) malloc(sizeof(char) * length);
+  proxy->url = (char *) malloc(sizeof(char) * (length+1));
   //proxy->url_ptr = length;
   //memcpy(proxy->url, at, length);
   proxy->url_ptr = urldecode(at, length, proxy->url);

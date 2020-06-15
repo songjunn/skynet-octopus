@@ -36,7 +36,7 @@ size_t urldecode(const unsigned char* encd, size_t sz, unsigned char* decd) {
   j = 0;
 
   for (i = 0; i < sz; i++) {
-    memset(p, '/0', 2);
+    memset(p, '\0', 2);
     if (encd[i] != '%') {
       decd[j++] = encd[i];
       continue;
@@ -49,7 +49,7 @@ size_t urldecode(const unsigned char* encd, size_t sz, unsigned char* decd) {
     p[1] = p[1] - 48 - ((p[1] >= 'A') ? 7 : 0) - ((p[1] >= 'a') ? 32 : 0);
     decd[j++] = (unsigned char)(p[0] * 16 + p[1]);
   }
-  decd[j] = '/0';
+  decd[j] = '\0';
   
   return j;
 }
