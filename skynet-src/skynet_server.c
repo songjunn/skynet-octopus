@@ -12,8 +12,7 @@ int skynet_message_dispatch() {
 
     uint32_t handle = skynet_mq_handle(q);
     struct skynet_service * ctx = skynet_service_find(handle);
-    if (ctx == NULL) {
-        skynet_mq_release(q);
+    if (ctx == NULL || ctx->handle == 0) {
         return 0;
     }
 
@@ -21,7 +20,7 @@ int skynet_message_dispatch() {
     int ret = skynet_service_message_dispatch(ctx);
     if (ctx->closing) {
         skynet_service_release(ctx);
-    } else if (ret == 0) {
+    } else if (ret == 0 && skynet_mq_concurrent(q) == 0) {
         skynet_globalmq_push(ctx->queue);
     }
 
@@ -63,7 +62,7 @@ void skynet_send(struct skynet_service * context, uint32_t source, uint32_t sess
 }
 
 void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {
-    struct skynet_service * context = skynet_service_query(name);
+    struct skynet_service * context = skynet_service_findname(name);
     if (context != NULL) {
         skynet_send(context, source, session, type, data, size);
     } else {

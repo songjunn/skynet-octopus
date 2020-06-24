@@ -69,7 +69,7 @@ $(LIB_PATH)/libsnlua.so : service-src/service_snlua.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Iservice-src/3rd/lua/include -Lservice-src/3rd/lua/lib -llua
 
 clean :
-	rm -f $(BIN_PATH)/skynet $(LIB_PATH)/*.so
+	rm -f $(BIN_PATH)/skynet  $(BIN_PATH)/libskynet.so $(LIB_PATH)/*.so
 
 cleanall:
 	clean

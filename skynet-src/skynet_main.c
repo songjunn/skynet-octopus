@@ -203,11 +203,12 @@ int main(int argc, char *argv[]) {
         skynet_config_string(service_name, "lib", service_lib, sizeof(service_lib));
         skynet_config_string(service_name, "args", service_args, sizeof(service_args));
         
-        struct skynet_service * service = skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
-        if (service == NULL) {
+        uint32_t handle = skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
+        if (handle == 0) {
             printf("skynet start failed.\n");
             return 1;
         }
+        skynet_handle_namehandle(handle, service_name);
 
         service_name = strtok(NULL, ",");
     }

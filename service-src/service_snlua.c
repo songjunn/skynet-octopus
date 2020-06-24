@@ -117,25 +117,16 @@ static int lcreate_service(lua_State* L) {
     const char * name = lua_tostring(L, 1);
     const char * lib = lua_tostring(L, 2);
     const char * args = lua_tostring(L, 3);
-    int harbor = skynet_harbor_local_id();
     
-    struct skynet_service * service = skynet_service_create(name, harbor, lib, args, 0);
-    if (service == NULL) {
-        return 0;
-    }
-
-    lua_pushnumber(L, service->handle);
+    int harbor = skynet_harbor_local_id();
+    uint32_t handle = skynet_service_create(name, harbor, lib, args, 0);
+    lua_pushnumber(L, handle);
     return 1;
 }
 
 static int lclose_service(lua_State* L) {
     int handle = lua_tointeger(L, 1);
-    
-    struct skynet_service * service = skynet_service_find(handle);
-    if (service != NULL) {
-        skynet_service_close(service);
-    }
-
+    skynet_service_close(handle);
     return 0;
 }
 
