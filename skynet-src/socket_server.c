@@ -903,7 +903,6 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 			append_sendbuffer_udp(ss,s,priority,request,udp_address);
 		}
 	}
-	skynet_logger_debug(0, "[skynet]socket-server: write fd %d size %d.\n", s->fd, request->sz);
 	if (s->wb_size >= WARNING_SIZE && s->wb_size >= s->warn_size) {
 		s->warn_size = s->warn_size == 0 ? WARNING_SIZE *2 : s->warn_size*2;
 		result->opaque = s->opaque;
