@@ -69,9 +69,11 @@ void gate_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, si
         int size = sz-i-1;
         if (size > 0) {
             char * param = command+i+1;
-            char * buffer = (char *)skynet_malloc(size);
-            memcpy(buffer, param, size);
-            skynet_socket_send(ctx, fd, (void *)buffer, size);
+            char * buffer = (char *)skynet_malloc(size+sizeof(size));
+            memcpy(buffer, (char *)&size, sizeof(size));
+            memcpy(buffer+sizeof(size), param, size);
+            skynet_socket_send(ctx, fd, (void *)buffer, size+sizeof(size));
+            skynet_logger_debug(ctx->handle, "[gate]send data fd %d size:%d", fd, size+sizeof(size));
         }
     } else if (memcmp(command, "kick", i) == 0) {
         skynet_socket_close(ctx, fd);
