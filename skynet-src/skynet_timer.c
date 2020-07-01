@@ -25,6 +25,7 @@
 
 struct timer_event {
 	uint32_t handle;
+	uint32_t session;
 	void * data;
 	size_t size;
 };
@@ -140,6 +141,7 @@ dispatch_list(struct timer_node *current) {
 		struct timer_event * event = (struct timer_event *)(current+1);
 		struct skynet_message message;
 		message.source = 0;
+		message.session = event->session;
 		message.type = SERVICE_TIMER;
 		message.data = event->data;
 		message.size = event->size;
@@ -205,10 +207,11 @@ timer_create_timer() {
 }
 
 void
-skynet_timer_register(uint32_t handle, const void * args, size_t size, int time) {
+skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size_t size, int time) {
 	if (time <= 0) {
 		struct skynet_message message;
 		message.source = 0;
+		message.session = session;
 		message.type = SERVICE_TIMER;
 		message.size = size;
 		message.data = NULL;
@@ -221,6 +224,7 @@ skynet_timer_register(uint32_t handle, const void * args, size_t size, int time)
 	} else {
 		struct timer_event event;
 		event.handle = handle;
+		event.session = session;
 		event.size = size;
 		event.data = NULL;
 		if (args != NULL && size > 0) {

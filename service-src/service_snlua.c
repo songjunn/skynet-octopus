@@ -52,7 +52,7 @@ static int ltimer_register(lua_State* L) {
     const char * args = lua_tostring(L, 2);
     int time = lua_tointeger(L, 3);
 
-    skynet_timer_register(handle, args, strlen(args), time);
+    skynet_timer_register(handle, 0, args, strlen(args), time);
     return 0;
 }
 
