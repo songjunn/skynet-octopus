@@ -256,7 +256,7 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
             struct harbor_cluster * cluster = harbor_get_cluster_fd(h, smsg->id);
             if (cluster) {
                 cluster->fd = 0;
-                skynet_timer_register(ctx->handle, &cluster->harbor_id, sizeof(cluster->harbor_id), 1000);
+                skynet_timer_register(ctx->handle, 0, &cluster->harbor_id, sizeof(cluster->harbor_id), 1000);
             }
 
             int id = hashid_remove(&h->hash, smsg->id);

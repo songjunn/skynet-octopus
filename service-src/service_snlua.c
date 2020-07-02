@@ -23,6 +23,58 @@ static int llogger_debug(lua_State* L) {
     return 0;
 }
 
+static int llogger_debug_int(lua_State* L) {
+    int n = lua_gettop(L);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
+
+    int n1, n2, n3, n4, n5;
+    if (n > 2) {
+        n1 = lua_tointeger(L, 3);
+    }
+    if (n > 3) {
+        n2 = lua_tointeger(L, 4);
+    }
+    if (n > 4) {
+        n3 = lua_tointeger(L, 5);
+    }
+    if (n > 5) {
+        n3 = lua_tointeger(L, 6);
+    }
+    if (n > 6) {
+        n3 = lua_tointeger(L, 7);
+    }
+
+    skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
+    return 0;
+}
+
+static int llogger_debug_str(lua_State* L) {
+    int n = lua_gettop(L);
+    int source = lua_tointeger(L, 1);
+    const char * args = lua_tostring(L, 2);
+
+    const char * n1, * n2, * n3, * n4, * n5;
+    if (n > 2) {
+        n1 = lua_tostring(L, 3);
+    }
+    if (n > 3) {
+        n2 = lua_tostring(L, 4);
+    }
+    if (n > 4) {
+        n3 = lua_tostring(L, 5);
+    }
+    if (n > 5) {
+        n3 = lua_tostring(L, 6);
+    }
+    if (n > 6) {
+        n3 = lua_tostring(L, 7);
+    }
+
+    skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
+    return 0;
+}
+
 static int llogger_warn(lua_State* L) {
     int source = lua_tointeger(L, 1);
     const char * args = lua_tostring(L, 2);
@@ -182,6 +234,8 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_pushcfunction(l->L, traceback);
 
     lua_register(l->L, "skynet_logger_debug", llogger_debug);
+    lua_register(l->L, "skynet_logger_debug_int", llogger_debug_int);
+    lua_register(l->L, "skynet_logger_debug_str", llogger_debug_str);
     lua_register(l->L, "skynet_logger_warn", llogger_warn);
     lua_register(l->L, "skynet_logger_notice", llogger_notice);
     lua_register(l->L, "skynet_logger_error", llogger_error);
@@ -253,3 +307,4 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
     lua_gc(l->L, LUA_GCRESTART, 0);
     return ret;
 }
+
