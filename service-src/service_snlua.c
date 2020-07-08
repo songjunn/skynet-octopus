@@ -39,10 +39,10 @@ static int llogger_debug_int(lua_State* L) {
         n3 = lua_tointeger(L, 5);
     }
     if (n > 5) {
-        n3 = lua_tointeger(L, 6);
+        n4 = lua_tointeger(L, 6);
     }
     if (n > 6) {
-        n3 = lua_tointeger(L, 7);
+        n5 = lua_tointeger(L, 7);
     }
 
     skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
@@ -65,10 +65,10 @@ static int llogger_debug_str(lua_State* L) {
         n3 = lua_tostring(L, 5);
     }
     if (n > 5) {
-        n3 = lua_tostring(L, 6);
+        n4 = lua_tostring(L, 6);
     }
     if (n > 6) {
-        n3 = lua_tostring(L, 7);
+        n5 = lua_tostring(L, 7);
     }
 
     skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
