@@ -66,14 +66,15 @@ void simdb_insert(struct skynet_service * ctx, const char * dbname, const char *
 void simdb_remove(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024];
+	char dbpath[256], tablepath[512], filepath[1024], temp[1024];
+	snprintf(temp, sz, "%s", query);
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
-	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
+	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, temp);
 
 	if (simdb_file_exist(ctx, filepath)) {
 		simdb_file_delete(ctx, filepath);
-		skynet_logger_debug(ctx, "[simdb] remove success, %s:%s, %.*s", dbname, collection, query, sz);
+		skynet_logger_debug(ctx, "[simdb] remove success, %s:%s, %.*s", dbname, collection, sz, query);
 	} else {
 		skynet_logger_error(ctx, "[simdb] remove failed, %s:%s, %.*s", dbname, collection, sz, query);
 		skynet_logger_error(ctx, "[simdb] file not found: %s", filepath);
@@ -118,10 +119,11 @@ void simdb_upsert(struct skynet_service * ctx, const char * dbname, const char *
 char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024];
+	char dbpath[256], tablepath[512], filepath[1024], temp[1024];
+	snprintf(temp, sz, "%s", query);
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
-	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
+	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, temp);
 
 	if (simdb_folder_create(ctx, dbpath)) return;
 	if (simdb_folder_create(ctx, tablepath)) return;
