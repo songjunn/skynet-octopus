@@ -67,7 +67,7 @@ void simdb_remove(struct skynet_service * ctx, const char * dbname, const char *
 	struct simdb * db = ctx->hook;
 
 	char dbpath[256], tablepath[512], filepath[1024], temp[1024];
-	snprintf(temp, sz, "%s", query);
+	snprintf(temp, sz+1, "%s", query);
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, temp);
@@ -120,7 +120,7 @@ char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const c
 	struct simdb * db = ctx->hook;
 
 	char dbpath[256], tablepath[512], filepath[1024], temp[1024];
-	snprintf(temp, sz, "%s", query);
+	snprintf(temp, sz+1, "%s", query);
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
 	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, temp);
