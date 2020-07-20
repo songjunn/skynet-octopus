@@ -286,7 +286,11 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
     lua_pushinteger(l->L, source);
     lua_pushinteger(l->L, session);
     lua_pushinteger(l->L, type);
-    lua_pushlstring(l->L, msg, sz);
+    if (msg && sz > 0) {
+        lua_pushlstring(l->L, msg, sz);
+    } else {
+        lua_pushstring(l->L, "");
+    }
 
     struct timeval tv;
     gettimeofday(&tv,NULL);
