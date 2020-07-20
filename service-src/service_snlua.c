@@ -201,9 +201,11 @@ static void * lalloc(void * ud, void *ptr, size_t osize, size_t nsize) {
         skynet_logger_error(ctx->handle, "[snlua]Memory warning %.2f M", (float)l->mem / (1024 * 1024));
     }
     if (nsize == 0) {
+	//skynet_logger_error(ctx->handle, "[snlua]Memory free %.2f M", (float)l->mem / (1024 * 1024));
         skynet_free(ptr);
         return NULL;
     } else {
+        //skynet_logger_error(ctx->handle, "[snlua]Memory realloc %.2f M", (float)l->mem / (1024 * 1024));
         return skynet_realloc(ptr, nsize);
     }
 }
@@ -280,7 +282,7 @@ void snlua_release(struct skynet_service * ctx) {
 int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int type, void * msg, size_t sz) {
     struct snlua * l = (struct snlua *) ctx->hook;
 
-    lua_gc(l->L, LUA_GCSTOP, 0);
+    //lua_gc(l->L, LUA_GCSTOP, 0);
     lua_getglobal(l->L, "handle");  
     lua_pushinteger(l->L, ctx->handle);
     lua_pushinteger(l->L, source);
@@ -308,7 +310,7 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
     }
 
     lua_settop(l->L, 0);
-    lua_gc(l->L, LUA_GCRESTART, 0);
+    //lua_gc(l->L, LUA_GCRESTART, 0);
     return ret;
 }
 
