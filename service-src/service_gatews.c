@@ -74,7 +74,6 @@ void conn_cleardata(struct gatews_conn * conn) {
 void gatews_accept(struct skynet_service * ctx, struct gatews_conn * conn) {
     struct gatews * g = ctx->hook;
     char msg[64];
-    size_t sz = 
     sprintf(msg, "connect|%d|%s", strlen(conn->remote_name), conn->remote_name);
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
@@ -86,7 +85,7 @@ void gatews_close(struct skynet_service * ctx, struct gatews_conn * conn) {
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
 
-void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
+int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
     struct gatews * g = ctx->hook;
     struct handshake * hs = conn->hs;
     enum wsFrameType frameType;
@@ -117,7 +116,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
             skynet_socket_close(ctx, conn->fd);
         }
-        return;
+        return 0;
     }
 
     if (conn->state == WS_STATE_OPENING) {
@@ -139,6 +138,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             conn_popdata(conn, readSize);
             skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d", hsz+dataSize);
             skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
+            return conn->sz;
         } else if (frameType == WS_CLOSING_FRAME) {
             if (conn->state != WS_STATE_CLOSING) {
                 char * frame = (char *)skynet_malloc(frameSize);
@@ -148,6 +148,7 @@ void gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             }
         }
     }
+    return 0;
 }
 
 void gatews_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, size_t sz) {
@@ -188,7 +189,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
                 skynet_socket_close(ctx, message->id);
                 skynet_free(message->buffer);
             } else {
-                gatews_message(ctx, c);
+                while(gatews_message(ctx, c));
             }
         } else {
             skynet_logger_error(ctx->handle, "[gatews]recv unknown connection data fd=%d size=%d", message->id, message->ud);
