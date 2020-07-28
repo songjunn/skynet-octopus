@@ -158,13 +158,13 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
 }
 
 int harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
-    struct skynet_remote_message rmsg;
+    struct skynet_remote_message * rmsg;
     int sz = databuffer_readpack(buffer, &rmsg);
     if (sz > 0) {
-        skynet_local_message_forward(&rmsg, sz);
+        skynet_local_message_forward(rmsg, sz);
         databuffer_freepack(buffer, sz);
         skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
-            rmsg.name, rmsg.handle, rmsg.source, rmsg.session, rmsg.type, rmsg.size);
+            rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
         return 0;
     }
     return 1;

@@ -56,17 +56,18 @@ int databuffer_readpack(struct databuffer * buffer, char ** data) {
 		return 0;
 	}
 	int sz = *((int *) buffer->chunk);
-	if (sz < buffer->ptr - sizeof(int)) {
+	if (sz > buffer->ptr - sizeof(int)) {
 		return 0;
 	}
-	data = buffer->chunk + sizeof(int);
+	*data = buffer->chunk + sizeof(int);
 	return sz;
 }
 
 void databuffer_freepack(struct databuffer * buffer, int sz) {
-	assert(buffer->ptr >= sz + sizeof(int));
-	buffer->ptr -= sz + sizeof(int);
-	memcpy(buffer->chunk, buffer->chunk + sz, buffer->ptr);
+    int size = sz + sizeof(int);
+	assert(buffer->ptr >= size);
+	buffer->ptr -= size;
+	memcpy(buffer->chunk, buffer->chunk + size, buffer->ptr);
 }
 
 void databuffer_reset(struct databuffer * buffer) {
