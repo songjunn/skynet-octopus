@@ -51,6 +51,19 @@ int databuffer_readint(struct databuffer * buffer) {
 	return *((int *) buffer->chunk);
 }
 
+int databuffer_readpack(struct databuffer * buffer, char ** data) {
+	if (buffer->ptr < sizeof(int)) {
+		return 0;
+	}
+	int sz = *((int *) buffer->chunk);
+	if (sz < buffer->ptr - sizeof(int)) {
+		return 0;
+	}
+	data = buffer->ptr + sizeof(int);
+	buffer->ptr -= sz
+	return sz;
+}
+
 void databuffer_reset(struct databuffer * buffer) {
 	buffer->ptr = 0;
 }

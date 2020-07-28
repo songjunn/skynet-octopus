@@ -26,6 +26,7 @@ struct harbor {
     int harbor_id;
     int listen_fd;
     int listen_port;
+    int buffer_size;
     int remote_service_count;
     struct hashid hash;
     struct databuffer * buffer[HARBOR_CLUSTER_MAX];
@@ -157,17 +158,13 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
 }
 
 int harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
-    int sz = databuffer_readint(buffer);
+    struct skynet_remote_message rmsg;
+    int sz = databuffer_readpack(buffer, &rmsg);
     if (sz > 0) {
-        char data[BUFFER_MAX];
-        sz = databuffer_read(buffer, data, sz);
-        if (sz > 0) {
-            struct skynet_remote_message * rmsg = data;
-            skynet_local_message_forward(rmsg, sz);
-            skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
-                rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
-            return 0;
-        }
+        skynet_local_message_forward(&rmsg, sz);
+        skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
+            rmsg.name, rmsg.handle, rmsg.source, rmsg.session, rmsg.type, rmsg.size);
+        return 0;
     }
     return 1;
 }
@@ -184,7 +181,7 @@ int harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
     struct harbor * h = skynet_malloc(sizeof(struct harbor));
     h->harbor_id = harbor;
     ctx->hook = h;
-    sscanf(args, "%d", &h->listen_port);
+    sscanf(args, "%d,%d", &h->listen_port, &h->buffer_size);
     hashid_init(&h->hash, HARBOR_CLUSTER_MAX);
 
     if (harbor_load_clusters(ctx, h)) {
@@ -245,7 +242,7 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                 skynet_logger_debug(ctx->handle, "[harbor]accept max fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
             } else {
                 int id = hashid_insert(&h->hash, smsg->ud);
-                h->buffer[id] = databuffer_create(BUFFER_MAX);
+                h->buffer[id] = databuffer_create(h->buffer_size);
                 skynet_socket_start(ctx, smsg->ud);
                 skynet_logger_debug(ctx->handle, "[harbor]accept fd=%d addr=%s", smsg->ud, (const char *) (smsg + 1));
             }
