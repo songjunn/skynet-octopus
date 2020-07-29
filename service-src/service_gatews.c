@@ -251,7 +251,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
 int gatews_create(struct skynet_service * ctx, int harbor, const char * args) {
     int i;
     struct gatews * g = skynet_malloc(sizeof(struct gatews));
-    sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
+    sscanf(args, "%[^','],%d,%d,%d", g->forward, &g->listen_port, &g->connect_max, &g->buffer_max);
 
     g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
     if (g->listen_fd < 0) {
