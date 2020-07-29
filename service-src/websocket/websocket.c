@@ -64,6 +64,16 @@ static char* getUptoLinefeed(const char *startFrom)
     return writeTo;
 }
 
+uint64_t htonll(uint64_t val)
+{
+    return (((uint64_t) htonl(val)) << 32) + htonl(val >> 32);
+}
+ 
+uint64_t ntohll(uint64_t val)
+{
+    return (((uint64_t) ntohl(val)) << 32) + ntohl(val >> 32);
+}
+
 enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
                                   struct handshake *hs)
 {
