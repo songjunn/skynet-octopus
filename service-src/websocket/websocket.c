@@ -223,14 +223,10 @@ void wsMakeFrame(const uint8_t *data, size_t dataLength,
         memcpy(&outFrame[2], &payloadLength16b, 2);
         *outLength = 4;
     } else {
-        assert(dataLength <= 0xFFFF);
-        
-        /* implementation for 64bit systems
         outFrame[1] = 127;
-        dataLength = htonll(dataLength);
-        memcpy(&outFrame[2], &dataLength, 8);
+        uint64_t payloadLength64b = htonll(dataLength);
+        memcpy(&outFrame[2], &payloadLength64b, 8);
         *outLength = 10;
-        */
     }
     memcpy(&outFrame[*outLength], data, dataLength);
     *outLength+= dataLength;

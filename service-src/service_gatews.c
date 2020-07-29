@@ -19,17 +19,18 @@ struct gatews_conn {
 struct gatews {
     int listen_fd;
     int listen_port;
+    int buffer_max;
     int connect_max;
     char forward[64];
     struct hashid hash;
     struct gatews_conn * conn;
 };
 
-void conn_init(struct gatews_conn * conn, int fd, char * remote_name, size_t sz) {
+void conn_init(struct gatews * g, struct gatews_conn * conn, int fd, char * remote_name, size_t sz) {
     conn->fd = fd;
     conn->sz = 0;
-    conn->buffer = skynet_malloc(sizeof(char) * BUFFER_MAX);
-    memset(conn->buffer, '\0', BUFFER_MAX);
+    conn->buffer = skynet_malloc(sizeof(char) * g->buffer_max);
+    memset(conn->buffer, '\0', g->buffer_max);
     conn->remote_name = skynet_malloc(sz+1);
     memcpy(conn->remote_name, remote_name, sz);
     conn->remote_name[sz] = '\0';
@@ -46,8 +47,8 @@ void conn_free(struct gatews_conn * conn) {
     skynet_free(conn->remote_name);
 }
 
-int conn_pushdata(struct gatews_conn * conn, void * data, int sz) {
-    if (sz + conn->sz > BUFFER_MAX) {
+int conn_pushdata(struct gatews * g, struct gatews_conn * conn, void * data, int sz) {
+    if (sz + conn->sz > g->buffer_max) {
         return -1;
     }
 
@@ -102,7 +103,7 @@ int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
 
     //skynet_logger_debug(ctx->handle, "[gatews]parse state=%d frameType=%d", conn->state, frameType);
 
-    if ((frameType == WS_INCOMPLETE_FRAME && conn->sz == BUFFER_MAX) || frameType == WS_ERROR_FRAME) {
+    if ((frameType == WS_INCOMPLETE_FRAME && conn->sz == g->buffer_max) || frameType == WS_ERROR_FRAME) {
         skynet_logger_error(ctx->handle, "[gatews]parse message error, fd=%d frameType=%d", conn->fd, frameType);
             
         if (conn->state == WS_STATE_OPENING) {
@@ -165,7 +166,7 @@ void gatews_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, 
     if (memcmp(command, "forward", i) == 0) {
         int size = sz-i-1;
         if (size > 0) {
-            size_t frameSize = BUFFER_MAX;
+            size_t frameSize = size+10;
             char * param = command+i+1;
             char * frame = (char *)skynet_malloc(frameSize);
             wsMakeFrame(param, size, frame, &frameSize, WS_BINARY_FRAME);
@@ -184,7 +185,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
         int id = hashid_lookup(&g->hash, message->id);
         if (id >= 0) {
             struct gatews_conn *c = &g->conn[id];
-            if (conn_pushdata(c, message->buffer, message->ud) <= 0) {
+            if (conn_pushdata(g, c, message->buffer, message->ud) <= 0) {
                 skynet_logger_error(ctx->handle, "[gatews]connection recv data too long fd=%d size=%d", message->id, message->ud);
                 skynet_socket_close(ctx, message->id);
                 skynet_free(message->buffer);

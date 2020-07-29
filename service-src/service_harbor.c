@@ -4,7 +4,6 @@
 #include "databuffer.h"
 
 #define BACKLOG 32
-#define BUFFER_MAX 2048000
 #define CLUSTER_ADDR_MAX 32
 #define SERVICE_NAME_MAX 64
 #define HARBOR_CLUSTER_MAX 32
