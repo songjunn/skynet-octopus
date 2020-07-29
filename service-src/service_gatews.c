@@ -209,7 +209,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
             const char * remote_name = (const char *) (message + 1);
 
             struct gatews_conn *c = &g->conn[id];
-            conn_init(c, message->ud, remote_name, sz);
+            conn_init(g, c, message->ud, remote_name, sz);
 
             gatews_accept(ctx, c);
             skynet_socket_start(ctx, c->fd);
