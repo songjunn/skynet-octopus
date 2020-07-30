@@ -145,13 +145,13 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
         return;
     }
 
-    uint32_t head = skynet_remote_message_header() + rmsg->size;
-    uint32_t ulen = head + sizeof(head);
+    int head = skynet_remote_message_header() + rmsg->size;
+    int ulen = head + sizeof(head);
     char * buffer = (char *) skynet_malloc(ulen);
     memcpy(buffer, (char *) &head, sizeof(head));
     skynet_remote_message_push(rmsg, buffer + sizeof(head), ulen);
     skynet_socket_send(ctx, cluster->fd, buffer, ulen);
-    skynet_logger_debug(ctx->handle, "[harbor]send fd=%d size=%d", cluster->fd, ulen);
+    skynet_logger_debug(ctx->handle, "[harbor]send fd=%d size=%d head=%d", cluster->fd, ulen, head);
     skynet_logger_debug(ctx->handle, "[harbor]remote message forward name=%s handle=%d source=%d session=%d type=%d size=%d",
                 rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
 }
