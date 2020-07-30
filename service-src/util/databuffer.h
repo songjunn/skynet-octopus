@@ -67,7 +67,13 @@ void databuffer_freepack(struct databuffer * buffer, int sz) {
     int size = sz + sizeof(int);
 	assert(buffer->ptr >= size);
 	buffer->ptr -= size;
-	memcpy(buffer->chunk, buffer->chunk + size, buffer->ptr);
+	if (size >= buffer->ptr) {
+		memcpy(buffer->chunk, buffer->chunk + size, buffer->ptr);
+	} else {
+		memcpy(buffer->chunk, buffer->chunk + size, size);
+		memcpy(buffer->chunk + size, buffer->chunk + size*2, buffer->ptr-size);
+	}
+	
 }
 
 void databuffer_reset(struct databuffer * buffer) {
