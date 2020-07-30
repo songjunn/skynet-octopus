@@ -165,6 +165,8 @@ int harbor_forward_local_message(struct skynet_service * ctx, struct databuffer 
         skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
             rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
         databuffer_freepack(buffer, sz);
+        int head = *((int *) buffer->chunk);
+        skynet_logger_debug(ctx->handle, "[harbor]databuffer freepack head=%d left=%d", head, buffer->ptr);
         return 0;
     }
     return 1;
