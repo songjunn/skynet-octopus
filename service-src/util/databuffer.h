@@ -33,7 +33,7 @@ int databuffer_push(struct databuffer * buffer, void * data, int sz) {
 }
 
 char * databuffer_read(struct databuffer * buffer, int ptr) {
-	if (buffer->ptr > ptr) {
+	if (buffer->ptr <= ptr) {
 		return NULL;
 	}
 	return buffer->chunk + ptr;
