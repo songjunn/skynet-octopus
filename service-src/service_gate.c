@@ -38,19 +38,18 @@ void gate_close(struct skynet_service * ctx, struct gate_connection * conn) {
 }
 
 void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
+    int sz;
+    char * data;
     struct gate * g = ctx->hook;
-    int sz = databuffer_readint(conn->buffer);
-    if (sz > 0) {
-        char data[BUFFER_MAX];
-        sz = databuffer_read(conn->buffer, data, sz);
-        if (sz > 0) {
-            char msg[MESSAGE_BUFFER_MAX];
-            sprintf(msg, "forward|%d|", sz);
-            int hsz = strlen(msg);
-            memcpy(msg+hsz, data, sz);
 
-            skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+sz);
-        }
+    while (sz = databuffer_readpack(conn->buffer, &data)) {
+        char msg[MESSAGE_BUFFER_MAX];
+        sprintf(msg, "forward|%d|", sz);
+        int hsz = strlen(msg);
+        memcpy(msg+hsz, data, sz);
+
+        skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+sz);
+        databuffer_freepack(conn->buffer);
     }
 }
 

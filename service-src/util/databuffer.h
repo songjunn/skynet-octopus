@@ -32,53 +32,54 @@ int databuffer_push(struct databuffer * buffer, void * data, int sz) {
 	return sz;
 }
 
-int databuffer_read(struct databuffer * buffer, void * data, int bsz) {
-	int sz = bsz + sizeof(int);
-	if (buffer->ptr < sz) {
-		return -1;
+char * databuffer_read(struct databuffer * buffer, int ptr) {
+	if (buffer->ptr > ptr) {
+		return NULL;
 	}
+	return buffer->chunk + ptr;
+}
 
-	memcpy(data, buffer->chunk + sizeof(int), bsz);
-	memcpy(buffer->chunk, buffer->chunk + sz, buffer->ptr - sz);
+int databuffer_pop(struct databuffer * buffer, int sz) {
+	assert(buffer->ptr >= sz);
 	buffer->ptr -= sz;
-	return bsz;
-}
-
-int databuffer_readint(struct databuffer * buffer) {
-	if (buffer->ptr < sizeof(int)) {
-		return -1;
-	}
-	return *((int *) buffer->chunk);
-}
-
-int databuffer_readpack(struct databuffer * buffer, char ** data) {
-	if (buffer->ptr < sizeof(int)) {
-		return 0;
-	}
-	int sz = *((int *) buffer->chunk);
-	if (sz > buffer->ptr - sizeof(int)) {
-		return 0;
-	}
-	*data = buffer->chunk + sizeof(int);
-	return sz;
-}
-
-void databuffer_freepack(struct databuffer * buffer, int sz) {
-    int size = sz + sizeof(int);
-	assert(buffer->ptr >= size);
-	buffer->ptr -= size;
 
 	//may overlap
-	//memcpy(buffer->chunk, buffer->chunk + size, buffer->ptr);
+	//memcpy(buffer->chunk, buffer->chunk + sz, buffer->ptr);
 	int c = 0;
 	while (c < buffer->ptr) {
-		*(buffer->chunk + c) = *(buffer->chunk + size + c);
+		*(buffer->chunk + c) = *(buffer->chunk + sz + c);
 		++c;
 	}
+	return buffer->ptr;
+}
+
+int databuffer_isfull(struct databuffer * buffer) {
+	return buffer->ptr >= buffer->sz;
 }
 
 void databuffer_reset(struct databuffer * buffer) {
 	buffer->ptr = 0;
+}
+
+//for default package
+#define PACKHEAD(buffer) (sizeof(int))
+
+int databuffer_readpack(struct databuffer * buffer, char ** data) {
+	int hsz = PACKHEAD(buffer);
+	if (buffer->ptr < hsz) {
+		return 0;
+	}
+	int sz = *((int *) buffer->chunk);
+	if (sz > buffer->ptr - hsz) {
+		return 0;
+	}
+	*data = databuffer_read(buffer, hsz);
+	return sz;
+}
+
+void databuffer_freepack(struct databuffer * buffer) {
+	int sz = *((int *) buffer->chunk);
+    databuffer_pop(buffer, sz + PACKHEAD(buffer));
 }
 
 #endif //SKYNET_DATABUFFER_H

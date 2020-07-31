@@ -156,20 +156,16 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
                 rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
 }
 
-int harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
+void harbor_forward_local_message(struct skynet_service * ctx, struct databuffer * buffer) {
+    int sz;
     struct skynet_remote_message * rmsg;
-    int sz = databuffer_readpack(buffer, &rmsg);
-    skynet_logger_debug(ctx->handle, "[harbor]databuffer readpack sz=%d left=%d", sz, buffer->ptr);
-    if (sz > 0) {
-        skynet_local_message_forward(rmsg, sz);
+
+    while (sz = databuffer_readpack(buffer, &rmsg)) {
         skynet_logger_debug(ctx->handle, "[harbor]local message forward name=%s handle=%d source=%d session=%d type=%d size=%d", 
             rmsg->name, rmsg->handle, rmsg->source, rmsg->session, rmsg->type, rmsg->size);
-        databuffer_freepack(buffer, sz);
-        int head = *((int *) buffer->chunk);
-        skynet_logger_debug(ctx->handle, "[harbor]databuffer freepack head=%d left=%d", head, buffer->ptr);
-        return 0;
+        skynet_local_message_forward(rmsg, sz);
+        databuffer_freepack(buffer);
     }
-    return 1;
 }
 
 void harbor_cluster_reconnect(struct skynet_service * ctx, struct harbor * h, int harbor_id) {
@@ -231,7 +227,7 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                     skynet_socket_close(ctx, smsg->id);
                     skynet_free(smsg->buffer);
                 }
-                while (!harbor_forward_local_message(ctx, h->buffer[id])) {}
+                harbor_forward_local_message(ctx, h->buffer[id]);
             } else {
                 skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
                 skynet_socket_close(ctx, smsg->id);

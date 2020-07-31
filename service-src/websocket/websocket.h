@@ -132,7 +132,7 @@ struct handshake {
      * @param outLen Return length of extracted data
      * @return Type of parsed frame
      */
-    enum wsFrameType wsParseInputFrame(uint8_t *inputFrame, size_t inputLength, uint8_t **readLength,
+    enum wsFrameType wsParseInputFrame(const uint8_t *inputFrame, size_t inputLength, uint8_t **readLength,
                                        uint8_t **dataPtr, size_t *dataLength);
 
     /**
