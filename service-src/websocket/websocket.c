@@ -80,7 +80,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
     const char *inputPtr = (const char *)inputFrame;
     const char *endPtr = (const char *)inputFrame + inputLength;
 
-    if (!strstr((const char *)inputFrame, "\r\n\r\n"))
+    if (!strnstr((const char *)inputFrame, "\r\n\r\n", inputLength))
         return WS_INCOMPLETE_FRAME;
 	
     if (memcmp_P(inputFrame, PSTR("GET "), 4) != 0)
@@ -171,7 +171,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
         || versionMismatch)
     {
         printf("host=%s key=%s conn=%d upgrade=%d proto=%d\n", hs->host, hs->key, connectionFlag, upgradeFlag, subprotocolFlag);
-        hs->frameType = WS_ERROR_FRAME;
+        hs->frameType = WS_INCOMPLETE_FRAME;
     } else {
         hs->frameType = WS_OPENING_FRAME;
     }
