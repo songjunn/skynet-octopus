@@ -180,6 +180,7 @@ void skynet_service_release(struct skynet_service * ctx) {
 	if (ctx->module) dlclose(ctx->module);
 	if (ctx->name) skynet_free(ctx->name);
 	if (ctx->queue) skynet_mq_release(ctx->queue);
+	skynet_free(ctx);
 }
 
 void skynet_service_releaseall() {
@@ -194,6 +195,7 @@ void skynet_service_releaseall() {
 			skynet_service_release(ctx);
 		}
 	}
+	skynet_free(m->slot);
 }
 
 static void _insert_name_before(struct service_storage *s, char *name, uint32_t handle, int before) {
