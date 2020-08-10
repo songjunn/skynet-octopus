@@ -205,7 +205,7 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     int i;
     char * command = msg;
 
-    skynet_logger_debug(ctx, "[MongoDB] dispatch command: %s", msg);
+    skynet_logger_debug(ctx, "[MongoDB] dispatch command: %.*s", sz, msg);
 
     for (i=0;i<sz;i++) {
         if (command[i]=='|') {
