@@ -225,9 +225,9 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                 if (databuffer_push(h->buffer[id], smsg->buffer, smsg->ud) <= 0) {
                     skynet_logger_error(ctx->handle, "[harbor]connection %d recv data too long, size:%d", smsg->id, smsg->ud);
                     skynet_socket_close(ctx, smsg->id);
-                    skynet_free(smsg->buffer);
                 }
                 harbor_forward_local_message(ctx, h->buffer[id]);
+                skynet_free(smsg->buffer);
             } else {
                 skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
                 skynet_socket_close(ctx, smsg->id);

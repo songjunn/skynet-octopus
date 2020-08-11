@@ -103,15 +103,14 @@ void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
             if (databuffer_push(c->buffer, message->buffer, message->ud) <= 0) {
                 skynet_logger_error(ctx->handle, "[gate]connection recv data too long fd=%d size=%d", message->id, message->ud);
                 skynet_socket_close(ctx, message->id);
-                skynet_free(message->buffer);
             } else {
                 gate_message(ctx, c);
             }
         } else {
             skynet_logger_error(ctx->handle, "[gate]recv unknown connection data fd=%d size=%d", message->id, message->ud);
             skynet_socket_close(ctx, message->id);
-            skynet_free(message->buffer);
         }
+        skynet_free(message->buffer);
         break;
     }
     case SKYNET_SOCKET_TYPE_ACCEPT: {
