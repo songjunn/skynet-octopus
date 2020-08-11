@@ -113,15 +113,14 @@ void http_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
             if (nparsed < 0) {
                 skynet_logger_error(ctx->handle, "[http]connection recv data too long fd=%d size=%d", message->id, message->ud);
                 skynet_socket_close(ctx, message->id);
-                skynet_free(message->buffer);
             } else if (nparsed > 0) {
                 http_response(ctx, c);
             }
         } else {
             skynet_logger_error(ctx->handle, "[http]recv unknown connection data fd=%d size=%d", message->id, message->ud);
             skynet_socket_close(ctx, message->id);
-            skynet_free(message->buffer);
         }
+        skynet_free(message->buffer);
         break;
     }
     case SKYNET_SOCKET_TYPE_ACCEPT: {
