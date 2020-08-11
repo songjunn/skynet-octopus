@@ -142,8 +142,8 @@ char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const 
     int num = 0;
 
     mc = ctx->hook;
-    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
-    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, sz, &error) : bson_new ();
+    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, sz, &error) : bson_new();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
     client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
@@ -179,8 +179,8 @@ char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const c
     char *str, *result = NULL;
 
     mc = ctx->hook;
-    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, strlen(opts), &error) : bson_new();
-    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, sz, &error) : bson_new ();
+    bson_opts = strlen(opts) ? bson_new_from_json((const uint8_t*)opts, sz, &error) : bson_new();
+    bson_query = strlen(query) ? bson_new_from_json((const uint8_t*)query, strlen(query), &error) : bson_new ();
     client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
