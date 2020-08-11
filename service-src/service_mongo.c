@@ -128,7 +128,7 @@ void mongo_upsert(struct skynet_service * ctx, const char * dbname, const char *
     mongoc_collection_destroy (client);
 }
 
-char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
+char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts, size_t sz) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -168,7 +168,7 @@ char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const 
     return result;
 }
 
-char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
+char * mongo_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts, size_t sz) {
     struct mongo_client *mc;
     MONGO_COLLECTION *client;
     MONGO_ERROR error;
@@ -241,8 +241,9 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     } else if (memcmp(command, "findone", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
+        GET_CMD_ARGS(query, param)
 
-        char * value = mongo_selectone(ctx, dbname, collec, param, sz-(param-msg), "");
+        char * value = mongo_selectone(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
@@ -252,8 +253,9 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     } else if (memcmp(command, "findmore", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
+        GET_CMD_ARGS(query, param)
 
-        char * value = mongo_selectmore(ctx, dbname, collec, param, sz-(param-msg), "");
+        char * value = mongo_selectmore(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
