@@ -177,8 +177,18 @@ static int lcreate_service(lua_State* L) {
 }
 
 static int lclose_service(lua_State* L) {
-    int handle = lua_tointeger(L, 1);
-    skynet_service_close(handle);
+    int t = lua_type(L, 1);
+    if (t == LUA_TSTRING) {
+        const char * name = lua_tostring(L, 1);
+        struct skynet_service * ctx = skynet_service_findname(name);
+        if (ctx != NULL) {
+            skynet_service_close(ctx->handle);
+        }
+    } 
+    else if (t == LUA_TNUMBER) {
+        int handle = lua_tointeger(L, 1);
+        skynet_service_close(handle);
+    }
     return 0;
 }
 
