@@ -135,7 +135,7 @@ char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const 
     MONGO_CURSOR *cursor;
     MONGO_BSON *bson_query;
     MONGO_BSON *bson_opts;
-    MONGO_BSON all;
+    MONGO_BSON *bson_result;
     const MONGO_BSON *doc;
     char *str, *result = NULL;
     char key[64];
@@ -147,21 +147,22 @@ char * mongo_selectmore(struct skynet_service * ctx, const char * dbname, const 
     client = mongoc_client_get_collection (mc->client, dbname, collection);
     cursor = mongoc_collection_find (client, MONGOC_QUERY_NONE, 0, 0, 0, bson_query, bson_opts, NULL);
 
-    bson_init (&all);
+    bson_init (bson_result);
     while (mongoc_cursor_next (cursor, &doc)) {
         sprintf(key, "%d", num++);
-        bson_append_document (&all, key, strlen(key), doc);
+        bson_append_document (bson_result, key, strlen(key), doc);
         //skynet_logger_debug(ctx, "[MongoDB] SelectMore Success, %s:%s, %s, %s", dbname, collection, query, str);
     }
 
     if (num > 0) {
-        str = bson_array_as_json(&all, NULL);
+        str = bson_array_as_json(bson_result, NULL);
         result = skynet_strdup(str);
         bson_free (str);
     }
     
     bson_destroy (bson_opts);
     bson_destroy (bson_query);
+    bson_destroy (bson_result);
     mongoc_cursor_destroy (cursor);
     mongoc_collection_destroy (client);
 
