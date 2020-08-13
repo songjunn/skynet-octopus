@@ -222,10 +222,10 @@ skynet_mq_push(struct message_queue *q, struct skynet_message *message) {
 		expand_queue(q);
 	}
 
-	if (q->in_global == 0) {
+	/*if (q->in_global == 0) {
 		q->in_global = MQ_IN_GLOBAL;
 		skynet_globalmq_push(q);
-	}
+	}*/
 	
 	SPIN_UNLOCK(q)
 }
