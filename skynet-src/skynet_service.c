@@ -163,6 +163,9 @@ void skynet_service_close(uint32_t handle) {
 	struct skynet_service * ctx = skynet_service_find(handle);
 	if (ctx) {
 		ctx->closing = 1;
+		if (!skynet_mq_inglobal(ctx->queue)) {
+			skynet_globalmq_push(ctx->queue);
+		}
 	}
 }
 

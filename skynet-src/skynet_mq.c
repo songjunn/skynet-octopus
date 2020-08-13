@@ -118,6 +118,11 @@ skynet_mq_handle(struct message_queue *q) {
 	return q->handle;
 }
 
+int 
+skynet_mq_inglobal(struct message_queue *q) {
+	return q->in_global;
+}
+
 int
 skynet_mq_length(struct message_queue *q) {
 	int head, tail,cap;
