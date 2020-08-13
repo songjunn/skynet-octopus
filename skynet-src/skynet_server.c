@@ -10,19 +10,21 @@ int skynet_message_dispatch() {
         return 1;
     }
 
-    //uint32_t handle = skynet_mq_handle(q);
-    //struct skynet_service * ctx = skynet_service_find(handle);
-    struct skynet_service * ctx = skynet_mq_context(q);
+    uint32_t handle = skynet_mq_handle(q);
+    struct skynet_service * ctx = skynet_service_find(handle);
     if (ctx == NULL || ctx->handle == 0) {
         return 0;
     }
-
     assert(q == ctx->queue);
-    int ret = skynet_service_message_dispatch(ctx);
+
     if (ctx->closing) {
+        while (!skynet_service_message_dispatch(ctx));
         skynet_service_release(ctx);
-    } else if (ret == 0 && skynet_mq_concurrent(q) == 0) {
-        skynet_globalmq_push(ctx->queue);
+    } else {
+        int ret = skynet_service_message_dispatch(ctx);
+        if (ret == 0 && skynet_mq_concurrent(q) == 0) {
+            skynet_globalmq_push(ctx->queue);
+        }
     }
 
     return 0;
@@ -59,7 +61,9 @@ void skynet_send(struct skynet_service * context, uint32_t source, uint32_t sess
         smsg.data = skynet_malloc(size);
         memcpy(smsg.data, data, size);
     }
-    skynet_service_sendmsg(context, &smsg);
+    if (skynet_service_sendmsg(context, &smsg)) {
+        SKYNET_FREE(smsg.data);
+    }
 }
 
 void skynet_sendname(const char * name, uint32_t source, uint32_t session, int type, void * data, size_t size) {

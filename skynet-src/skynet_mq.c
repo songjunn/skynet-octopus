@@ -13,7 +13,7 @@
 
 struct message_queue {
 	struct spinlock lock;
-	//uint32_t handle;
+	uint32_t handle;
 	int cap;
 	int head;
 	int tail;
@@ -24,7 +24,6 @@ struct message_queue {
 	int concurrent;
 	struct skynet_message *queue;
 	struct message_queue *next;
-	struct skynet_service *context;
 };
 
 struct global_queue {
@@ -79,9 +78,9 @@ skynet_globalmq_pop() {
 }
 
 struct message_queue * 
-skynet_mq_create(struct skynet_service *context, int concurrent) {
+skynet_mq_create(uint32_t handle, int concurrent) {
 	struct message_queue * q = skynet_malloc(sizeof(*q));
-	//q->handle = handle;
+	q->handle = handle;
 	q->cap = DEFAULT_QUEUE_SIZE;
 	q->head = 0;
 	q->tail = 0;
@@ -96,7 +95,6 @@ skynet_mq_create(struct skynet_service *context, int concurrent) {
 	q->concurrent = concurrent;
 	q->queue = skynet_malloc(sizeof(struct skynet_message) * q->cap);
 	q->next = NULL;
-	q->context = context;
 
 	return q;
 }
@@ -117,12 +115,7 @@ _release(struct message_queue *q) {
 
 uint32_t 
 skynet_mq_handle(struct message_queue *q) {
-	return q->context->handle;
-}
-
-struct skynet_service *
-skynet_mq_context(struct message_queue *q) {
-	return q->context;
+	return q->handle;
 }
 
 int

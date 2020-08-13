@@ -146,7 +146,7 @@ uint32_t skynet_service_create(const char * name, int harbor, const char * modul
 		return NULL;
 	}
 
-	ctx->queue = skynet_mq_create(ctx, concurrent);
+	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
 
 	if (!ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
@@ -288,7 +288,7 @@ struct skynet_service * skynet_service_find(uint32_t handle) {
 	int hash = skynet_harbor_index(handle);
 	if (hash >= 0 && hash < m->slot_size) {
 		struct skynet_service * ctx = m->slot[hash];
-		if (ctx && ctx->handle == handle && ctx->closing == 0) {
+		if (ctx && ctx->handle == handle) {
 			result = ctx;
 		}
 	}
@@ -308,7 +308,7 @@ struct skynet_service * skynet_service_findname(const char * name) {
 	int hash = skynet_harbor_index(handle);
 	if (hash >= 0 && hash < m->slot_size) {
 		struct skynet_service * ctx = m->slot[hash];
-		if (ctx && ctx->handle == handle && ctx->closing == 0) {
+		if (ctx && ctx->handle == handle) {
 			result = ctx;
 		}
 	}
@@ -318,15 +318,19 @@ struct skynet_service * skynet_service_findname(const char * name) {
 	return result;
 }
 
-void skynet_service_sendmsg(struct skynet_service * context, struct skynet_message * message) {
-	skynet_mq_push(context->queue, message);
+int skynet_service_sendmsg(struct skynet_service * context, struct skynet_message * message) {
+	if (context->closing == 0) {
+		skynet_mq_push(context->queue, message);
+		return 0;
+	}
+	return -1;
 }
 
 int skynet_service_pushmsg(uint32_t handle, struct skynet_message * message) {
 	struct skynet_service * ctx = skynet_service_find(handle);
-	if (ctx == NULL) {
-		return -1;
+	if (ctx && ctx->closing == 0) {
+		skynet_mq_push(ctx->queue, message);
+		return 0;
 	}
-	skynet_mq_push(ctx->queue, message);
-	return 0;
+	return -1;
 }
