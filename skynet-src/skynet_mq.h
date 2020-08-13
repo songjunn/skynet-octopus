@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include "skynet_service.h"
 
 struct skynet_message {
 	int type;
@@ -17,10 +18,11 @@ struct message_queue;
 void skynet_globalmq_push(struct message_queue * queue);
 struct message_queue * skynet_globalmq_pop(void);
 
-struct message_queue * skynet_mq_create(uint32_t handle, int concurrent);
+struct message_queue * skynet_mq_create(struct skynet_service * context, int concurrent);
 void skynet_mq_release(struct message_queue *q);
 
-uint32_t skynet_mq_handle(struct message_queue *);
+uint32_t skynet_mq_handle(struct message_queue *q);
+struct skynet_service * skynet_mq_context(struct message_queue *q);
 
 // 0 for success
 int skynet_mq_pop(struct message_queue *q, struct skynet_message *message);

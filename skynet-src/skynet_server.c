@@ -10,8 +10,9 @@ int skynet_message_dispatch() {
         return 1;
     }
 
-    uint32_t handle = skynet_mq_handle(q);
-    struct skynet_service * ctx = skynet_service_find(handle);
+    //uint32_t handle = skynet_mq_handle(q);
+    //struct skynet_service * ctx = skynet_service_find(handle);
+    struct skynet_service * ctx = skynet_mq_context(q);
     if (ctx == NULL || ctx->handle == 0) {
         return 0;
     }

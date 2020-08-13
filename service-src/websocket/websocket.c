@@ -74,7 +74,7 @@ uint64_t ntohll(uint64_t val)
     return (((uint64_t) ntohl(val)) << 32) + ntohl(val >> 32);
 }
 
-char *strnstr(const char *s1, size_t len1, const char *s2, size_t len2)
+char *_strnstr(const char *s1, size_t len1, const char *s2, size_t len2)
 {
     const char *p = s1;
     for(;(p=strchr(p,*s2))!=0;p++)
@@ -93,7 +93,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
     const char *inputPtr = (const char *)inputFrame;
     const char *endPtr = (const char *)inputFrame + inputLength;
 
-    if (!strnstr((const char *)inputFrame, inputLength, "\r\n\r\n", strlen("\r\n\r\n")))
+    if (!_strnstr((const char *)inputFrame, inputLength, "\r\n\r\n", strlen("\r\n\r\n")))
         return WS_INCOMPLETE_FRAME;
 	
     if (memcmp_P(inputFrame, PSTR("GET "), 4) != 0)
