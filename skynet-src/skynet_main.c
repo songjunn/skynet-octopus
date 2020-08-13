@@ -158,6 +158,7 @@ void skynet_signal_init() {
     actTerminate.sa_handler = skynet_shutdown;
     sigemptyset(&actTerminate.sa_mask);
     actTerminate.sa_flags = 0;
+    sigaction(SIGINT, &actTerminate, NULL);
     sigaction(SIGTERM, &actTerminate, NULL);
 
     struct sigaction actCoredump;
