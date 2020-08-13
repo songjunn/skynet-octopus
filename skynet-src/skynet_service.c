@@ -146,7 +146,7 @@ uint32_t skynet_service_create(const char * name, int harbor, const char * modul
 		return NULL;
 	}
 
-	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
+	ctx->queue = skynet_mq_create(ctx, concurrent);
 
 	if (!ctx->create(ctx, harbor, args)) {
 		skynet_globalmq_push(ctx->queue);
