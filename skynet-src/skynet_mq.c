@@ -103,9 +103,7 @@ static void
 _release(struct message_queue *q) {
 	struct skynet_message msg;
 	while(!skynet_mq_pop(q, &msg)) {
-		if (msg.data != NULL) {
-			skynet_free(msg.data);
-		}
+		SKYNET_FREE(msg.data);
 	}
 
 	SPIN_DESTROY(q)
@@ -204,6 +202,7 @@ expand_queue(struct message_queue *q) {
 	
 	skynet_free(q->queue);
 	q->queue = new_queue;
+	skynet_logger_warn(NULL, "[skynet]message queue expand, service:%d cap:%d", q->handle, q->cap);
 }
 
 void 

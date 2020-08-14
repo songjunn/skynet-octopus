@@ -27,7 +27,7 @@ struct monitor {
 static struct monitor *m = NULL;
 
 void create_thread(pthread_t *thread, void *(*start_routine) (void *), void *arg) {
-    if (pthread_create(thread,NULL, start_routine, arg)) {
+    if (pthread_create(thread, NULL, start_routine, arg)) {
         skynet_logger_error(0, "[skynet]Create thread failed");
         exit(1);
     }

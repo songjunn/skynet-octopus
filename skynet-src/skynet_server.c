@@ -44,9 +44,7 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
         ctx->cb(ctx, msg.source, msg.session, msg.type, msg.data, msg.size);
     }
 
-    if (msg.size > 0 && msg.data != NULL) {
-        skynet_free(msg.data);
-    }
+    SKYNET_FREE(msg.data);
     return 0;
 }
 

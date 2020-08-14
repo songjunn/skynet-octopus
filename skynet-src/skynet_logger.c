@@ -1,5 +1,6 @@
 #include "skynet.h"
 #include "skynet_logger.h"
+#include "skynet_mq.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -8,7 +9,6 @@
 #include <sys/syscall.h>
 
 #define LOG_MESSAGE_SIZE 204800
-#define LOG_MESSAGE_FORMAT LOG_MESSAGE_SIZE+1024
 
 static struct skynet_service * LOGGER = 0;
 
@@ -53,24 +53,35 @@ void skynet_logger_format_time(char * buffer, size_t size) {
 }
 
 void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
+    char head[64] = {0}, time[64] = {0};
+    char * data = skynet_malloc(LOG_MESSAGE_SIZE+128);
+    skynet_logger_format_time(time, sizeof(time));
+    skynet_logger_format_head(head, sizeof(head), level, source);
+    int sz = snprintf(data, 128, "%s%s", time, head);
+
     va_list ap;
     va_start(ap, msg);
-    char tmp[LOG_MESSAGE_SIZE] = {0};
-    int len = vsnprintf(tmp, LOG_MESSAGE_SIZE, msg, ap);
+    int len = vsnprintf(data+sz, LOG_MESSAGE_SIZE, msg, ap);
     if (len >= LOG_MESSAGE_SIZE) {
         len = LOG_MESSAGE_SIZE - 1;
     }
     va_end(ap);
 
-    char head[64] = {0}, time[64] = {0}, message[LOG_MESSAGE_FORMAT] = {0};
-    skynet_logger_format_time(time, sizeof(time));
-    skynet_logger_format_head(head, sizeof(head), level, source);
-    snprintf(message, LOG_MESSAGE_FORMAT, "%s%s%.*s", time, head, len, tmp);
-
-    fprintf(stdout, message);
+    fprintf(stdout, data);
     fprintf(stdout, "\n");
 
     if (LOGGER) {
-        skynet_send(LOGGER, source, 0, level, (void *)message, strlen(message));
+        struct skynet_message smsg;
+        smsg.source = source;
+        smsg.type = level;
+        smsg.size = len+sz;
+        smsg.session = 0;
+        smsg.data = data;
+
+        if (skynet_service_sendmsg(context, &smsg)) {
+            SKYNET_FREE(smsg.data);
+        }
+    } else {
+        skynet_free(data);
     }
 }
