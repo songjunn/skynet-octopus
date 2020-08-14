@@ -2,6 +2,7 @@
 #include "skynet_mq.h"
 #include "skynet_spinlock.h"
 
+#include <stdio.h>
 #include <string.h>
 
 // 0 means mq is not in global mq.
