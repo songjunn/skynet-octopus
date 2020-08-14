@@ -202,7 +202,7 @@ expand_queue(struct message_queue *q) {
 	
 	skynet_free(q->queue);
 	q->queue = new_queue;
-	skynet_logger_warn(NULL, "[skynet]message queue expand, service:%d cap:%d", q->handle, q->cap);
+	fprintf(stdout, "[skynet]message queue expand, service:%d cap:%d", q->handle, q->cap);
 }
 
 void 
