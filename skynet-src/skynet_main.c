@@ -139,7 +139,7 @@ void skynet_shutdown(int sig) {
 void skynet_coredump(int sig) {
     unsigned i;
 
-    printf("skynet coredump. sig:%d\n", sig);
+    fprintf(stdout, "skynet coredump. sig:%d\n", sig);
 
     skynet_shutdown(sig);
 
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
         
         uint32_t handle = skynet_service_create(service_name, harbor, service_lib, service_args, concurrent);
         if (handle == 0) {
-            printf("skynet start failed.\n");
+            fprintf(stdout, "skynet start failed.\n");
             return 1;
         }
         skynet_handle_namehandle(handle, service_name);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
     skynet_socket_free();
     skynet_config_free();
 
-    printf("skynet exit.\n");
+    fprintf(stdout, "skynet exit.\n");
 
     return 0;
 }
