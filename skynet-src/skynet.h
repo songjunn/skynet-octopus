@@ -1,6 +1,8 @@
 #ifndef SKYNET_H
 #define SKYNET_H
 
+#include "skynet_alloc.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,12 +26,6 @@
 #define SKYNET_SOCKET_TYPE_ERROR 5
 #define SKYNET_SOCKET_TYPE_UDP 6
 #define SKYNET_SOCKET_TYPE_WARNING 7
-
-#define skynet_malloc malloc
-#define skynet_calloc calloc
-#define skynet_realloc realloc
-#define skynet_free free
-#define SKYNET_FREE(ptr) if (ptr) {free(ptr);}
 
 #define skynet_logger_debug(source, msg, ...) skynet_logger_print(source, LOGGER_DEBUG, msg, ##__VA_ARGS__)
 #define skynet_logger_warn(source, msg, ...) skynet_logger_print(source, LOGGER_WARN, msg, ##__VA_ARGS__)

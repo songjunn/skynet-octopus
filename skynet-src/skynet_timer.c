@@ -147,7 +147,7 @@ dispatch_list(struct timer_node *current) {
 		message.size = event->size;
 
 		if (skynet_service_pushmsg(event->handle, &message)) {
-			SKYNET_FREE(message.data);
+			skynet_free(message.data);
 		}
 		
 		struct timer_node * temp = current;
@@ -224,7 +224,7 @@ skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size
 		}
 
 		if (skynet_service_pushmsg(handle, &message)) {
-			SKYNET_FREE(message.data);
+			skynet_free(message.data);
 		}
 	} else {
 		struct timer_event event;

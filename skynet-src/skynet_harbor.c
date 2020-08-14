@@ -85,7 +85,7 @@ size_t skynet_remote_message_push(struct skynet_remote_message * rmsg, void * da
 	if (size >= skynet_remote_message_header() + rmsg->size) {
 		memcpy(data, rmsg, skynet_remote_message_header());
 		memcpy(data + skynet_remote_message_header(), rmsg->data, rmsg->size);
-		SKYNET_FREE(rmsg->data);
+		skynet_free(rmsg->data);
 		return skynet_remote_message_header() + rmsg->size;
 	}
 	return 0;

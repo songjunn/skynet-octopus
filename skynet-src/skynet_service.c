@@ -182,7 +182,7 @@ void skynet_service_release(struct skynet_service * ctx) {
 	ctx->release(ctx);
 	if (ctx->module) dlclose(ctx->module);
 	if (ctx->queue) skynet_mq_release(ctx->queue);
-	SKYNET_FREE(ctx->name);
+	skynet_free(ctx->name);
 	skynet_free(ctx);
 }
 

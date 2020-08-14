@@ -79,7 +79,7 @@ void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
         smsg.data = data;
 
         if (skynet_service_sendmsg(LOGGER, &smsg)) {
-            SKYNET_FREE(smsg.data);
+            skynet_free(smsg.data);
         }
     } else {
         skynet_free(data);

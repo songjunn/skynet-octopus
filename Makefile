@@ -13,7 +13,7 @@ SHARED := -shared -fPIC
 
 SKYNET_SRC = skynet_service.c skynet_mq.c \
 	skynet_server.c skynet_timer.c skynet_config.c skynet_harbor.c \
-	skynet_logger.c skynet_socket.c socket_server.c
+	skynet_logger.c skynet_socket.c socket_server.c skynet_alloc.c
 
 SKYNET_EXE_SRC = skynet_main.c
 
