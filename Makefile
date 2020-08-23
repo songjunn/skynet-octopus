@@ -7,6 +7,7 @@ SERVICE_INC ?= service-src/util
 CC := gcc
 
 CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -I$(SKYNET_INC) -I$(SERVICE_INC)
+DEFINES := -DMEMORY_CHECK
 EXPORT := -Wl,-E
 LIBS := -lrt -ldl -lpthread
 SHARED := -shared -fPIC
@@ -35,10 +36,10 @@ $(LIB_PATH) :
 	mkdir $(LIB_PATH)
 
 $(BIN_PATH)/libskynet.so : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(SHARED) $(LIBS) $^ -o $@
+	$(CC) $(CFLAGS) $(DEFINES) $(SHARED) $(LIBS) $^ -o $@
 
 $(BIN_PATH)/skynet : $(foreach v, $(SKYNET_EXE_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(EXPORT) $(LIBS) $^ -o $@ -lskynet -L$(BIN_PATH)
+	$(CC) $(CFLAGS) $(DEFINES) $(EXPORT) $(LIBS) $^ -o $@ -lskynet -L$(BIN_PATH)
 
 $(LIB_PATH)/liblogger.so : service-src/service_logger.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@

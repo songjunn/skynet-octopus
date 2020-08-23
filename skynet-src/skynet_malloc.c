@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 
+#ifdef MEMORY_CHECK
 struct memory_node {
 	void * ptr;
 	size_t size;
@@ -122,12 +123,19 @@ skynet_malloc_print() {
 	for (i=0;i<hm->cap;i++) {
 		c = hm->node[i];
 		while (c && c->ptr) {
-			fprintf(stdout, "hashmemory %s:%d %x %d %lld\n", c->file, c->line, c->ptr, c->size, c->timestamp);
+			fprintf(stdout, "Memory check %s:%d %x %d %lld\n", c->file, c->line, c->ptr, c->size, c->timestamp);
 			c = c->next;
 		}
 	}
 	rwlock_runlock(&hm->lock);
 }
+#else
+void skynet_malloc_init() {}
+void skynet_malloc_free() {}
+void skynet_malloc_insert(void *ptr, size_t sz, const char * file, int line) {}
+void skynet_malloc_remove(void *ptr) {}
+void skynet_malloc_print() {}
+#endif
 
 void * 
 skynet_malloc(size_t sz) {

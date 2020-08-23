@@ -8,7 +8,7 @@ PLATFORM_INC ?= platform
 CC := gcc 
 
 CFLAGS := -std=gnu99 -g -O0 -Wall -I$(SKYNET_INC) -I$(SERVICE_INC) -I$(PLATFORM_INC)
-SKYNET_DEFINES :=-DFD_SETSIZE=1024
+DEFINES :=-DFD_SETSIZE=1024 -DMEMORY_CHECK
 
 # link
 LDFLAGS := -lplatform -lpthread -lws2_32 -L$(BIN_PATH)
@@ -42,10 +42,10 @@ $(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
 
 $(BIN_PATH)/skynet.dll : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(SHARED) -o $@ $^ $(LDFLAGS) -includeplatform.h 
+	$(CC) $(CFLAGS) $(DEFINES) $(SHARED) -o $@ $^ $(LDFLAGS) -includeplatform.h 
 
 $(BIN_PATH)/skynet.exe : $(foreach v, $(SKYNET_EXE_SRC), skynet-src/$(v))
-	$(CC) $(CFLAGS) $(SKYNET_DEFINES) $(EXPORT) -o $@ $^ $(LDFLAGS) $(SHAREDLDFLAGS) 
+	$(CC) $(CFLAGS) $(DEFINES) $(EXPORT) -o $@ $^ $(LDFLAGS) $(SHAREDLDFLAGS) 
 
 $(LIB_PATH) :
 	mkdir $(LIB_PATH)
