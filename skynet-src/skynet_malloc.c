@@ -37,7 +37,7 @@ skynet_malloc_init() {
 }
 
 void
-skynet_malloc_clear() {
+skynet_malloc_free() {
 	struct memory_hash *hm = HM;
 	struct memory_node *c, *t;
 	int i;

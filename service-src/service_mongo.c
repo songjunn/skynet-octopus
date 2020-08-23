@@ -1,4 +1,5 @@
 #include "skynet.h"
+#include "skynet_malloc.h"
 #include "mongoc.h"
 #include "bson.h"
 

@@ -1,5 +1,6 @@
 #include "skynet.h"
 #include "skynet_mq.h"
+#include "skynet_malloc.h"
 #include "skynet_spinlock.h"
 
 #include <stdio.h>

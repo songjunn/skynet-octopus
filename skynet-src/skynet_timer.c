@@ -1,6 +1,7 @@
 #include "skynet.h"
 #include "skynet_timer.h"
 #include "skynet_mq.h"
+#include "skynet_malloc.h"
 #include "skynet_service.h"
 #include "skynet_spinlock.h"
 

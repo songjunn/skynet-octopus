@@ -1,5 +1,6 @@
 #include "skynet.h"
 #include "skynet_harbor.h"
+#include "skynet_malloc.h"
 
 #include <string.h>
 #include <stdio.h>

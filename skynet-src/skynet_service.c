@@ -2,6 +2,7 @@
 #include "skynet_service.h"
 #include "skynet_server.h"
 #include "skynet_mq.h"
+#include "skynet_malloc.h"
 #include "skynet_harbor.h"
 #include "skynet_atomic.h"
 #include "skynet_rwlock.h"

@@ -1,5 +1,6 @@
 #include "skynet.h"
 #include "skynet_mq.h"
+#include "skynet_malloc.h"
 #include "skynet_server.h"
 #include "skynet_service.h"
 #include "skynet_config.h"
@@ -220,6 +221,7 @@ int main(int argc, char *argv[]) {
     skynet_harbor_exit();
     skynet_socket_free();
     skynet_config_free();
+    skynet_malloc_free();
 
     fprintf(stdout, "skynet exit.\n");
 

@@ -2,6 +2,7 @@
 
 #include "socket_server.h"
 #include "socket_poll.h"
+#include "skynet_malloc.h"
 #include "skynet_atomic.h"
 #include "skynet_spinlock.h"
 

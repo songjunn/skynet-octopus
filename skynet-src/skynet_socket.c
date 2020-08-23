@@ -5,6 +5,7 @@
 #include "skynet_server.h"
 #include "skynet_service.h"
 #include "skynet_mq.h"
+#include "skynet_malloc.h"
 
 #include <assert.h>
 #include <stdlib.h>
