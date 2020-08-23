@@ -53,6 +53,7 @@ void skynet_harbor_sendname(const char * name, uint32_t source, uint32_t session
 		strncpy(rmsg.name, name, 32);
 		if (data != NULL) {
 	        rmsg.data = skynet_malloc(size);
+	        skynet_malloc_insert(rmsg.data, size, __FILE__, __LINE__);
 	        memcpy(rmsg.data, data, size);
 	    }
 
@@ -70,6 +71,7 @@ void skynet_harbor_sendhandle(uint32_t target, uint32_t source, uint32_t session
 		rmsg.handle = target;
 		if (data != NULL) {
 	        rmsg.data = skynet_malloc(size);
+	        skynet_malloc_insert(rmsg.data, size, __FILE__, __LINE__);
 	        memcpy(rmsg.data, data, size);
 	    }
 
@@ -85,6 +87,7 @@ size_t skynet_remote_message_push(struct skynet_remote_message * rmsg, void * da
 	if (size >= skynet_remote_message_header() + rmsg->size) {
 		memcpy(data, rmsg, skynet_remote_message_header());
 		memcpy(data + skynet_remote_message_header(), rmsg->data, rmsg->size);
+		skynet_malloc_remove(rmsg->data);
 		skynet_free(rmsg->data);
 		return skynet_remote_message_header() + rmsg->size;
 	}

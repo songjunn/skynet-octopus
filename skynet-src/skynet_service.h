@@ -16,7 +16,7 @@ void skynet_service_releaseall();
 struct skynet_service * skynet_service_findname(const char * name);
 struct skynet_service * skynet_service_find(uint32_t handle);
 uint32_t skynet_service_handle(struct skynet_service * ctx);
-const char * skynet_handle_namehandle(uint32_t handle, const char *name);
+void skynet_handle_namehandle(uint32_t handle, const char *name);
 
 int skynet_service_pushmsg(uint32_t handle, struct skynet_message * message);
 int skynet_service_sendmsg(struct skynet_service * ctx, struct skynet_message * message);

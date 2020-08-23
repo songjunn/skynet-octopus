@@ -44,6 +44,7 @@ int skynet_service_message_dispatch(struct skynet_service * ctx) {
         ctx->cb(ctx, msg.source, msg.session, msg.type, msg.data, msg.size);
     }
 
+    skynet_malloc_remove(msg.data);
     skynet_free(msg.data);
     return 0;
 }
@@ -57,9 +58,11 @@ void skynet_send(struct skynet_service * context, uint32_t source, uint32_t sess
     smsg.data = NULL;
     if (data != NULL) {
         smsg.data = skynet_malloc(size);
+        skynet_malloc_insert(smsg.data, size, __FILE__, __LINE__);
         memcpy(smsg.data, data, size);
     }
     if (skynet_service_sendmsg(context, &smsg)) {
+        skynet_malloc_remove(smsg.data);
         skynet_free(smsg.data);
     }
 }
@@ -87,6 +90,7 @@ void skynet_sendhandle(uint32_t target, uint32_t source, uint32_t session, int t
 char * skynet_strdup(const char * str) {
     size_t sz = strlen(str);
     char * ret = skynet_malloc(sz+1);
+    skynet_malloc_insert(ret, sz+1, __FILE__, __LINE__);
     memcpy(ret, str, sz+1);
     return ret;
 }

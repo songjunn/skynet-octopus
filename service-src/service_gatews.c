@@ -29,10 +29,12 @@ void conn_init(struct gatews * g, struct gatews_conn * conn, int fd, char * remo
     conn->fd = fd;
     conn->buffer = databuffer_create(g->buffer_max);
     conn->remote_name = skynet_malloc(sz+1);
+    skynet_malloc_insert(conn->remote_name, sz+1, __FILE__, __LINE__);
     memcpy(conn->remote_name, remote_name, sz);
     conn->remote_name[sz] = '\0';
     conn->state = WS_STATE_OPENING;
     conn->hs = skynet_malloc(sizeof(struct handshake));
+    skynet_malloc_insert(conn->hs, sizeof(struct handshake), __FILE__, __LINE__);
     nullHandshake(conn->hs);
 }
 
@@ -40,6 +42,8 @@ void conn_free(struct gatews_conn * conn) {
     conn->fd = -1;
     databuffer_free(conn->buffer);
     freeHandshake(conn->hs);
+    skynet_malloc_remove(conn->hs);
+    skynet_malloc_remove(conn->remote_name);
     skynet_free(conn->hs);
     skynet_free(conn->remote_name);
 }
@@ -80,11 +84,13 @@ int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
             
         if (conn->state == WS_STATE_OPENING) {
             char * frame = (char *)skynet_malloc(frameSize);
+            skynet_malloc_insert(frame, frameSize, __FILE__, __LINE__);
             frameSize = sprintf(frame, "HTTP/1.1 400 Bad Request\r\n%s%s\r\n\r\n", versionField, version);
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
             skynet_socket_close(ctx, conn->fd);
         } else {
             char * frame = (char *)skynet_malloc(frameSize);
+            skynet_malloc_insert(frame, frameSize, __FILE__, __LINE__);
             wsMakeFrame(NULL, 0, frame, &frameSize, WS_CLOSING_FRAME);
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
             skynet_socket_close(ctx, conn->fd);
@@ -96,6 +102,7 @@ int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
         //assert(frameType == WS_OPENING_FRAME);
         if (frameType == WS_OPENING_FRAME) {
             char * frame = (char *)skynet_malloc(frameSize);
+            skynet_malloc_insert(frame, frameSize, __FILE__, __LINE__);
             wsGetHandshakeAnswer(hs, frame, &frameSize);
             skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
             databuffer_reset(conn->buffer);
@@ -106,11 +113,13 @@ int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
         if (frameType == WS_BINARY_FRAME /*|| frameType == WS_TEXT_FRAME*/) {
             if (dataSize <= g->buffer_max - 32) {
                 char * msg = (char *)skynet_malloc(g->buffer_max);
+                skynet_malloc_insert(msg, g->buffer_max, __FILE__, __LINE__);
                 sprintf(msg, "forward|%d|", dataSize);
                 int hsz = strlen(msg);
                 memcpy(msg+hsz, data, dataSize);
                 skynet_logger_debug(ctx->handle, "[gatews]forward data sz=%d", hsz+dataSize);
                 skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+dataSize);
+                skynet_malloc_remove(msg);
                 skynet_free(msg);
                 return databuffer_pop(conn->buffer, readSize);
             } else {
@@ -120,6 +129,7 @@ int gatews_message(struct skynet_service * ctx, struct gatews_conn * conn) {
         } else if (frameType == WS_CLOSING_FRAME) {
             if (conn->state != WS_STATE_CLOSING) {
                 char * frame = (char *)skynet_malloc(frameSize);
+                skynet_malloc_insert(frame, frameSize, __FILE__, __LINE__);
                 wsMakeFrame(NULL, 0, frame, &frameSize, WS_CLOSING_FRAME);
                 skynet_socket_send(ctx, conn->fd, (void *)frame, frameSize);
                 skynet_socket_close(ctx, conn->fd);
@@ -146,6 +156,7 @@ void gatews_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, 
             size_t frameSize = size+10;
             char * param = command+i+1;
             char * frame = (char *)skynet_malloc(frameSize);
+            skynet_malloc_insert(frame, frameSize, __FILE__, __LINE__);
             wsMakeFrame(param, size, frame, &frameSize, WS_BINARY_FRAME);
             skynet_socket_send(ctx, fd, (void *)frame, frameSize);
         }
@@ -172,6 +183,7 @@ void gatews_dispatch_socket_message(struct skynet_service * ctx, const struct sk
             skynet_logger_error(ctx->handle, "[gatews]recv unknown connection data fd=%d size=%d", message->id, message->ud);
             skynet_socket_close(ctx, message->id);
         }
+        skynet_malloc_remove(message->buffer);
         skynet_free(message->buffer);
         break;
     }

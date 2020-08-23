@@ -1,8 +1,6 @@
 #ifndef SKYNET_H
 #define SKYNET_H
 
-#include "skynet_alloc.h"
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -69,6 +67,12 @@ struct skynet_socket_message {
 	char * buffer;
 };
 
+// memory
+extern void * skynet_malloc(size_t sz);
+extern void * skynet_realloc(void *ptr, size_t sz);
+extern void skynet_free(void *ptr);
+extern char * skynet_strdup(const char * str);
+
 // logger
 extern void skynet_logger_start(struct skynet_service * ctx);
 extern void skynet_logger_exit(void);
@@ -102,8 +106,5 @@ extern void skynet_timer_register(uint32_t handle, uint32_t session, const void 
 // config
 extern int skynet_config_int(const char * section, const char * option, int * value);
 extern int skynet_config_string(const char * section, const char * option, char *value, int size);
-
-// utils
-extern char * skynet_strdup(const char * str);
 
 #endif

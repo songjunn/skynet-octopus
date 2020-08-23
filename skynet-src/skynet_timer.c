@@ -92,6 +92,7 @@ add_node(struct timer * T,struct timer_node * node) {
 static void
 timer_add(struct timer * T, void * arg, size_t sz,int time) {
 	struct timer_node *node = skynet_malloc(sizeof(*node)+sz);
+	skynet_malloc_insert(node, sizeof(*node)+sz, __FILE__, __LINE__);
 	memcpy(node+1,arg,sz);
 
 	SPIN_LOCK(T);
@@ -147,11 +148,13 @@ dispatch_list(struct timer_node *current) {
 		message.size = event->size;
 
 		if (skynet_service_pushmsg(event->handle, &message)) {
+			skynet_malloc_remove(message.data);
 			skynet_free(message.data);
 		}
 		
 		struct timer_node * temp = current;
 		current=current->next;
+		skynet_malloc_remove(temp);
 		skynet_free(temp);	
 	} while (current);
 }
@@ -220,10 +223,12 @@ skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size
 		if (args != NULL && size > 0) {
 			message.size = size;
 			message.data = skynet_malloc(size);
+			skynet_malloc_insert(message.data, size, __FILE__, __LINE__);
 			memcpy(message.data, args, size);
 		}
 
 		if (skynet_service_pushmsg(handle, &message)) {
+			skynet_malloc_remove(message.data);
 			skynet_free(message.data);
 		}
 	} else {
@@ -235,6 +240,7 @@ skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size
 		if (args != NULL && size > 0) {
 			event.size = size;
 			event.data = skynet_malloc(size);
+			skynet_malloc_insert(event.data, size, __FILE__, __LINE__);
 			memcpy(event.data, args, size);
 		}
 		timer_add(TI, &event, sizeof(event), time);

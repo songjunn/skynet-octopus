@@ -148,6 +148,7 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
     int head = skynet_remote_message_header() + rmsg->size;
     int ulen = head + sizeof(head);
     char * buffer = (char *) skynet_malloc(ulen);
+    skynet_malloc_insert(buffer, ulen, __FILE__, __LINE__);
     memcpy(buffer, (char *) &head, sizeof(head));
     skynet_remote_message_push(rmsg, buffer + sizeof(head), ulen);
     skynet_socket_send(ctx, cluster->fd, buffer, ulen);
@@ -227,10 +228,12 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                     skynet_socket_close(ctx, smsg->id);
                 }
                 harbor_forward_local_message(ctx, h->buffer[id]);
+                skynet_malloc_remove(smsg->buffer);
                 skynet_free(smsg->buffer);
             } else {
                 skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
                 skynet_socket_close(ctx, smsg->id);
+                skynet_malloc_remove(smsg->buffer);
                 skynet_free(smsg->buffer);
             }
             break;

@@ -192,6 +192,11 @@ static int lclose_service(lua_State* L) {
     return 0;
 }
 
+static int lprint_memory(lua_State* L) {
+    skynet_malloc_print();
+    return 0;
+}
+
 static void * lalloc(void * ud, void *ptr, size_t osize, size_t nsize) {
     struct skynet_service * ctx = ud;
     struct snlua *l = ctx->hook;
@@ -212,11 +217,15 @@ static void * lalloc(void * ud, void *ptr, size_t osize, size_t nsize) {
     }
     if (nsize == 0) {
 	//skynet_logger_error(ctx->handle, "[snlua]Memory free %.2f M", (float)l->mem / (1024 * 1024));
+        //if (ptr) skynet_malloc_remove(ptr);
         skynet_free(ptr);
         return NULL;
     } else {
         //skynet_logger_error(ctx->handle, "[snlua]Memory realloc %.2f M", (float)l->mem / (1024 * 1024));
-        return skynet_realloc(ptr, nsize);
+        //if (ptr) skynet_malloc_remove(ptr);
+        void * ptr_new = skynet_realloc(ptr, nsize);
+        //skynet_malloc_insert(ptr_new, nsize, __FILE__, __LINE__);
+        return ptr_new;
     }
 }
 
@@ -237,6 +246,7 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     sscanf(args, "%s", mainfile);
 
     struct snlua * l = skynet_malloc(sizeof(struct snlua));
+    skynet_malloc_insert(l, sizeof(struct snlua), __FILE__, __LINE__);
     memset(l, 0, sizeof(*l));
     ctx->hook = l;
     l->mem_report = MEMORY_WARNING_REPORT;
@@ -255,6 +265,7 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_register(l->L, "skynet_send_string", lsend_string);
     lua_register(l->L, "skynet_create_service", lcreate_service);
     lua_register(l->L, "skynet_close_service", lclose_service);
+    lua_register(l->L, "skynet_print_memory", lprint_memory);
 
     lua_gc(l->L, LUA_GCSTOP, 0);
     int ret = luaL_dofile(l->L, mainfile);
@@ -286,6 +297,7 @@ void snlua_release(struct skynet_service * ctx) {
     }
     lua_settop(l->L, 0);
     lua_close(l->L);
+    skynet_malloc_remove(l);
     skynet_free(l);
 }
 

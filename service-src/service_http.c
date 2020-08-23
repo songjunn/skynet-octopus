@@ -44,6 +44,7 @@ void http_accept(struct skynet_service * ctx, struct http_connection * conn, int
     conn->session = 0;
     conn->buffer = proxy_create(HTTP_REQUEST, fd, remote_name, sz);
     conn->remote_name = skynet_malloc(sz+1);
+    skynet_malloc_insert(conn->remote_name, sz+1, __FILE__, __LINE__);
     memcpy(conn->remote_name, remote_name, sz);
     conn->remote_name[sz] = '\0';
 }
@@ -51,6 +52,7 @@ void http_accept(struct skynet_service * ctx, struct http_connection * conn, int
 void http_close(struct skynet_service * ctx, struct http_connection * conn) {
     conn->fd = -1;
     proxy_destroy(conn->buffer);
+    skynet_malloc_remove(conn->remote_name);
     skynet_free(conn->remote_name);
 }
 
@@ -91,6 +93,7 @@ void http_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz)
         if (size > 0) {
             int fd = atoi(param);
             char * buffer = (char *)skynet_malloc(size);
+            skynet_malloc_insert(buffer, size, __FILE__, __LINE__);
             memcpy(buffer, fdstr+1, size);
             skynet_socket_send(ctx, fd, (void *)buffer, size);
         }
@@ -120,6 +123,7 @@ void http_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
             skynet_logger_error(ctx->handle, "[http]recv unknown connection data fd=%d size=%d", message->id, message->ud);
             skynet_socket_close(ctx, message->id);
         }
+        skynet_malloc_remove(message->buffer);
         skynet_free(message->buffer);
         break;
     }

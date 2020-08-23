@@ -92,6 +92,7 @@ struct skynet_service * _create(int harbor, const char * name, const char * modu
 			int hash = index & (m->slot_size-1);
 			if (m->slot[hash] == NULL) {
 				result = skynet_malloc(sizeof(struct skynet_service));
+				skynet_malloc_insert(result, sizeof(struct skynet_service), __FILE__, __LINE__);
 				result->closing = 0;
 				result->name = skynet_strdup(name);
 				result->handle = skynet_harbor_handle(harbor, hash);
@@ -107,12 +108,14 @@ struct skynet_service * _create(int harbor, const char * name, const char * modu
 		}
 		assert((m->slot_size*2 - 1) <= INDEX_MASK);
 		struct skynet_service ** new_slot = skynet_malloc(m->slot_size * 2 * sizeof(struct skynet_service *));
+		skynet_malloc_insert(new_slot, m->slot_size * 2 * sizeof(struct skynet_service *), __FILE__, __LINE__);
 		memset(new_slot, 0, m->slot_size * 2 * sizeof(struct skynet_service *));
 		for (i=0; i<m->slot_size; i++) {
 			int hash = skynet_service_handle(m->slot[i]) & (m->slot_size * 2 - 1);
 			assert(new_slot[hash] == NULL);
 			new_slot[hash] = m->slot[i];
 		}
+		skynet_malloc_remove(m->slot);
 		skynet_free(m->slot);
 		m->slot = new_slot;
 		m->slot_size *= 2;
@@ -126,10 +129,12 @@ void skynet_service_init(const char *path) {
 	m->slot_index = 0;
 	m->slot = skynet_malloc(m->slot_size * sizeof(struct skynet_service *));
 	memset(m->slot, 0, m->slot_size * sizeof(struct skynet_service *));
+	skynet_malloc_insert(m->slot, m->slot_size * sizeof(struct skynet_service *), __FILE__, __LINE__);
 
 	m->name_cap = DEFAULT_SLOT_SIZE/2;
 	m->name_count = 0;
 	m->name = skynet_malloc(m->name_cap * sizeof(struct service_name));
+	skynet_malloc_insert(m->name, m->name_cap * sizeof(struct service_name), __FILE__, __LINE__);
 
 	rwlock_init(&m->lock);
 
@@ -182,6 +187,8 @@ void skynet_service_release(struct skynet_service * ctx) {
 	ctx->release(ctx);
 	if (ctx->module) dlclose(ctx->module);
 	if (ctx->queue) skynet_mq_release(ctx->queue);
+	skynet_malloc_remove(ctx->name);
+	skynet_malloc_remove(ctx);
 	skynet_free(ctx->name);
 	skynet_free(ctx);
 }
@@ -199,13 +206,16 @@ void skynet_service_releaseall() {
 		}
 	}
 	skynet_free(m->slot);
+	skynet_free(m->name);
+	skynet_free(m);
 }
 
-static void _insert_name_before(struct service_storage *s, char *name, uint32_t handle, int before) {
+static void _insert_name_before(struct service_storage *s, const char *name, uint32_t handle, int before) {
 	if (s->name_count >= s->name_cap) {
 		s->name_cap *= 2;
 		assert(s->name_cap <= s->slot_size);
 		struct service_name * n = skynet_malloc(s->name_cap * sizeof(struct service_name));
+		skynet_malloc_insert(n, s->name_cap * sizeof(struct service_name), __FILE__, __LINE__);
 		int i;
 		for (i=0;i<before;i++) {
 			n[i] = s->name[i];
@@ -213,6 +223,7 @@ static void _insert_name_before(struct service_storage *s, char *name, uint32_t 
 		for (i=before;i<s->name_count;i++) {
 			n[i+1] = s->name[i];
 		}
+		skynet_malloc_remove(s->name);
 		skynet_free(s->name);
 		s->name = n;
 	} else {
@@ -226,7 +237,7 @@ static void _insert_name_before(struct service_storage *s, char *name, uint32_t 
 	s->name_count ++;
 }
 
-static const char * _insert_name(struct service_storage *s, const char * name, uint32_t handle) {
+void _insert_name(struct service_storage *s, const char * name, uint32_t handle) {
 	int begin = 0;
 	int end = s->name_count - 1;
 	while (begin<=end) {
@@ -234,7 +245,7 @@ static const char * _insert_name(struct service_storage *s, const char * name, u
 		struct service_name *n = &s->name[mid];
 		int c = strcmp(n->name, name);
 		if (c==0) {
-			return NULL;
+			return;
 		}
 		if (c<0) {
 			begin = mid + 1;
@@ -242,11 +253,7 @@ static const char * _insert_name(struct service_storage *s, const char * name, u
 			end = mid - 1;
 		}
 	}
-	char * result = skynet_strdup(name);
-
-	_insert_name_before(s, result, handle, begin);
-
-	return result;
+	_insert_name_before(s, name, handle, begin);
 }
 
 uint32_t _find_name(struct service_storage *m, const char * name) {
@@ -272,14 +279,10 @@ uint32_t _find_name(struct service_storage *m, const char * name) {
 	return handle;
 }
 
-const char * skynet_handle_namehandle(uint32_t handle, const char *name) {
+void skynet_handle_namehandle(uint32_t handle, const char *name) {
 	rwlock_wlock(&M->lock);
-
-	const char * ret = _insert_name(M, name, handle);
-
+	_insert_name(M, name, handle);
 	rwlock_wunlock(&M->lock);
-
-	return ret;
 }
 
 struct skynet_service * skynet_service_find(uint32_t handle) {

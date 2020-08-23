@@ -290,8 +290,10 @@ write_buffer_free(struct socket_server *ss, struct write_buffer *wb) {
 	if (wb->userobject) {
 		ss->soi.free(wb->buffer);
 	} else {
+		skynet_malloc_remove(wb->buffer);
 		FREE(wb->buffer);
 	}
+	skynet_malloc_remove(wb);
 	FREE(wb);
 }
 
@@ -369,6 +371,7 @@ socket_server_create(uint64_t time) {
 	ss->recvctrl_fd = fd[0];
 	ss->sendctrl_fd = fd[1];
 	ss->checkctrl = 1;
+	skynet_malloc_insert(ss, sizeof(*ss), __FILE__, __LINE__);
 
 	for (i=0;i<MAX_SOCKET;i++) {
 		struct socket *s = &ss->slot[i];
@@ -408,6 +411,7 @@ static void
 free_buffer(struct socket_server *ss, const void * buffer, int sz) {
 	struct send_object so;
 	send_object_init(ss, &so, (void *)buffer, sz);
+	skynet_malloc_remove(buffer);
 	so.free_func((void *)buffer);
 }
 
@@ -456,6 +460,7 @@ socket_server_release(struct socket_server *ss) {
 	close(ss->sendctrl_fd);
 	close(ss->recvctrl_fd);
 	sp_release(ss->event_fd);
+	skynet_malloc_remove(ss);
 	FREE(ss);
 }
 
@@ -777,6 +782,7 @@ send_buffer(struct socket_server *ss, struct socket *s, struct socket_lock *l, s
 	if (s->dw_buffer) {
 		// add direct write buffer before high.head
 		struct write_buffer * buf = MALLOC(SIZEOF_TCPBUFFER);
+		skynet_malloc_insert(buf, SIZEOF_TCPBUFFER, __FILE__, __LINE__);
 		struct send_object so;
 		buf->userobject = send_object_init(ss, &so, (void *)s->dw_buffer, s->dw_size);
 		buf->ptr = (char*)so.buffer+s->dw_offset;
@@ -801,6 +807,7 @@ send_buffer(struct socket_server *ss, struct socket *s, struct socket_lock *l, s
 static struct write_buffer *
 append_sendbuffer_(struct socket_server *ss, struct wb_list *s, struct request_send * request, int size) {
 	struct write_buffer * buf = MALLOC(size);
+	skynet_malloc_insert(buf, size, __FILE__, __LINE__);
 	struct send_object so;
 	buf->userobject = send_object_init(ss, &so, request->buffer, request->sz);
 	buf->ptr = (char*)so.buffer;
@@ -855,11 +862,13 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 	if (s->type == SOCKET_TYPE_INVALID || s->id != id 
 		|| s->type == SOCKET_TYPE_HALFCLOSE
 		|| s->type == SOCKET_TYPE_PACCEPT) {
+		skynet_malloc_remove(request->buffer);
 		so.free_func(request->buffer);
 		return -1;
 	}
 	if (s->type == SOCKET_TYPE_PLISTEN || s->type == SOCKET_TYPE_LISTEN) {
 		skynet_logger_error(0, "[skynet]socket-server: write to listen fd %d.\n", id);
+		skynet_malloc_remove(request->buffer);
 		so.free_func(request->buffer);
 		return -1;
 	}
@@ -876,6 +885,7 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 			if (sasz == 0) {
 				// udp type mismatch, just drop it.
 				skynet_logger_error(0, "[skynet]socket-server: udp socket (%d) type mistach.\n", id);
+				skynet_malloc_remove(request->buffer);
 				so.free_func(request->buffer);
 				return -1;
 			}
@@ -884,6 +894,7 @@ send_socket(struct socket_server *ss, struct request_send * request, struct sock
 				append_sendbuffer_udp(ss,s,priority,request,udp_address);
 			} else {
 				stat_write(ss,s,n);
+				skynet_malloc_remove(request->buffer);
 				so.free_func(request->buffer);
 				return -1;
 			}
@@ -1201,8 +1212,10 @@ static int
 forward_message_tcp(struct socket_server *ss, struct socket *s, struct socket_lock *l, struct socket_message * result) {
 	int sz = s->p.size;
 	char * buffer = MALLOC(sz);
+	skynet_malloc_insert(buffer, sz, __FILE__, __LINE__);
 	int n = (int)read(s->fd, buffer, sz);
 	if (n<0) {
+		skynet_malloc_remove(buffer);
 		FREE(buffer);
 		switch(errno) {
 		case EINTR:
@@ -1219,6 +1232,7 @@ forward_message_tcp(struct socket_server *ss, struct socket *s, struct socket_lo
 		return -1;
 	}
 	if (n==0) {
+		skynet_malloc_remove(buffer);
 		FREE(buffer);
 		force_close(ss, s, l, result);
 		return SOCKET_CLOSE;
@@ -1226,6 +1240,7 @@ forward_message_tcp(struct socket_server *ss, struct socket *s, struct socket_lo
 
 	if (s->type == SOCKET_TYPE_HALFCLOSE) {
 		// discard recv data
+		skynet_malloc_remove(buffer);
 		FREE(buffer);
 		return -1;
 	}
@@ -1288,11 +1303,13 @@ forward_message_udp(struct socket_server *ss, struct socket *s, struct socket_lo
 		if (s->protocol != PROTOCOL_UDP)
 			return -1;
 		data = MALLOC(n + 1 + 2 + 4);
+		skynet_malloc_insert(data, n+1+2+4, __FILE__, __LINE__);
 		gen_udp_address(PROTOCOL_UDP, &sa, data + n);
 	} else {
 		if (s->protocol != PROTOCOL_UDPv6)
 			return -1;
 		data = MALLOC(n + 1 + 2 + 16);
+		skynet_malloc_insert(data, n+1+2+16, __FILE__, __LINE__);
 		gen_udp_address(PROTOCOL_UDPv6, &sa, data + n);
 	}
 	memcpy(data, ss->udpbuffer, n);
@@ -1604,6 +1621,7 @@ socket_server_send(struct socket_server *ss, int id, const void * buffer, int sz
 				if (sasz == 0) {
 					skynet_logger_error(0, "[skynet]socket-server : set udp (%d) address first.\n", id);
 					socket_unlock(&l);
+					skynet_malloc_remove(buffer);
 					so.free_func((void *)buffer);
 					return -1;
 				}
@@ -1617,6 +1635,7 @@ socket_server_send(struct socket_server *ss, int id, const void * buffer, int sz
 			if (n == so.sz) {
 				// write done
 				socket_unlock(&l);
+				skynet_malloc_remove(buffer);
 				so.free_func((void *)buffer);
 				return 0;
 			}
@@ -1877,6 +1896,7 @@ socket_server_udp_send(struct socket_server *ss, int id, const struct socket_udp
 			socklen_t sasz = udp_socket_address(s, udp_address, &sa);
 			if (sasz == 0) {
 				socket_unlock(&l);
+				skynet_malloc_remove(buffer);
 				so.free_func((void *)buffer);
 				return -1;
 			}
@@ -1885,6 +1905,7 @@ socket_server_udp_send(struct socket_server *ss, int id, const struct socket_udp
 				// sendto succ
 				stat_write(ss,s,n);
 				socket_unlock(&l);
+				skynet_malloc_remove(buffer);
 				so.free_func((void *)buffer);
 				return 0;
 			}
@@ -1977,6 +1998,7 @@ socket_server_udp_address(struct socket_server *ss, struct socket_message *msg, 
 struct socket_info *
 socket_info_create(struct socket_info *last) {
 	struct socket_info *si = skynet_malloc(sizeof(*si));
+	skynet_malloc_insert(si, sizeof(*si), __FILE__, __LINE__);
 	memset(si, 0 , sizeof(*si));
 	si->next = last;
 	return si;
@@ -1987,6 +2009,7 @@ socket_info_release(struct socket_info *si) {
 	while (si) {
 		struct socket_info *temp = si;
 		si = si->next;
+		skynet_malloc_remove(temp);
 		skynet_free(temp);
 	}
 }

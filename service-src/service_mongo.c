@@ -247,6 +247,7 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         char * value = mongo_selectone(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
+            skynet_malloc_remove(value);
             skynet_free(value);
         } else {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);
@@ -259,6 +260,7 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         char * value = mongo_selectmore(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
+            skynet_malloc_remove(value);
             skynet_free(value);
         } else {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);

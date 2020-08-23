@@ -30,16 +30,20 @@ hashid_init(struct hashid *hi, int max) {
 	hi->cap = max;
 	hi->count = 0;
 	hi->id = skynet_malloc(max * sizeof(struct hashid_node));
+	skynet_malloc_insert(hi->id, max * sizeof(struct hashid_node), __FILE__, __LINE__);
 	for (i=0;i<max;i++) {
 		hi->id[i].id = -1;
 		hi->id[i].next = NULL;
 	}
 	hi->hash = skynet_malloc(hashcap * sizeof(struct hashid_node *));
+	skynet_malloc_insert(hi->hash, hashcap * sizeof(struct hashid_node), __FILE__, __LINE__);
 	memset(hi->hash, 0, hashcap * sizeof(struct hashid_node *));
 }
 
 static void
 hashid_clear(struct hashid *hi) {
+	skynet_malloc_remove(hi->id);
+	skynet_malloc_remove(hi->hash);
 	skynet_free(hi->id);
 	skynet_free(hi->hash);
 	hi->id = NULL;

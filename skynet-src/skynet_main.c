@@ -185,6 +185,7 @@ int main(int argc, char *argv[]) {
     char * service_name;
     char service_lib[1024], service_args[1024], service_list[1024], service_path[1024];
 
+    skynet_malloc_init();
     skynet_config_init(argv[1]);
     skynet_config_int("skynet", "harbor", &harbor);
     skynet_config_int("skynet", "thread", &thread);
