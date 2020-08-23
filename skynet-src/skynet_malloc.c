@@ -136,18 +136,3 @@ void skynet_malloc_insert(void *ptr, size_t sz, const char * file, int line) {}
 void skynet_malloc_remove(void *ptr) {}
 void skynet_malloc_print() {}
 #endif
-
-void * 
-skynet_malloc(size_t sz) {
-	return malloc(sz);
-}
-
-void * 
-skynet_realloc(void *ptr, size_t sz) {
-	return realloc(ptr, sz);
-}
-
-void 
-skynet_free(void *ptr) {
-	if (ptr) free(ptr);
-}

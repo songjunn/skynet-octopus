@@ -1,12 +1,20 @@
 #ifndef SKYNET_MALLOC_H
 #define SKYNET_MALLOC_H
 
+#include "jemalloc.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
-void * skynet_malloc(size_t sz);
-void * skynet_realloc(void *ptr, size_t sz);
-void skynet_free(void *ptr);
+#ifdef USE_JEMALLOC
+#define skynet_malloc je_malloc
+#define skynet_realloc je_realloc
+#define skynet_free(ptr) if(ptr) je_free(ptr);
+#else
+#define skynet_malloc malloc
+#define skynet_realloc realloc
+#define skynet_free(ptr) if(ptr) free(ptr);
+#endif
 
 void skynet_malloc_init();
 void skynet_malloc_free();
