@@ -6,10 +6,10 @@ SERVICE_INC ?= service-src/util
 
 CC := gcc
 CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -I$(SKYNET_INC) -I$(SERVICE_INC)
-DEFINES := -DUSE_JEMALLOC -DNOMEMORY_CHECK
+DEFINES := -DNOUSE_JEMALLOC -DNOMEMORY_CHECK
 EXPORT := -Wl,-E
 SHARED := -shared -fPIC
-LIBS := -lrt -ldl -lpthread -ljemalloc_pic
+LIBS := -lrt -ldl -lpthread -ljemalloc
 
 JEMALLOC_INC := -Iservice-src/3rd/jemalloc/include
 JEMALLOC_LIB := -L./service-src/3rd/jemalloc/lib
