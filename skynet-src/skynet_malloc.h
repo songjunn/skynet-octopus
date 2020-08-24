@@ -1,8 +1,6 @@
 #ifndef SKYNET_MALLOC_H
 #define SKYNET_MALLOC_H
 
-#include "jemalloc.h"
-
 #include <stddef.h>
 #include <stdint.h>
 

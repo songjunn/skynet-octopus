@@ -2,6 +2,7 @@
 #include "skynet_malloc.h"
 #include "skynet_timer.h"
 #include "skynet_rwlock.h"
+#include "jemalloc.h"
 
 #include <stdio.h>
 
@@ -137,6 +138,19 @@ void skynet_malloc_remove(void *ptr) {}
 void skynet_malloc_print() {}
 #endif
 
+#ifdef USE_JEMALLOC
+void * skynet_malloc(size_t sz) {
+	return je_malloc(sz);
+}
+
+void * skynet_realloc(void *ptr, size_t sz) {
+	return je_realloc(ptr, sz);
+}
+
+void skynet_free(void *ptr) {
+	if (ptr) je_free(ptr);
+}
+#else
 void * skynet_malloc(size_t sz) {
 	return malloc(sz);
 }
@@ -148,3 +162,4 @@ void * skynet_realloc(void *ptr, size_t sz) {
 void skynet_free(void *ptr) {
 	if (ptr) free(ptr);
 }
+#endif
