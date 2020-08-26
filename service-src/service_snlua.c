@@ -24,58 +24,6 @@ static int llogger_debug(lua_State* L) {
     return 0;
 }
 
-static int llogger_debug_int(lua_State* L) {
-    int n = lua_gettop(L);
-    int source = lua_tointeger(L, 1);
-    const char * args = lua_tostring(L, 2);
-
-    int n1, n2, n3, n4, n5;
-    if (n > 2) {
-        n1 = lua_tointeger(L, 3);
-    }
-    if (n > 3) {
-        n2 = lua_tointeger(L, 4);
-    }
-    if (n > 4) {
-        n3 = lua_tointeger(L, 5);
-    }
-    if (n > 5) {
-        n4 = lua_tointeger(L, 6);
-    }
-    if (n > 6) {
-        n5 = lua_tointeger(L, 7);
-    }
-
-    skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
-    return 0;
-}
-
-static int llogger_debug_str(lua_State* L) {
-    int n = lua_gettop(L);
-    int source = lua_tointeger(L, 1);
-    const char * args = lua_tostring(L, 2);
-
-    const char * n1, * n2, * n3, * n4, * n5;
-    if (n > 2) {
-        n1 = lua_tostring(L, 3);
-    }
-    if (n > 3) {
-        n2 = lua_tostring(L, 4);
-    }
-    if (n > 4) {
-        n3 = lua_tostring(L, 5);
-    }
-    if (n > 5) {
-        n4 = lua_tostring(L, 6);
-    }
-    if (n > 6) {
-        n5 = lua_tostring(L, 7);
-    }
-
-    skynet_logger_debug(source, args, n1, n2, n3, n4, n5);
-    return 0;
-}
-
 static int llogger_warn(lua_State* L) {
     int source = lua_tointeger(L, 1);
     const char * args = lua_tostring(L, 2);
@@ -218,14 +166,14 @@ static void * lalloc(void * ud, void *ptr, size_t osize, size_t nsize) {
     }
     if (nsize == 0) {
 	//skynet_logger_error(ctx->handle, "[snlua]Memory free %.2f M", (float)l->mem / (1024 * 1024));
-        skynet_malloc_remove2(ptr);
+        skynet_malloc_remove(ptr);
         skynet_free(ptr);
         return NULL;
     } else {
         //skynet_logger_error(ctx->handle, "[snlua]Memory realloc %.2f M", (float)l->mem / (1024 * 1024));
-        skynet_malloc_remove2(ptr);
+        skynet_malloc_remove(ptr);
         void * ptr_new = skynet_realloc(ptr, nsize);
-        skynet_malloc_insert2(ptr_new, nsize, __FILE__, __LINE__);
+        skynet_malloc_insert(ptr_new, nsize, __FILE__, __LINE__);
         return ptr_new;
     }
 }
@@ -247,7 +195,7 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     sscanf(args, "%s", mainfile);
 
     struct snlua * l = skynet_malloc(sizeof(struct snlua));
-    skynet_malloc_insert2(l, sizeof(struct snlua), __FILE__, __LINE__);
+    skynet_malloc_insert(l, sizeof(struct snlua), __FILE__, __LINE__);
     memset(l, 0, sizeof(*l));
     ctx->hook = l;
     l->mem_report = MEMORY_WARNING_REPORT;
@@ -257,8 +205,6 @@ int snlua_create(struct skynet_service * ctx, int harbor, const char * args) {
     lua_pushcfunction(l->L, traceback);
 
     lua_register(l->L, "skynet_logger_debug", llogger_debug);
-    lua_register(l->L, "skynet_logger_debug_int", llogger_debug_int);
-    lua_register(l->L, "skynet_logger_debug_str", llogger_debug_str);
     lua_register(l->L, "skynet_logger_warn", llogger_warn);
     lua_register(l->L, "skynet_logger_notice", llogger_notice);
     lua_register(l->L, "skynet_logger_error", llogger_error);
@@ -298,7 +244,7 @@ void snlua_release(struct skynet_service * ctx) {
     }
     lua_settop(l->L, 0);
     lua_close(l->L);
-    skynet_malloc_remove2(l);
+    skynet_malloc_remove(l);
     skynet_free(l);
 }
 
@@ -317,20 +263,20 @@ int snlua_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessio
         lua_pushstring(l->L, "");
     }
 
-    struct timeval tv;
+    /*struct timeval tv;
     gettimeofday(&tv,NULL);
-    long start = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    long start = tv.tv_sec * 1000 + tv.tv_usec / 1000;*/
 
     int ret = lua_pcall(l->L, 5, 0, 0);
     if (ret != LUA_OK) {
         skynet_logger_error(ctx->handle, "[snlua]Runtime error:%s", lua_tostring(l->L, -1));
     }
 
-    gettimeofday(&tv,NULL);
+    /*gettimeofday(&tv,NULL);
     long end = tv.tv_sec * 1000 + tv.tv_usec / 1000;
     if (end - start > 1) {
         skynet_logger_error(ctx->handle, "[snlua]lua_pcall cost:%d", (end-start));
-    }
+    }*/
 
     lua_settop(l->L, 0);
     //lua_gc(l->L, LUA_GCRESTART, 0);

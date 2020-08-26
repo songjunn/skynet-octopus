@@ -57,7 +57,7 @@ skynet_malloc_free() {
 }
 
 void
-skynet_malloc_insert2(void *ptr, size_t sz, const char * file, int line) {
+skynet_malloc_insert(void *ptr, size_t sz, const char * file, int line) {
 	struct memory_hash *hm = HM;
 	struct memory_node *c, *n;
 
@@ -86,7 +86,7 @@ skynet_malloc_insert2(void *ptr, size_t sz, const char * file, int line) {
 }
 
 void
-skynet_malloc_remove2(void *ptr) {
+skynet_malloc_remove(void *ptr) {
 	if (ptr == NULL) return;
 
 	struct memory_hash *hm = HM;
