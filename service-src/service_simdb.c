@@ -117,14 +117,13 @@ void simdb_upsert(struct skynet_service * ctx, const char * dbname, const char *
 	skynet_logger_debug(ctx, "[simdb] upsert success, %s:%s, %s", dbname, collection, query);
 }
 
-char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, size_t sz, const char * opts) {
+char * simdb_selectone(struct skynet_service * ctx, const char * dbname, const char * collection, const char * query, const char * opts, size_t sz) {
 	struct simdb * db = ctx->hook;
 
-	char dbpath[256], tablepath[512], filepath[1024], temp[1024];
-	snprintf(temp, sz+1, "%s", query);
+	char dbpath[256], tablepath[512], filepath[1024];
 	snprintf(dbpath, sizeof(dbpath), "%s/%s", db->path, dbname);
 	snprintf(tablepath, sizeof(tablepath), "%s/%s", dbpath, collection);
-	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, temp);
+	snprintf(filepath, sizeof(filepath), "%s/%s", tablepath, query);
 
 	if (simdb_folder_create(ctx, dbpath)) return;
 	if (simdb_folder_create(ctx, tablepath)) return;
@@ -175,8 +174,9 @@ void simdb_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
     } else if (memcmp(command, "findone", i) == 0) {
         GET_CMD_ARGS(dbname, param)
         GET_CMD_ARGS(collec, param)
+        GET_CMD_ARGS(query, param)
 
-        char * value = simdb_selectone(ctx, dbname, collec, param, sz-(param-msg), "");
+        char * value = simdb_selectone(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
             skynet_free(value);
