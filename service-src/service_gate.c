@@ -26,7 +26,6 @@ struct gate {
 void gate_accept(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
     char msg[64];
-    size_t sz = 
     sprintf(msg, "connect|%d|%s", strlen(conn->remote_name), conn->remote_name);
     skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, strlen(msg));
 }
@@ -44,6 +43,12 @@ void gate_message(struct skynet_service * ctx, struct gate_connection * conn) {
     struct gate * g = ctx->hook;
 
     while (sz = databuffer_readpack(conn->buffer, &data)) {
+        if (sz < 0) {
+            skynet_logger_error(ctx->handle, "[gate]parse data error, fd=%d size=%d", conn->fd, sz);
+            skynet_socket_close(ctx, conn->fd);
+            break;
+        }
+
         char msg[MESSAGE_BUFFER_MAX];
         sprintf(msg, "forward|%d|", sz);
         int hsz = strlen(msg);
