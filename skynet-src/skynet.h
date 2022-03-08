@@ -29,6 +29,7 @@
 #define skynet_logger_warn(source, msg, ...) skynet_logger_print(source, LOGGER_WARN, msg, ##__VA_ARGS__)
 #define skynet_logger_notice(source, msg, ...) skynet_logger_print(source, LOGGER_NOTICE, msg, ##__VA_ARGS__)
 #define skynet_logger_error(source, msg, ...) skynet_logger_print(source, LOGGER_ERROR, msg, ##__VA_ARGS__)
+#define skynet_error(source, msg, ...) skynet_logger_error(source, msg, ##__VA_ARGS__)
 
 struct skynet_service;
 struct skynet_remote_message;

@@ -121,14 +121,30 @@ skynet_socket_poll() {
 	return 1;
 }
 
+void 
+sendbuffer_init_(struct socket_sendbuffer *buf, int id, const void *buffer, int sz) {
+	buf->id = id;
+	buf->buffer = buffer;
+	if (sz < 0) {
+		buf->type = SOCKET_BUFFER_OBJECT;
+	} else {
+		buf->type = SOCKET_BUFFER_MEMORY;
+	}
+	buf->sz = (size_t)sz;
+}
+
 int
 skynet_socket_send(struct skynet_service *ctx, int id, void *buffer, int sz) {
-	return socket_server_send(SOCKET_SERVER, id, buffer, sz);
+	struct socket_sendbuffer tmp;
+	sendbuffer_init_(&tmp, id, buffer, sz);
+	return socket_server_send(SOCKET_SERVER, &tmp);
 }
 
 int
 skynet_socket_send_lowpriority(struct skynet_service *ctx, int id, void *buffer, int sz) {
-	return socket_server_send_lowpriority(SOCKET_SERVER, id, buffer, sz);
+	struct socket_sendbuffer tmp;
+	sendbuffer_init_(&tmp, id, buffer, sz);
+	return socket_server_send_lowpriority(SOCKET_SERVER, &tmp);
 }
 
 int 
@@ -180,7 +196,9 @@ skynet_socket_udp_connect(struct skynet_service *ctx, int id, const char * addr,
 
 int 
 skynet_socket_udp_send(struct skynet_service *ctx, int id, const char * address, const void *buffer, int sz) {
-	return socket_server_udp_send(SOCKET_SERVER, id, (const struct socket_udp_address *)address, buffer, sz);
+	struct socket_sendbuffer tmp;
+	sendbuffer_init_(&tmp, id, buffer, sz);
+	return socket_server_udp_send(SOCKET_SERVER, (const struct socket_udp_address *)address, &tmp);
 }
 
 const char *

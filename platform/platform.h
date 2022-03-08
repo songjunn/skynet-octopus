@@ -17,6 +17,10 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 #define socket_poll_h
 #endif
 
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR SD_SEND
+#define SHUT_RDWR SD_BOTH
+
 typedef int poll_fd;
 
 /*skynet/skynet-src/socket_poll.h*/
@@ -33,7 +37,7 @@ poll_fd sp_create();
 void sp_release(poll_fd fd);
 int sp_add(poll_fd fd, int sock, void *ud);
 void sp_del(poll_fd fd, int sock);
-void sp_write(poll_fd, int sock, void *ud, bool enable);
+int sp_enable(poll_fd, int sock, void *ud, bool read_enable, bool write_enable);
 int sp_wait(poll_fd, struct event *e, int max);
 void sp_nonblocking(int sock);
 

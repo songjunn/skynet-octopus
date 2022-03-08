@@ -8,7 +8,7 @@ PLATFORM_INC ?= platform
 CC := gcc 
 
 CFLAGS := -std=gnu99 -g -O0 -Wall -I$(SKYNET_INC) -I$(SERVICE_INC) -I$(PLATFORM_INC)
-DEFINES :=-DFD_SETSIZE=1024 -DMEMORY_CHECK
+DEFINES := -DFD_SETSIZE=1024
 
 # link
 LDFLAGS := -lplatform -lpthread -lws2_32 -L$(BIN_PATH)
