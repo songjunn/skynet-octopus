@@ -6,7 +6,7 @@ SERVICE_INC ?= service-src/util
 
 CC := gcc
 CFLAGS := -std=gnu99 -g -ggdb -O0 -w -m64 -I$(SKYNET_INC) -I$(SERVICE_INC)
-DEFINES := -DNOMEMORY_CHECK
+DEFINES := -DNOMEMORY_CHECK -D__STDC_NO_ATOMICS__
 EXPORT := -Wl,-E
 SHARED := -shared -fPIC
 LIBS := -lrt -ldl -lpthread -ljemalloc
