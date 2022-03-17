@@ -2039,11 +2039,11 @@ socket_server_pause(struct socket_server *ss, uintptr_t opaque, int id) {
 }
 
 void
-socket_server_nodelay(struct socket_server *ss, int id) {
+socket_server_option(struct socket_server *ss, int id, int what, int value) {
 	struct request_package request;
 	request.u.setopt.id = id;
-	request.u.setopt.what = TCP_NODELAY;
-	request.u.setopt.value = 1;
+	request.u.setopt.what = what;
+	request.u.setopt.value = value;
 	send_request(ss, &request, 'T', sizeof(request.u.setopt));
 }
 

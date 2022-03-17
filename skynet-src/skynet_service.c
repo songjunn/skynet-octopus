@@ -123,94 +123,6 @@ struct skynet_service * _create(int harbor, const char * name, const char * modu
 	}
 }
 
-void skynet_service_init(const char *path) {
-	struct service_storage * m = skynet_malloc(sizeof(*m));
-	m->path = skynet_strdup(path);
-	m->slot_size = DEFAULT_SLOT_SIZE;
-	m->slot_index = 0;
-	m->slot = skynet_malloc(m->slot_size * sizeof(struct skynet_service *));
-	memset(m->slot, 0, m->slot_size * sizeof(struct skynet_service *));
-	skynet_malloc_insert(m->slot, m->slot_size * sizeof(struct skynet_service *), __FILE__, __LINE__);
-
-	m->name_cap = DEFAULT_SLOT_SIZE/2;
-	m->name_count = 0;
-	m->name = skynet_malloc(m->name_cap * sizeof(struct service_name));
-	skynet_malloc_insert(m->name, m->name_cap * sizeof(struct service_name), __FILE__, __LINE__);
-
-	rwlock_init(&m->lock);
-
-	M = m;
-}
-
-uint32_t skynet_service_handle(struct skynet_service *ctx) {
-	return ctx->handle;
-}
-
-uint32_t skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent) {
-	struct skynet_service * ctx = _create(harbor, name, module);
-	if (ctx == NULL) {
-		return NULL;
-	}
-
-	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
-
-	if (!ctx->create(ctx, harbor, args)) {
-		skynet_globalmq_push(ctx->queue);
-		skynet_logger_notice(0, "[skynet]create service %s success handle:%d args:%s", name, ctx->handle, args);
-		return ctx->handle;
-	} else {
-		skynet_logger_error(0, "[skynet]create service %s failed args:%s", name, args);
-		skynet_service_release(ctx);
-		return 0;
-	}
-}
-
-void skynet_service_close(uint32_t handle) {
-	struct skynet_service * ctx = skynet_service_find(handle);
-	if (ctx) {
-		ctx->closing = 1;
-		if (!skynet_mq_inglobal(ctx->queue)) {
-			skynet_globalmq_push(ctx->queue);
-		}
-	}
-}
-
-void skynet_service_release(struct skynet_service * ctx) {
-	skynet_logger_notice(0, "[skynet]release service %s success handle:%d", ctx->name, ctx->handle);
-
-	struct service_storage * m = M;
-	int hash = skynet_harbor_index(ctx->handle);
-	assert(hash >= 0 && hash < m->slot_size);
-	rwlock_wlock(&m->lock);
-	m->slot[hash] = NULL;
-	rwlock_wunlock(&m->lock);
-
-	ctx->release(ctx);
-	if (ctx->module) dlclose(ctx->module);
-	if (ctx->queue) skynet_mq_release(ctx->queue);
-	skynet_malloc_remove(ctx->name);
-	skynet_malloc_remove(ctx);
-	skynet_free(ctx->name);
-	skynet_free(ctx);
-}
-
-void skynet_service_releaseall() {
-	int i;
-	struct service_storage * m = M;
-
-	for (i=m->slot_size-1; i>=0; i--) { // release by desc
-		struct skynet_service * ctx = m->slot[i];
-		if (ctx && ctx->handle > 0) {
-			ctx->closing = 1;
-			while (skynet_service_message_dispatch(ctx) == 0);
-			skynet_service_release(ctx);
-		}
-	}
-	skynet_free(m->slot);
-	skynet_free(m->name);
-	skynet_free(m);
-}
-
 static void _insert_name_before(struct service_storage *s, const char *name, uint32_t handle, int before) {
 	if (s->name_count >= s->name_cap) {
 		s->name_cap *= 2;
@@ -280,10 +192,99 @@ uint32_t _find_name(struct service_storage *m, const char * name) {
 	return handle;
 }
 
-void skynet_handle_namehandle(uint32_t handle, const char *name) {
+void _handle_namehandle(uint32_t handle, const char *name) {
 	rwlock_wlock(&M->lock);
 	_insert_name(M, name, handle);
 	rwlock_wunlock(&M->lock);
+}
+
+void skynet_service_init(const char *path) {
+	struct service_storage * m = skynet_malloc(sizeof(*m));
+	m->path = skynet_strdup(path);
+	m->slot_size = DEFAULT_SLOT_SIZE;
+	m->slot_index = 0;
+	m->slot = skynet_malloc(m->slot_size * sizeof(struct skynet_service *));
+	memset(m->slot, 0, m->slot_size * sizeof(struct skynet_service *));
+	skynet_malloc_insert(m->slot, m->slot_size * sizeof(struct skynet_service *), __FILE__, __LINE__);
+
+	m->name_cap = DEFAULT_SLOT_SIZE/2;
+	m->name_count = 0;
+	m->name = skynet_malloc(m->name_cap * sizeof(struct service_name));
+	skynet_malloc_insert(m->name, m->name_cap * sizeof(struct service_name), __FILE__, __LINE__);
+
+	rwlock_init(&m->lock);
+
+	M = m;
+}
+
+uint32_t skynet_service_handle(struct skynet_service *ctx) {
+	return ctx->handle;
+}
+
+uint32_t skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent) {
+	struct skynet_service * ctx = _create(harbor, name, module);
+	if (ctx == NULL) {
+		return NULL;
+	}
+
+	ctx->queue = skynet_mq_create(ctx->handle, concurrent);
+
+	if (!ctx->create(ctx, harbor, args)) {
+		_handle_namehandle(ctx->handle, name);
+		skynet_globalmq_push(ctx->queue);
+		skynet_logger_notice(0, "[skynet]create service %s success handle:%d args:%s", name, ctx->handle, args);
+		return ctx->handle;
+	} else {
+		skynet_logger_error(0, "[skynet]create service %s failed args:%s", name, args);
+		skynet_service_release(ctx);
+		return 0;
+	}
+}
+
+void skynet_service_close(uint32_t handle) {
+	struct skynet_service * ctx = skynet_service_find(handle);
+	if (ctx) {
+		ctx->closing = 1;
+		if (!skynet_mq_inglobal(ctx->queue)) {
+			skynet_globalmq_push(ctx->queue);
+		}
+	}
+}
+
+void skynet_service_release(struct skynet_service * ctx) {
+	skynet_logger_notice(0, "[skynet]release service %s success handle:%d", ctx->name, ctx->handle);
+
+	struct service_storage * m = M;
+	int hash = skynet_harbor_index(ctx->handle);
+	assert(hash >= 0 && hash < m->slot_size);
+	rwlock_wlock(&m->lock);
+	m->slot[hash] = NULL;
+	rwlock_wunlock(&m->lock);
+
+	ctx->release(ctx);
+	if (ctx->module) dlclose(ctx->module);
+	if (ctx->queue) skynet_mq_release(ctx->queue);
+	skynet_malloc_remove(ctx->name);
+	skynet_malloc_remove(ctx);
+	skynet_free(ctx->name);
+	skynet_free(ctx);
+}
+
+void skynet_service_releaseall() {
+	int i;
+	struct service_storage * m = M;
+
+	for (i=m->slot_size-1; i>=0; i--) { // release by desc
+		struct skynet_service * ctx = m->slot[i];
+		if (ctx && ctx->handle > 0) {
+			ctx->closing = 1;
+			while (skynet_service_message_dispatch(ctx) == 0);
+			skynet_service_release(ctx);
+		}
+	}
+	skynet_free(m->slot);
+	skynet_free(m->name);
+	skynet_free(m);
 }
 
 struct skynet_service * skynet_service_find(uint32_t handle) {

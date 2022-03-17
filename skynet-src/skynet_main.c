@@ -211,7 +211,6 @@ int main(int argc, char *argv[]) {
             fprintf(stdout, "skynet start failed.\n");
             return 1;
         }
-        skynet_handle_namehandle(handle, service_name);
 
         service_name = strtok(NULL, ",");
     }
