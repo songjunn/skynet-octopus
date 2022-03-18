@@ -251,6 +251,16 @@ void skynet_service_close(uint32_t handle) {
 	}
 }
 
+void skynet_service_closename(const char * name) {
+	struct service_storage * m = M;
+
+	rwlock_rlock(&m->lock);
+	uint32_t handle = _find_name(m, name);
+	rwlock_runlock(&m->lock);
+
+	skynet_service_close(handle);
+}
+
 void skynet_service_release(struct skynet_service * ctx) {
 	skynet_logger_notice(0, "[skynet]release service %s success handle:%d", ctx->name, ctx->handle);
 

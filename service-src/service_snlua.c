@@ -129,10 +129,7 @@ static int lclose_service(lua_State* L) {
     int t = lua_type(L, 1);
     if (t == LUA_TSTRING) {
         const char * name = lua_tostring(L, 1);
-        struct skynet_service * ctx = skynet_service_findname(name);
-        if (ctx != NULL) {
-            skynet_service_close(ctx->handle);
-        }
+        skynet_service_closename(name);
     } 
     else if (t == LUA_TNUMBER) {
         int handle = lua_tointeger(L, 1);

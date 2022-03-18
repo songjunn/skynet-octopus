@@ -41,16 +41,15 @@ void skynet_logger_format_head(char * buffer, size_t size, int level, uint32_t s
 }
 
 void skynet_logger_format_time(char * buffer, size_t size) {
-    struct tm * newtime;
-    time_t aclock;
-    time(&aclock);
-    newtime = localtime(&aclock);
+    time_t sec = time(0);
+    struct tm newtime;
+    localtime_r(&sec, &newtime);
 
     struct timeval tv;
     gettimeofday(&tv,NULL);
 
-    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d.%06d] ", newtime->tm_year+1900, 
-        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec, tv.tv_usec);
+    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d.%06d] ", newtime.tm_year+1900, 
+        newtime.tm_mon+1, newtime.tm_mday, newtime.tm_hour, newtime.tm_min, newtime.tm_sec, tv.tv_usec);
 }
 
 void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {

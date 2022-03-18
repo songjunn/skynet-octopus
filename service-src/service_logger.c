@@ -17,21 +17,19 @@ struct logger {
 };
 
 void logger_format_name(char * filename, size_t size, const char * basename) {
-    struct tm * newtime;
-    time_t aclock;
-    time(&aclock);
-    newtime = localtime(&aclock);
-    snprintf(filename, size, "%s-%02d%02d%02d-%02d%02d%02d.log", basename, newtime->tm_year+1900, 
-        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+    time_t sec = time(0);
+    struct tm newtime;
+    localtime_r(&sec, &newtime);
+    snprintf(filename, size, "%s-%02d%02d%02d-%02d%02d%02d.log", basename, newtime.tm_year+1900, 
+        newtime.tm_mon+1, newtime.tm_mday, newtime.tm_hour, newtime.tm_min, newtime.tm_sec);
 }
 
 void logger_format_time(char * buffer, size_t size) {
-    struct tm * newtime;
-    time_t aclock;
-    time(&aclock);
-    newtime = localtime(&aclock);
-    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime->tm_year+1900, 
-        newtime->tm_mon+1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+    time_t sec = time(0);
+    struct tm newtime;
+    localtime_r(&sec, &newtime);
+    snprintf(buffer, size, "[%02d:%02d:%02d %02d:%02d:%02d] ", newtime.tm_year+1900, 
+        newtime.tm_mon+1, newtime.tm_mday, newtime.tm_hour, newtime.tm_min, newtime.tm_sec);
 }
 
 void logger_format_head(char * buffer, size_t size, int level, uint32_t source) {
@@ -85,7 +83,7 @@ void logger_release(struct skynet_service * ctx) {
 int logger_callback(struct skynet_service * ctx, uint32_t source, uint32_t session, int level, void * msg, size_t sz) {
     struct logger * l = ctx->hook;
     if (level < l->level) {
-        return 1;
+        return 0;
     }
 
     char head[64] = {0}, time[64] = {0};

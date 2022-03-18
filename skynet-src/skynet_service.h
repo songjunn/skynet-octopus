@@ -10,6 +10,7 @@ struct skynet_service;
 void skynet_service_init(const char * path);
 uint32_t skynet_service_create(const char * name, int harbor, const char * module, const char * args, int concurrent);
 void skynet_service_close(uint32_t handle);
+void skynet_service_closename(const char * name);
 void skynet_service_release(struct skynet_service * ctx);
 void skynet_service_releaseall();
 
