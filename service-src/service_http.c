@@ -63,9 +63,7 @@ void http_response(struct skynet_service * ctx, struct http_connection * conn) {
     int hsz = strlen(msg);
     memcpy(msg+hsz, buf->url, buf->url_ptr);
 
-    skynet_service_closename("manager");
-
-    //skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+buf->url_ptr);
+    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+buf->url_ptr);
     proxy_reset(buf);
 }
 
