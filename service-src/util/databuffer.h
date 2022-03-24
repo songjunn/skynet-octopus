@@ -10,18 +10,14 @@ struct databuffer {
 };
 
 struct databuffer * databuffer_create(int sz) {
-	struct databuffer * buffer = skynet_malloc(sizeof(struct databuffer));
-	skynet_malloc_insert(buffer, sizeof(struct databuffer), __FILE__, __LINE__);
+	struct databuffer * buffer = SKYNET_MALLOC(sizeof(struct databuffer));
 	buffer->sz = sz;
 	buffer->ptr = 0;
-	buffer->chunk = skynet_malloc(sizeof(char) * sz);
-	skynet_malloc_insert(buffer->chunk, sz, __FILE__, __LINE__);
+	buffer->chunk = SKYNET_MALLOC(sizeof(char) * sz);
 	return buffer;
 }
 
 void databuffer_free(struct databuffer * buffer) {
-	skynet_malloc_remove(buffer->chunk);
-	skynet_malloc_remove(buffer);
 	skynet_free(buffer->chunk);
 	skynet_free(buffer);
 }

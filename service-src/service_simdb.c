@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +35,7 @@ char * simdb_file_read(struct skynet_service * ctx, const char * file) {
 
 	fseek(fp, 0, SEEK_END);
 	long sz = ftell(fp);
-	char * buffer = skynet_malloc(sz+1);
+	char * buffer = SKYNET_MALLOC(sz+1);
 	fseek(fp, 0, SEEK_SET);
 	fscanf(fp, "%s", buffer);
 	return buffer;
@@ -191,7 +190,7 @@ void simdb_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
 }
 
 int simdb_create(struct skynet_service * ctx, int harbor, const char * args) {
-	struct simdb * db = skynet_malloc(sizeof(struct simdb));
+	struct simdb * db = SKYNET_MALLOC(sizeof(struct simdb));
 	ctx->hook = db;
 
 	sscanf(args, "%s", db->path);

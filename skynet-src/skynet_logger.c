@@ -1,6 +1,5 @@
 #include "skynet.h"
 #include "skynet_logger.h"
-#include "skynet_malloc.h"
 #include "skynet_mq.h"
 
 #include <stdarg.h>
@@ -54,8 +53,7 @@ void skynet_logger_format_time(char * buffer, size_t size) {
 
 void skynet_logger_print(uint32_t source, int level, const char * msg, ...) {
     char head[64] = {0}, time[64] = {0};
-    char * data = skynet_malloc(LOG_MESSAGE_SIZE+128);
-    skynet_malloc_insert(data, LOG_MESSAGE_SIZE+128, __FILE__, __LINE__);
+    char * data = SKYNET_MALLOC(LOG_MESSAGE_SIZE+128);
     skynet_logger_format_time(time, sizeof(time));
     skynet_logger_format_head(head, sizeof(head), level, source);
     int sz = snprintf(data, 128, "%s%s", time, head);

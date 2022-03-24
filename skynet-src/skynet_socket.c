@@ -5,7 +5,6 @@
 #include "skynet_server.h"
 #include "skynet_service.h"
 #include "skynet_mq.h"
-#include "skynet_malloc.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -51,8 +50,7 @@ forward_message(int type, bool padding, struct socket_message * result) {
 			result->data = "";
 		}
 	}
-	sm = (struct skynet_socket_message *)skynet_malloc(sz);
-	skynet_malloc_insert(sm, sz, __FILE__, __LINE__);
+	sm = (struct skynet_socket_message *)SKYNET_MALLOC(sz);
 	sm->type = type;
 	sm->id = result->id;
 	sm->ud = result->ud;
@@ -73,8 +71,6 @@ forward_message(int type, bool padding, struct socket_message * result) {
 	if (skynet_service_pushmsg((uint32_t)result->opaque, &message)) {
 		// todo: report somewhere to close socket
 		// don't call skynet_socket_close here (It will block mainloop)
-		skynet_malloc_remove(sm->buffer);
-		skynet_malloc_remove(sm);
 		skynet_free(sm->buffer);
 		skynet_free(sm);
 	}

@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 #include "skynet_socket.h"
 #include "hashid.h"
 #include "http_proxy.h"
@@ -44,8 +43,7 @@ void http_accept(struct skynet_service * ctx, struct http_connection * conn, int
     conn->source = 0;
     conn->session = 0;
     conn->buffer = proxy_create(HTTP_REQUEST, fd, remote_name, sz);
-    conn->remote_name = skynet_malloc(sz+1);
-    skynet_malloc_insert(conn->remote_name, sz+1, __FILE__, __LINE__);
+    conn->remote_name = SKYNET_MALLOC(sz+1);
     memcpy(conn->remote_name, remote_name, sz);
     conn->remote_name[sz] = '\0';
 }
@@ -53,7 +51,6 @@ void http_accept(struct skynet_service * ctx, struct http_connection * conn, int
 void http_close(struct skynet_service * ctx, struct http_connection * conn) {
     conn->fd = -1;
     proxy_destroy(conn->buffer);
-    skynet_malloc_remove(conn->remote_name);
     skynet_free(conn->remote_name);
 }
 
@@ -66,7 +63,9 @@ void http_response(struct skynet_service * ctx, struct http_connection * conn) {
     int hsz = strlen(msg);
     memcpy(msg+hsz, buf->url, buf->url_ptr);
 
-    skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+buf->url_ptr);
+    skynet_service_closename("manager");
+
+    //skynet_sendname(g->forward, ctx->handle, conn->fd, SERVICE_TEXT, msg, hsz+buf->url_ptr);
     proxy_reset(buf);
 }
 
@@ -93,8 +92,7 @@ void http_dispatch_cmd(struct skynet_service * ctx, const char * msg, size_t sz)
         int size = sz-(fdstr-command)-1;
         if (size > 0) {
             int fd = atoi(param);
-            char * buffer = (char *)skynet_malloc(size);
-            skynet_malloc_insert(buffer, size, __FILE__, __LINE__);
+            char * buffer = (char *)SKYNET_MALLOC(size);
             memcpy(buffer, fdstr+1, size);
             skynet_socket_send(ctx, fd, (void *)buffer, size);
         }
@@ -124,7 +122,6 @@ void http_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
             skynet_logger_error(ctx->handle, "[http]recv unknown connection data fd=%d size=%d", message->id, message->ud);
             skynet_socket_close(ctx, message->id);
         }
-        skynet_malloc_remove(message->buffer);
         skynet_free(message->buffer);
         break;
     }
@@ -177,11 +174,11 @@ void http_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
 
 int http_create(struct skynet_service * ctx, int harbor, const char * args) {
     int i;
-    struct http * g = skynet_malloc(sizeof(struct http));
+    struct http * g = SKYNET_MALLOC(sizeof(struct http));
     sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
 
     hashid_init(&g->hash, g->connect_max);
-    g->conn = skynet_malloc(g->connect_max * sizeof(struct http_connection));
+    g->conn = SKYNET_MALLOC(g->connect_max * sizeof(struct http_connection));
     memset(g->conn, 0, g->connect_max * sizeof(struct http_connection));
     for (i=0; i<g->connect_max; i++) {
         g->conn[i].fd = -1;

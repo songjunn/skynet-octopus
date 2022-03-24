@@ -1,6 +1,5 @@
 #include "skynet.h"
 #include "skynet_config.h"
-#include "skynet_malloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -9,7 +8,7 @@ static char * config_file = NULL;
 
 void skynet_config_init(const char * file) {
 	size_t len = strlen(file) + 1;
-	config_file = skynet_malloc(len);
+	config_file = SKYNET_MALLOC(len);
 	memcpy(config_file, file, len);
 }
 

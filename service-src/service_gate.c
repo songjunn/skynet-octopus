@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 #include "skynet_socket.h"
 #include "hashid.h"
 #include "databuffer.h"
@@ -74,7 +73,7 @@ void gate_dispatch_cmd(struct skynet_service * ctx, int fd, const char * msg, si
         int size = sz-i-1;
         if (size > 0) {
             char * param = command+i+1;
-            char * buffer = (char *)skynet_malloc(size+sizeof(size));
+            char * buffer = (char *)SKYNET_MALLOC(size+sizeof(size));
             memcpy(buffer, (char *)&size, sizeof(size));
             memcpy(buffer+sizeof(size), param, size);
             skynet_socket_send(ctx, fd, (void *)buffer, size+sizeof(size));
@@ -131,7 +130,7 @@ void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
             struct gate_connection *c = &g->conn[id];
             c->fd = message->ud;
             c->buffer = databuffer_create(BUFFER_MAX);
-            c->remote_name = skynet_malloc(sz+1);
+            c->remote_name = SKYNET_MALLOC(sz+1);
             memcpy(c->remote_name, remote_name, sz);
             c->remote_name[sz] = '\0';
 
@@ -176,7 +175,7 @@ void gate_dispatch_socket_message(struct skynet_service * ctx, const struct skyn
 
 int gate_create(struct skynet_service * ctx, int harbor, const char * args) {
     int i;
-    struct gate * g = skynet_malloc(sizeof(struct gate));
+    struct gate * g = SKYNET_MALLOC(sizeof(struct gate));
     sscanf(args, "%[^','],%d,%d", g->forward, &g->listen_port, &g->connect_max);
 
     g->listen_fd = skynet_socket_listen(ctx, "0.0.0.0", g->listen_port, BACKLOG);
@@ -185,7 +184,7 @@ int gate_create(struct skynet_service * ctx, int harbor, const char * args) {
     }
 
     hashid_init(&g->hash, g->connect_max);
-    g->conn = skynet_malloc(g->connect_max * sizeof(struct gate_connection));
+    g->conn = SKYNET_MALLOC(g->connect_max * sizeof(struct gate_connection));
     memset(g->conn, 0, g->connect_max * sizeof(struct gate_connection));
     for (i=0; i<g->connect_max; i++) {
         g->conn[i].fd = -1;

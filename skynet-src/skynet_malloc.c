@@ -29,8 +29,8 @@ skynet_malloc_init() {
 	struct memory_hash *hm;
 
 	hashcap = 1023;
-	hm = skynet_malloc(sizeof(struct memory_hash));
-	hm->node = skynet_malloc(hashcap * sizeof(struct memory_node *));
+	hm = malloc(sizeof(struct memory_hash));
+	hm->node = malloc(hashcap * sizeof(struct memory_node *));
 	memset(hm->node, 0, hashcap * sizeof(struct memory_node *));
 	hm->cap = hashcap;
 	rwlock_init(&hm->lock);
@@ -48,12 +48,12 @@ skynet_malloc_free() {
 		while (c && c->ptr) {
 			t = c;
 			c = c->next;
-			skynet_free(t->file);
-			skynet_free(t);
+			free(t->file);
+			free(t);
 		}
 	}
-	skynet_free(hm->node);
-	skynet_free(hm);
+	free(hm->node);
+	free(hm);
 }
 
 void
@@ -62,10 +62,10 @@ skynet_malloc_insert(void *ptr, size_t sz, const char * file, int line) {
 	struct memory_node *c, *n;
 
 	size_t fsz = strlen(file)+1;
-	n = skynet_malloc(sizeof(struct memory_node));
+	n = malloc(sizeof(struct memory_node));
 	n->ptr = ptr;
 	n->size = sz;
-	n->file = skynet_malloc(fsz);
+	n->file = malloc(fsz);
 	memcpy(n->file, file, fsz);
 	n->line = line;
 	n->timestamp = 0;
@@ -109,8 +109,8 @@ skynet_malloc_remove(void *ptr) {
 	}
 	rwlock_wunlock(&hm->lock);
 	
-	skynet_free(c->file);
-	skynet_free(c);
+	free(c->file);
+	free(c);
 }
 
 void 
@@ -128,6 +128,7 @@ skynet_malloc_print() {
 		}
 	}
 	rwlock_runlock(&hm->lock);
+	fprintf(stdout, "=======================================================\n");
 }
 #else
 void skynet_malloc_init() {}
@@ -137,14 +138,23 @@ void skynet_malloc_remove(void *ptr) {}
 void skynet_malloc_print() {}
 #endif
 
-void * skynet_malloc(size_t sz) {
-	return malloc(sz);
+void * skynet_malloc(size_t sz, const char * file, size_t line) {
+	void *ptr = malloc(sz);
+	skynet_malloc_insert(ptr, sz, file, line);
+	return ptr;
 }
 
-void * skynet_realloc(void *ptr, size_t sz) {
-	return realloc(ptr, sz);
+void * skynet_realloc(void *ptr, size_t sz, const char * file, size_t line) {
+	void *newptr = realloc(ptr, sz);
+	skynet_malloc_remove(ptr);
+	skynet_malloc_insert(newptr, sz, file, line);
+	return newptr;
 }
 
 void skynet_free(void *ptr) {
-	if (ptr) free(ptr);
+	if (ptr) {
+		free(ptr);
+		skynet_malloc_remove(ptr);
+	}
+	skynet_malloc_print();
 }

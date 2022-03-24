@@ -31,6 +31,9 @@
 #define skynet_logger_error(source, msg, ...) skynet_logger_print(source, LOGGER_ERROR, msg, ##__VA_ARGS__)
 #define skynet_error(source, msg, ...) skynet_logger_error(source, msg, ##__VA_ARGS__)
 
+#define SKYNET_MALLOC(sz) skynet_malloc(sz, __FILE__, __LINE__)
+#define SKYNET_REALLOC(ptr, sz) skynet_realloc(ptr, sz, __FILE__, __LINE__)
+
 struct skynet_service;
 struct skynet_remote_message;
 
@@ -69,8 +72,8 @@ struct skynet_socket_message {
 };
 
 // memory
-extern void * skynet_malloc(size_t sz);
-extern void * skynet_realloc(void *ptr, size_t sz);
+extern void * skynet_malloc(size_t sz, const char * file, size_t line);
+extern void * skynet_realloc(void *ptr, size_t sz, const char * file, size_t line);
 extern void skynet_free(void *ptr);
 extern char * skynet_strdup(const char * str);
 

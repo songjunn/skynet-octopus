@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 #include "skynet_socket.h"
 #include "hashid.h"
 #include "databuffer.h"
@@ -148,8 +147,7 @@ void harbor_forward_remote_message(struct skynet_service * ctx, const void * msg
 
     int head = skynet_remote_message_header() + rmsg->size;
     int ulen = head + sizeof(head);
-    char * buffer = (char *) skynet_malloc(ulen);
-    skynet_malloc_insert(buffer, ulen, __FILE__, __LINE__);
+    char * buffer = (char *) SKYNET_MALLOC(ulen);
     memcpy(buffer, (char *) &head, sizeof(head));
     skynet_remote_message_push(rmsg, buffer + sizeof(head), ulen);
     skynet_socket_send(ctx, cluster->fd, buffer, ulen);
@@ -179,7 +177,7 @@ void harbor_cluster_reconnect(struct skynet_service * ctx, struct harbor * h, in
 }
 
 int harbor_create(struct skynet_service * ctx, int harbor, const char * args) {
-    struct harbor * h = skynet_malloc(sizeof(struct harbor));
+    struct harbor * h = SKYNET_MALLOC(sizeof(struct harbor));
     h->harbor_id = harbor;
     ctx->hook = h;
     sscanf(args, "%d,%d", &h->listen_port, &h->buffer_size);
@@ -229,12 +227,10 @@ int harbor_callback(struct skynet_service * ctx, uint32_t source, uint32_t sessi
                     skynet_socket_close(ctx, smsg->id);
                 }
                 harbor_forward_local_message(ctx, h->buffer[id]);
-                skynet_malloc_remove(smsg->buffer);
                 skynet_free(smsg->buffer);
             } else {
                 skynet_logger_error(ctx->handle, "[harbor]recv unknown connection %d message", smsg->id);
                 skynet_socket_close(ctx, smsg->id);
-                skynet_malloc_remove(smsg->buffer);
                 skynet_free(smsg->buffer);
             }
             break;

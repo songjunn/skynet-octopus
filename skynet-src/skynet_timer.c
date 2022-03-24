@@ -1,7 +1,6 @@
 #include "skynet.h"
 #include "skynet_timer.h"
 #include "skynet_mq.h"
-#include "skynet_malloc.h"
 #include "skynet_service.h"
 #include "skynet_spinlock.h"
 
@@ -92,8 +91,7 @@ add_node(struct timer * T,struct timer_node * node) {
 
 static void
 timer_add(struct timer * T, void * arg, size_t sz,int time) {
-	struct timer_node *node = skynet_malloc(sizeof(*node)+sz);
-	skynet_malloc_insert(node, sizeof(*node)+sz, __FILE__, __LINE__);
+	struct timer_node *node = SKYNET_MALLOC(sizeof(*node)+sz);
 	memcpy(node+1,arg,sz);
 
 	SPIN_LOCK(T);
@@ -149,13 +147,11 @@ dispatch_list(struct timer_node *current) {
 		message.size = event->size;
 
 		if (skynet_service_pushmsg(event->handle, &message)) {
-			skynet_malloc_remove(message.data);
 			skynet_free(message.data);
 		}
 		
 		struct timer_node * temp = current;
 		current=current->next;
-		skynet_malloc_remove(temp);
 		skynet_free(temp);	
 	} while (current);
 }
@@ -190,7 +186,7 @@ timer_update(struct timer *T) {
 
 static struct timer *
 timer_create_timer() {
-	struct timer *r = skynet_malloc(sizeof(struct timer));
+	struct timer *r = SKYNET_MALLOC(sizeof(struct timer));
 	memset(r,0,sizeof(*r));
 
 	int i,j;
@@ -223,13 +219,11 @@ skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size
 		message.data = NULL;
 		if (args != NULL && size > 0) {
 			message.size = size;
-			message.data = skynet_malloc(size);
-			skynet_malloc_insert(message.data, size, __FILE__, __LINE__);
+			message.data = SKYNET_MALLOC(size);
 			memcpy(message.data, args, size);
 		}
 
 		if (skynet_service_pushmsg(handle, &message)) {
-			skynet_malloc_remove(message.data);
 			skynet_free(message.data);
 		}
 	} else {
@@ -240,8 +234,7 @@ skynet_timer_register(uint32_t handle, uint32_t session, const void * args, size
 		event.data = NULL;
 		if (args != NULL && size > 0) {
 			event.size = size;
-			event.data = skynet_malloc(size);
-			skynet_malloc_insert(event.data, size, __FILE__, __LINE__);
+			event.data = SKYNET_MALLOC(size);
 			memcpy(event.data, args, size);
 		}
 		timer_add(TI, &event, sizeof(event), time);

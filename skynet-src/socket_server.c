@@ -237,7 +237,7 @@ struct send_object {
 	void (*free_func)(void *);
 };
 
-#define MALLOC skynet_malloc
+#define MALLOC SKYNET_MALLOC
 #define FREE skynet_free
 
 struct socket_lock {
@@ -2222,7 +2222,7 @@ socket_server_udp_address(struct socket_server *ss, struct socket_message *msg, 
 
 struct socket_info *
 socket_info_create(struct socket_info *last) {
-	struct socket_info *si = skynet_malloc(sizeof(*si));
+	struct socket_info *si = SKYNET_MALLOC(sizeof(*si));
 	memset(si, 0 , sizeof(*si));
 	si->next = last;
 	return si;

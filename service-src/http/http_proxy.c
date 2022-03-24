@@ -33,8 +33,8 @@ int on_header_value(http_parser* parser, const char* at, size_t length) {
 
 int on_url(http_parser* parser, const char* at, size_t length) {
   http_proxy * proxy = (http_proxy *)parser->data;
-  if (proxy->url) free(proxy->url);
-  proxy->url = (char *) malloc(sizeof(char) * (length+1));
+  if (proxy->url) skynet_free(proxy->url);
+  proxy->url = (char *) SKYNET_MALLOC(sizeof(char) * (length+1));
   //proxy->url_ptr = length;
   //memcpy(proxy->url, at, length);
   proxy->url_ptr = urldecode(at, length, proxy->url);
@@ -44,8 +44,8 @@ int on_url(http_parser* parser, const char* at, size_t length) {
 
 int on_body(http_parser* parser, const char* at, size_t length) {
   http_proxy * proxy = (http_proxy *)parser->data;
-  if (proxy->body) free(proxy->body);
-  proxy->body = (char *) malloc(sizeof(char) * length);
+  if (proxy->body) skynet_free(proxy->body);
+  proxy->body = (char *) SKYNET_MALLOC(sizeof(char) * length);
   proxy->body_ptr = length;
   memcpy(proxy->body, at, length);
   skynet_logger_debug(NULL, "Body: %.*s", (int)proxy->body_ptr, proxy->body);
@@ -64,12 +64,12 @@ static http_parser_settings settings_null =
 };
 
 http_proxy * proxy_create(int type, int id, const char * addr, size_t sz) {
-  http_proxy * proxy = (http_proxy *)malloc(sizeof(http_proxy));
+  http_proxy * proxy = (http_proxy *)SKYNET_MALLOC(sizeof(http_proxy));
   proxy->id = id;
   proxy->type = type;
   proxy->complete = 0;
   
-  proxy->chunk = (char *) malloc(sizeof(char) * 20480);
+  proxy->chunk = (char *) SKYNET_MALLOC(sizeof(char) * 20480);
   proxy->chunk_ptr = 0;
 
   proxy->url = NULL;
@@ -84,21 +84,21 @@ http_proxy * proxy_create(int type, int id, const char * addr, size_t sz) {
 
 void proxy_destroy(http_proxy * proxy) {
   //skynet_logger_debug(NULL, "[HTTP] destroy proxy, id=%d", proxy->id);
-  if (proxy->body) free(proxy->body);
-  if (proxy->url) free(proxy->url);
-  free(proxy->chunk);
-  free(proxy);
+  if (proxy->body) skynet_free(proxy->body);
+  if (proxy->url) skynet_free(proxy->url);
+  skynet_free(proxy->chunk);
+  skynet_free(proxy);
 }
 
 void proxy_reset(http_proxy * proxy) {
   //skynet_logger_debug(NULL, "[HTTP] reset proxy, id=%d", proxy->id);
   if (proxy->url) {
-    free(proxy->url);
+    skynet_free(proxy->url);
     proxy->url = NULL;
     proxy->url_ptr = 0;
   }
   if (proxy->body) {
-    free(proxy->body);
+    skynet_free(proxy->body);
     proxy->body = NULL;
     proxy->body_ptr = 0;
   }

@@ -1,6 +1,5 @@
 #include "skynet.h"
 #include "skynet_mq.h"
-#include "skynet_malloc.h"
 #include "skynet_spinlock.h"
 
 #include <stdio.h>
@@ -81,7 +80,7 @@ skynet_globalmq_pop() {
 
 struct message_queue * 
 skynet_mq_create(uint32_t handle, int concurrent) {
-	struct message_queue * q = skynet_malloc(sizeof(*q));
+	struct message_queue * q = SKYNET_MALLOC(sizeof(*q));
 	q->handle = handle;
 	q->cap = DEFAULT_QUEUE_SIZE;
 	q->head = 0;
@@ -95,7 +94,7 @@ skynet_mq_create(uint32_t handle, int concurrent) {
 	q->overload = 0;
 	q->overload_threshold = MQ_OVERLOAD;
 	q->concurrent = concurrent;
-	q->queue = skynet_malloc(sizeof(struct skynet_message) * q->cap);
+	q->queue = SKYNET_MALLOC(sizeof(struct skynet_message) * q->cap);
 	q->next = NULL;
 
 	return q;
@@ -193,7 +192,7 @@ skynet_mq_pop(struct message_queue *q, struct skynet_message *message) {
 
 static void
 expand_queue(struct message_queue *q) {
-	struct skynet_message * new_queue = skynet_malloc(sizeof(struct skynet_message) * q->cap * 2);
+	struct skynet_message * new_queue = SKYNET_MALLOC(sizeof(struct skynet_message) * q->cap * 2);
 	int i;
 	for (i=0;i<q->cap;i++) {
 		new_queue[i] = q->queue[(q->head + i) % q->cap];
@@ -231,7 +230,7 @@ skynet_mq_push(struct message_queue *q, struct skynet_message *message) {
 
 void 
 skynet_mq_init() {
-	struct global_queue * q = skynet_malloc(sizeof(*q));
+	struct global_queue * q = SKYNET_MALLOC(sizeof(*q));
 	memset(q,0,sizeof(*q));
 	SPIN_INIT(q);
 	Q=q;

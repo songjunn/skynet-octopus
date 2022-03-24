@@ -1,6 +1,5 @@
 #include "skynet.h"
 #include "skynet_mq.h"
-#include "skynet_malloc.h"
 #include "skynet_server.h"
 #include "skynet_service.h"
 #include "skynet_config.h"
@@ -89,12 +88,12 @@ void * thread_worker(void *p) {
 void skynet_start(unsigned harbor, unsigned thread) {
     unsigned i;
 
-    m = skynet_malloc(sizeof(*m));
+    m = SKYNET_MALLOC(sizeof(*m));
     memset(m, 0, sizeof(*m));
     m->count = thread;
     m->sleep = 0;
     m->quit = 0;
-    m->pids = skynet_malloc(sizeof(*m->pids) * (thread+2));
+    m->pids = SKYNET_MALLOC(sizeof(*m->pids) * (thread+2));
 
     if (pthread_mutex_init(&m->mutex, NULL)) {
         skynet_logger_error(0, "[skynet]Init mutex error");

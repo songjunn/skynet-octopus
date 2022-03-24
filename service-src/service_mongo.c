@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 #include "mongoc.h"
 #include "bson.h"
 
@@ -248,7 +247,6 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         char * value = mongo_selectone(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
-            skynet_malloc_remove(value);
             skynet_free(value);
         } else {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);
@@ -261,7 +259,6 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
         char * value = mongo_selectmore(ctx, dbname, collec, query, param, sz-(param-msg));
         if (value != NULL) {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, value, strlen(value));
-            skynet_malloc_remove(value);
             skynet_free(value);
         } else {
             skynet_sendhandle(source, ctx->handle, session, SERVICE_RESPONSE, "", 0);
@@ -274,8 +271,8 @@ void mongo_dispatch_cmd(struct skynet_service * ctx, uint32_t source, uint32_t s
 }
 
 int mongo_create(struct skynet_service * ctx, int harbor, const char * args) {
-    struct mongo_client * mc = skynet_malloc(sizeof(struct mongo_client));
-    mc->host = (char *)skynet_malloc(sizeof(char) * 1024);
+    struct mongo_client * mc = SKYNET_MALLOC(sizeof(struct mongo_client));
+    mc->host = (char *)SKYNET_MALLOC(sizeof(char) * 1024);
     sscanf(args, "%s", mc->host);
 
     ctx->hook = mc;

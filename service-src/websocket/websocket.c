@@ -22,6 +22,7 @@
  */
 
 #include "websocket.h"
+#include "skynet.h"
 
 static char rn[] PROGMEM = "\r\n";
 
@@ -37,16 +38,16 @@ void nullHandshake(struct handshake *hs)
 void freeHandshake(struct handshake *hs)
 {
     if (hs->host) {
-        free(hs->host);
+        skynet_free(hs->host);
     }
     if (hs->origin) {
-        free(hs->origin);
+        skynet_free(hs->origin);
     }
     if (hs->resource) {
-        free(hs->resource);
+        skynet_free(hs->resource);
     }
     if (hs->key) {
-        free(hs->key);
+        skynet_free(hs->key);
     }
     nullHandshake(hs);
 }
@@ -56,7 +57,7 @@ static char* getUptoLinefeed(const char *startFrom)
     char *writeTo = NULL;
     uint8_t newLength = strstr_P(startFrom, rn) - startFrom;
     assert(newLength);
-    writeTo = (char *)malloc(newLength+1); //+1 for '\x00'
+    writeTo = (char *)SKYNET_MALLOC(newLength+1); //+1 for '\x00'
     assert(writeTo);
     memcpy(writeTo, startFrom, newLength);
     writeTo[ newLength ] = 0;
@@ -108,10 +109,10 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
         return WS_ERROR_FRAME;
 
     if (hs->resource) {
-        free(hs->resource);
+        skynet_free(hs->resource);
         hs->resource = NULL;
     }
-    hs->resource = (char *)malloc(second - first + 1); // +1 is for \x00 symbol
+    hs->resource = (char *)SKYNET_MALLOC(second - first + 1); // +1 is for \x00 symbol
     assert(hs->resource);
 
     if (sscanf_P(inputPtr, PSTR("GET %s HTTP/1.1\r\n"), hs->resource) != 1)
@@ -121,7 +122,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
     /*
         parse next lines
      */
-    #define prepare(x) do {if (x) { free(x); x = NULL; }} while(0)
+    #define prepare(x) do {if (x) { skynet_free(x); x = NULL; }} while(0)
     #define strtolower(x) do { int i; for (i = 0; x[i]; i++) x[i] = tolower(x[i]); } while(0)
     uint8_t connectionFlag = FALSE;
     uint8_t upgradeFlag = FALSE;
@@ -153,7 +154,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
             versionString = getUptoLinefeed(inputPtr);
             if (memcmp_P(versionString, version, strlen_P(version)) != 0)
                 versionMismatch = TRUE;
-            free(versionString);
+            skynet_free(versionString);
         } else
         if (memcmp_P(inputPtr, connectionField, strlen_P(connectionField)) == 0) {
             inputPtr += strlen_P(connectionField);
@@ -163,7 +164,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
             assert(connectionValue);
             if (strstr_P(connectionValue, upgrade) != NULL)
                 connectionFlag = TRUE;
-            free(connectionValue);
+            skynet_free(connectionValue);
         } else
         if (memcmp_P(inputPtr, upgradeField, strlen_P(upgradeField)) == 0) {
             inputPtr += strlen_P(upgradeField);
@@ -173,7 +174,7 @@ enum wsFrameType wsParseHandshake(const uint8_t *inputFrame, size_t inputLength,
             assert(compare);
             if (memcmp_P(compare, websocket, strlen_P(websocket)) == 0)
                 upgradeFlag = TRUE;
-            free(compare);
+            skynet_free(compare);
         };
 
         inputPtr = strstr_P(inputPtr, rn) + 2;
@@ -201,7 +202,7 @@ void wsGetHandshakeAnswer(const struct handshake *hs, uint8_t *outFrame,
 
     char *responseKey = NULL;
     size_t length = strlen(hs->key)+strlen_P(secret);
-    responseKey = malloc(length);
+    responseKey = SKYNET_MALLOC(length);
     memcpy(responseKey, hs->key, strlen(hs->key));
     memcpy_P(&(responseKey[strlen(hs->key)]), secret, strlen_P(secret));
     unsigned char shaHash[20];
@@ -221,7 +222,7 @@ void wsGetHandshakeAnswer(const struct handshake *hs, uint8_t *outFrame,
                             upgrade2,
                             responseKey);
 	
-    free(responseKey);
+    skynet_free(responseKey);
     // if assert fail, that means, that we corrupt memory
     assert(written <= *outLength);
     *outLength = written;

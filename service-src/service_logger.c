@@ -1,5 +1,4 @@
 #include "skynet.h"
-#include "skynet_malloc.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -50,7 +49,7 @@ FILE * logger_open_file(char * filename, size_t size, const char * basename) {
 
 int logger_create(struct skynet_service * ctx, int harbor, const char * args) {
     int level, maxsize;
-    struct logger * l = skynet_malloc(sizeof(struct logger));
+    struct logger * l = SKYNET_MALLOC(sizeof(struct logger));
     sscanf(args, "%[^','],%d,%d", l->basename, &maxsize, &level);
 
     l->maxsize = maxsize * 1024 * 1024;
