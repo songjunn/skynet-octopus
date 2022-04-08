@@ -38,7 +38,7 @@ all : \
 	#$(LIB_PATH)/libmongo.so \
 	#$(LIB_PATH)/libpython.so \
 
-$(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_poll.c platform/socket_extend.c
+$(BIN_PATH)/platform.dll : platform/platform.c platform/epoll.c platform/socket_extend.c
 	$(CC) $(CFLAGS) $(SHARED) $^ -lws2_32 -lwsock32 -o $@ -DDONOT_USE_IO_EXTEND -DFD_SETSIZE=1024
 
 $(BIN_PATH)/skynet.dll : $(foreach v, $(SKYNET_SRC), skynet-src/$(v))

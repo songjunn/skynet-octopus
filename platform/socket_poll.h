@@ -29,22 +29,22 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <errno.h>
 
-bool 
+static bool 
 sp_invalid(int efd) {
 	return efd == -1;
 }
 
-int
+static int
 sp_create() {
 	return epoll_create(1024);
 }
 
-void
+static void
 sp_release(int efd) {
 	closesocket(efd);
 }
 
-int 
+static int 
 sp_add(int efd, int sock, void *ud) {
 	struct epoll_event ev;
 	ev.events = EPOLLIN;
@@ -55,12 +55,12 @@ sp_add(int efd, int sock, void *ud) {
 	return 0;
 }
 
-void 
+static void 
 sp_del(int efd, int sock) {
 	epoll_ctl(efd, EPOLL_CTL_DEL, sock , NULL);
 }
 
-int
+static int
 sp_enable(int efd, int sock, void *ud, bool read_enable, bool write_enable) {
 	struct epoll_event ev;
 	ev.events = (read_enable ? EPOLLIN : 0) | (write_enable ? EPOLLOUT : 0);
@@ -71,7 +71,7 @@ sp_enable(int efd, int sock, void *ud, bool read_enable, bool write_enable) {
 	return 0;
 }
 
-int 
+static int 
 sp_wait(int efd, struct event *e, int max) {
 	assert(max <= 1024);
 	struct epoll_event ev[1024];
@@ -89,7 +89,7 @@ sp_wait(int efd, struct event *e, int max) {
 	return n;
 }
 
-void
+static void
 sp_nonblocking(int fd) {
 	u_long ul = 1;
 	ioctlsocket(fd, FIONBIO, &ul);
