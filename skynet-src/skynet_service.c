@@ -144,7 +144,7 @@ static void _insert_name_before(struct service_storage *s, const char *name, uin
 	s->name_count ++;
 }
 
-void _insert_name(struct service_storage *s, const char * name, uint32_t handle) {
+static void _insert_name(struct service_storage *s, const char * name, uint32_t handle) {
 	int begin = 0;
 	int end = s->name_count - 1;
 	while (begin<=end) {
@@ -163,14 +163,37 @@ void _insert_name(struct service_storage *s, const char * name, uint32_t handle)
 	_insert_name_before(s, name, handle, begin);
 }
 
-uint32_t _find_name(struct service_storage *m, const char * name) {
+static void _delete_name(struct service_storage *s, const char * name) {
+	int i;
+	int begin = 0;
+	int end = s->name_count - 1;
+	while (begin<=end) {
+		int mid = (begin+end)/2;
+		struct service_name *n = &s->name[mid];
+		int c = strcmp(n->name, name);
+		if (c==0) {
+			for (i=mid;i<s->name_count-1;i++) {
+				s->name[i] = s->name[i+1];
+			}
+			s->name_count --;
+			return;
+		}
+		if (c<0) {
+			begin = mid + 1;
+		} else {
+			end = mid - 1;
+		}
+	}
+}
+
+static uint32_t _find_name(struct service_storage *s, const char * name) {
 	uint32_t handle = 0;
 	
 	int begin = 0;
-	int end = m->name_count - 1;
+	int end = s->name_count - 1;
 	while (begin<=end) {
 		int mid = (begin+end)/2;
-		struct service_name *n = &m->name[mid];
+		struct service_name *n = &s->name[mid];
 		int c = strcmp(n->name, name);
 		if (c==0) {
 			handle = n->handle;
@@ -260,6 +283,7 @@ void skynet_service_release(struct skynet_service * ctx) {
 	int hash = skynet_harbor_index(ctx->handle);
 	assert(hash >= 0 && hash < m->slot_size);
 	rwlock_wlock(&m->lock);
+	_delete_name(m, ctx->name);
 	m->slot[hash] = NULL;
 	rwlock_wunlock(&m->lock);
 
